@@ -174,8 +174,7 @@
   <!-- ══════════ Tab 1: 模版管理 ══════════ -->
   <div class="tab-content active" id="tab-templates">
     <div class="toolbar">
-      <button class="btn btn-primary" onclick="openImport()">+ 导入模版</button>
-      <button class="btn btn-outline" onclick="alert('下载所有模版的xlsx文件（共16个模版）')">下载所有模版</button>
+      <span style="font-size:13px;color:#888;">共 <strong id="templateCount">16</strong> 个模版</span>
       <span class="spacer"></span>
       <div class="filter-group">
         <select id="filterStatus" onchange="filterTemplates()">
@@ -208,7 +207,7 @@
       <table>
         <thead>
           <tr>
-            <th>主体</th><th>税率条件</th><th>金额类型</th><th>适用模版</th><th>操作</th>
+            <th>主体编码</th><th>主体名称</th><th>税率条件</th><th>金额类型</th><th>适用模版</th><th>操作</th>
           </tr>
         </thead>
         <tbody id="configTableBody"></tbody>
@@ -284,12 +283,13 @@
     </div>
     <div class="modal-body">
       <div class="form-group">
-        <label>主体</label>
+        <label><span style="color:#e74c3c">*</span> 主体</label>
         <select id="cfgEntity">
           <option value="">请选择主体</option>
-          <option>加拿大</option><option>温哥华</option><option>美国EL</option><option>美国GA</option>
-          <option>日本</option><option>澳洲</option><option>深圳</option><option>香港</option>
+          <option value="CA">CA - 加拿大</option><option value="VC">VC - 温哥华</option><option value="EL">EL - 美国EL</option><option value="GA">GA - 美国GA</option>
+          <option value="JP">JP - 日本</option><option value="AU">AU - 澳洲</option><option value="SZ">SZ - 深圳</option><option value="HK">HK - 香港</option>
         </select>
+        <div style="display:none" id="cfgEntityName"></div>
       </div>
       <div class="form-row">
         <div class="form-group">
@@ -297,7 +297,7 @@
           <div class="multi-select" id="cfgTaxSelect">
             <div class="multi-select-trigger" onclick="toggleTaxDropdown(event)">
               <div class="multi-select-tags" id="taxTags"></div>
-              <span class="multi-select-placeholder" id="taxPlaceholder">请选择税率</span>
+              <span class="multi-select-placeholder" id="taxPlaceholder">不适用（可不选）</span>
               <span class="multi-select-arrow" id="taxArrow">▼</span>
             </div>
             <div class="multi-select-dropdown" id="taxDropdown">
@@ -309,17 +309,19 @@
               <label><input type="checkbox" class="cfg-tax-cb" value="不适用" onchange="onTaxChange()"> 不适用</label>
             </div>
           </div>
+          <div class="form-hint">未选择则默认为不适用</div>
         </div>
         <div class="form-group">
           <label>金额类型</label>
           <select id="cfgSign">
-            <option value="">请选择</option>
-            <option value="正数">正数</option><option value="负数">负数</option><option value="不区分">不区分</option>
+            <option value="">不适用（不选则默认）</option>
+            <option value="正数">正数</option><option value="负数">负数</option>
           </select>
+          <div class="form-hint">未选择则默认为不适用</div>
         </div>
       </div>
       <div class="form-group">
-        <label>适用模版</label>
+        <label><span style="color:#e74c3c">*</span> 适用模版</label>
         <select id="cfgTemplate">
           <option value="">请先选择条件</option>
         </select>
@@ -373,7 +375,7 @@
       <div id="cfgStep2" style="display:none;">
         <p style="margin-bottom:12px;font-size:14px;font-weight:600;">检测到以下变更，请确认：</p>
         <table class="diff-table">
-          <thead><tr><th>状态</th><th>主体</th><th>税率条件</th><th>金额类型</th><th>适用模版</th><th>备注</th></tr></thead>
+          <thead><tr><th>状态</th><th>主体编码</th><th>主体名称</th><th>税率条件</th><th>金额类型</th><th>适用模版</th><th>备注</th></tr></thead>
           <tbody id="cfgDiffBody"></tbody>
         </table>
         <div class="status-summary" id="cfgDiffSummary"></div>
@@ -397,6 +399,18 @@
 </div>
 
 <script>
+// ── Entity Options ──
+const ENTITY_OPTIONS = [
+  {code:'CA', name:'加拿大'},
+  {code:'VC', name:'温哥华'},
+  {code:'EL', name:'美国EL'},
+  {code:'GA', name:'美国GA'},
+  {code:'JP', name:'日本'},
+  {code:'AU', name:'澳洲'},
+  {code:'SZ', name:'深圳'},
+  {code:'HK', name:'香港'},
+];
+
 // ── Mock Data ──
 const templates = [
   {id:'CA-GST5', name:'FBU-加拿大-5%GST', status:'enabled', time:'2026-06-22 10:30'},
@@ -419,20 +433,20 @@ const templates = [
 
 // ── Entity config (matching rules) ──
 let configs = [
-  {id:1, entity:'加拿大', tax:['5%','13%'], sign:'正数', template:'CA-GST5'},
-  {id:2, entity:'加拿大', tax:['5%','13%'], sign:'负数', template:'CA-GST5N'},
-  {id:3, entity:'温哥华', tax:['0%'], sign:'正数', template:'VC-GST'},
-  {id:4, entity:'温哥华', tax:['0%'], sign:'负数', template:'VC-GSTN'},
-  {id:5, entity:'温哥华', tax:['13%'], sign:'正数', template:'VC-HST'},
-  {id:6, entity:'温哥华', tax:['13%'], sign:'负数', template:'VC-HSTN'},
-  {id:7, entity:'美国EL', tax:['不适用'], sign:'正数', template:'EL'},
-  {id:8, entity:'美国EL', tax:['不适用'], sign:'负数', template:'EL-N'},
-  {id:9, entity:'美国GA', tax:['不适用'], sign:'正数', template:'GA'},
-  {id:10, entity:'美国GA', tax:['不适用'], sign:'负数', template:'GA-N'},
-  {id:11, entity:'日本', tax:['不适用'], sign:'不区分', template:'JP'},
-  {id:12, entity:'澳洲', tax:['不适用'], sign:'不区分', template:'AU'},
-  {id:13, entity:'深圳', tax:['不适用'], sign:'不区分', template:'ABU-SZ'},
-  {id:14, entity:'香港', tax:['不适用'], sign:'不区分', template:'ABU-HK'},
+  {id:1, entityCode:'CA', entityName:'加拿大', tax:['5%','13%'], sign:'正数', template:'CA-GST5'},
+  {id:2, entityCode:'CA', entityName:'加拿大', tax:['5%','13%'], sign:'负数', template:'CA-GST5N'},
+  {id:3, entityCode:'VC', entityName:'温哥华', tax:['0%'], sign:'正数', template:'VC-GST'},
+  {id:4, entityCode:'VC', entityName:'温哥华', tax:['0%'], sign:'负数', template:'VC-GSTN'},
+  {id:5, entityCode:'VC', entityName:'温哥华', tax:['13%'], sign:'正数', template:'VC-HST'},
+  {id:6, entityCode:'VC', entityName:'温哥华', tax:['13%'], sign:'负数', template:'VC-HSTN'},
+  {id:7, entityCode:'EL', entityName:'美国EL', tax:['不适用'], sign:'正数', template:'EL'},
+  {id:8, entityCode:'EL', entityName:'美国EL', tax:['不适用'], sign:'负数', template:'EL-N'},
+  {id:9, entityCode:'GA', entityName:'美国GA', tax:['不适用'], sign:'正数', template:'GA'},
+  {id:10, entityCode:'GA', entityName:'美国GA', tax:['不适用'], sign:'负数', template:'GA-N'},
+  {id:11, entityCode:'JP', entityName:'日本', tax:['不适用'], sign:'不适用', template:'JP'},
+  {id:12, entityCode:'AU', entityName:'澳洲', tax:['不适用'], sign:'不适用', template:'AU'},
+  {id:13, entityCode:'SZ', entityName:'深圳', tax:['不适用'], sign:'不适用', template:'ABU-SZ'},
+  {id:14, entityCode:'HK', entityName:'香港', tax:['不适用'], sign:'不适用', template:'ABU-HK'},
 ];
 let cfgNextId = 15;
 
@@ -521,7 +535,8 @@ function getPreviewHTML(t) {
 // ── Tab 1: Template List ──
 function renderTemplateTable(data) {
   const tbody = document.getElementById('templateTableBody');
-  tbody.innerHTML = data.map(t => '<tr><td><strong>'+t.id+'</strong></td><td>'+t.name+'</td><td><label class="toggle"><input type="checkbox" '+(t.status==='enabled'?'checked':'')+' onchange="toggleStatus(\''+t.id+'\', this.checked)"><span class="slider"></span></label><span class="badge '+(t.status==='enabled'?'badge-enabled':'badge-disabled')+'" style="margin-left:6px">'+(t.status==='enabled'?'启用':'禁用')+'</span></td><td style="color:#888;font-size:12px">'+t.time+'</td><td><span class="op-link" onclick="previewTemplate(\''+t.id+'\')">预览</span></td></tr>').join('');
+  tbody.innerHTML = data.map(t => '<tr><td><strong>'+t.id+'</strong></td><td>'+t.name+'</td><td><label class="toggle"><input type="checkbox" '+(t.status==='enabled'?'checked':'')+' onchange="toggleStatus(\''+t.id+'\', this.checked, this)"><span class="slider"></span></label><span class="badge '+(t.status==='enabled'?'badge-enabled':'badge-disabled')+'" style="margin-left:6px">'+(t.status==='enabled'?'启用':'禁用')+'</span></td><td style="color:#888;font-size:12px">'+t.time+'</td><td><span class="op-link" onclick="previewTemplate(\''+t.id+'\')">预览</span><span class="op-link" onclick="downloadTemplate(\''+t.id+'\')">下载</span><span class="op-link" onclick="openTemplateImport(\''+t.id+'\')">导入更新</span></td></tr>').join('');
+  document.getElementById('templateCount').textContent = data.length;
 }
 function filterTemplates() {
   const status = document.getElementById('filterStatus').value;
@@ -539,7 +554,7 @@ function renderConfigTable() {
   const tbody = document.getElementById('configTableBody');
   tbody.innerHTML = configs.map(c => {
     const signCls = c.sign==='正数'?'cfg-tag-sign-pos':c.sign==='负数'?'cfg-tag-sign-neg':'cfg-tag-sign-na';
-    return '<tr><td><span class="entity-name">'+c.entity+'</span></td><td>'+c.tax.join('、')+'</td><td><span class="cfg-tag '+signCls+'">'+c.sign+'</span></td><td><span class="cfg-template-view">'+c.template+'</span></td><td><span class="op-link" onclick="editConfig('+c.id+')">编辑</span><span class="op-link-del" onclick="deleteConfig('+c.id+')">删除</span></td></tr>';
+    return '<tr><td style="font-family:Consolas,monospace;font-weight:600">'+c.entityCode+'</td><td><span class="entity-name">'+c.entityName+'</span></td><td>'+c.tax.join('、')+'</td><td><span class="cfg-tag '+signCls+'">'+c.sign+'</span></td><td><span class="cfg-template-view">'+c.template+'</span></td><td><span class="op-link" onclick="editConfig('+c.id+')">编辑</span><span class="op-link-del" onclick="deleteConfig('+c.id+')">删除</span></td></tr>';
   }).join('');
 }
 
@@ -562,7 +577,7 @@ function editConfig(id) {
   if (!c) return;
   editingCfgId = id;
   document.getElementById('configModalTitle').textContent = '编辑配置';
-  document.getElementById('cfgEntity').value = c.entity;
+  document.getElementById('cfgEntity').value = c.entityCode;
   document.querySelectorAll('.cfg-tax-cb').forEach(cb => cb.checked = c.tax.includes(cb.value));
   updateTaxTags();
   document.getElementById('cfgSign').value = c.sign;
@@ -571,16 +586,18 @@ function editConfig(id) {
   document.getElementById('configModal').classList.add('active');
 }
 
-function filterTemplatesForConfig() {
+function filterTemplatesForConfig(keepSelection) {
   const sel = document.getElementById('cfgTemplate');
   const sign = document.getElementById('cfgSign').value;
   let candidates = templates.filter(t => t.status === 'enabled');
-  if (sign && sign !== '不区分') candidates = candidates.filter(t => {
+  if (sign) candidates = candidates.filter(t => {
     if (sign === '正数') return !t.id.endsWith('-N') && !t.id.endsWith('N');
     if (sign === '负数') return t.id.endsWith('-N') || t.id.endsWith('N');
     return true;
   });
+  const selected = keepSelection ? sel.value : '';
   sel.innerHTML = '<option value="">请选择模版</option>' + candidates.map(t => '<option value="'+t.id+'">'+t.id+' - '+t.name+'</option>').join('');
+  if (selected) sel.value = selected;
 }
 
 document.getElementById('cfgEntity').onchange = filterTemplatesForConfig;
@@ -626,20 +643,23 @@ document.addEventListener('click', function(e) {
 });
 
 function saveConfig() {
-  const entity = document.getElementById('cfgEntity').value;
+  const entityCode = document.getElementById('cfgEntity').value;
+  const entityOpt = ENTITY_OPTIONS.find(e => e.code === entityCode);
   const taxCbs = document.querySelectorAll('.cfg-tax-cb:checked');
-  const tax = Array.from(taxCbs).map(cb => cb.value);
-  const sign = document.getElementById('cfgSign').value;
+  let tax = Array.from(taxCbs).map(cb => cb.value);
+  if (tax.length === 0) tax = ['不适用'];
+  let sign = document.getElementById('cfgSign').value;
+  if (!sign) sign = '不适用';
   const template = document.getElementById('cfgTemplate').value;
-  if (!entity || tax.length === 0 || !sign || !template) { alert('请填写完整信息'); return; }
+  if (!entityCode || !template) { alert('请填写必填项（主体、适用模版）'); return; }
   // Check duplicate
-  const dup = configs.find(c => c.entity === entity && JSON.stringify(c.tax.sort()) === JSON.stringify([...tax].sort()) && c.sign === sign && c.id !== editingCfgId);
+  const dup = configs.find(c => c.entityCode === entityCode && JSON.stringify(c.tax.sort()) === JSON.stringify([...tax].sort()) && c.sign === sign && c.id !== editingCfgId);
   if (dup) { alert('该条件组合已存在配置，请先删除原有配置'); return; }
   if (editingCfgId) {
     const c = configs.find(x => x.id === editingCfgId);
-    if (c) { c.entity = entity; c.tax = tax; c.sign = sign; c.template = template; }
+    if (c) { c.entityCode = entityCode; c.entityName = entityOpt.name; c.tax = tax; c.sign = sign; c.template = template; }
   } else {
-    configs.push({id: cfgNextId++, entity, tax, sign, template});
+    configs.push({id: cfgNextId++, entityCode, entityName: entityOpt.name, tax, sign, template});
   }
   renderConfigTable();
   closeModal('configModal');
@@ -690,15 +710,16 @@ function parseCsvConfig(text) {
   const result = [];
   for (let i = 1; i < lines.length; i++) {
     const cols = lines[i].split(',');
-    if (cols.length < 4) continue;
-    const entity = cols[0].trim();
-    const taxRaw = cols[1].trim();
-    const sign = cols[2].trim();
-    const template = cols[3].trim();
-    if (!entity || !taxRaw || !sign || !template) continue;
+    if (cols.length < 5) continue;
+    const entityCode = cols[0].trim();
+    const entityName = cols[1].trim();
+    const taxRaw = cols[2].trim();
+    const sign = cols[3].trim();
+    const template = cols[4].trim();
+    if (!entityCode || !entityName || !taxRaw || !template) continue;
     // Split tax by spaces to support multi-tax (e.g. "5% 13%" → ["5%","13%"])
     const tax = taxRaw.split(/\s+/);
-    result.push({entity, tax, sign, template});
+    result.push({entityCode, entityName, tax, sign: sign || '不适用', template});
   }
   return result;
 }
@@ -706,17 +727,17 @@ function parseCsvConfig(text) {
 function downloadCfgTemplate() {
   const BOM = '﻿';
   const rows = [
-    ['主体','税率条件','金额类型','适用模版'],
-    ['加拿大','5% 13%','正数','CA-GST5'],
-    ['加拿大','5% 13%','负数','CA-GST5N'],
-    ['温哥华','0%','正数','VC-GST'],
-    ['温哥华','13%','正数','VC-HST'],
-    ['美国EL','不适用','正数','EL'],
-    ['美国EL','不适用','负数','EL-N'],
-    ['日本','不适用','不区分','JP'],
-    ['澳洲','不适用','不区分','AU'],
-    ['深圳','不适用','不区分','ABU-SZ'],
-    ['香港','不适用','不区分','ABU-HK'],
+    ['主体编码','主体名称','税率条件','金额类型','适用模版'],
+    ['CA','加拿大','5% 13%','正数','CA-GST5'],
+    ['CA','加拿大','5% 13%','负数','CA-GST5N'],
+    ['VC','温哥华','0%','正数','VC-GST'],
+    ['VC','温哥华','13%','正数','VC-HST'],
+    ['EL','美国EL','不适用','正数','EL'],
+    ['EL','美国EL','不适用','负数','EL-N'],
+    ['JP','日本','不适用','不适用','JP'],
+    ['AU','澳洲','不适用','不适用','AU'],
+    ['SZ','深圳','不适用','不适用','ABU-SZ'],
+    ['HK','香港','不适用','不适用','ABU-HK'],
   ];
   const csv = BOM + rows.map(r => r.join(',')).join('\n');
   const blob = new Blob([csv], {type: 'text/csv;charset=utf-8'});
@@ -728,9 +749,9 @@ function downloadCfgTemplate() {
   URL.revokeObjectURL(url);
 }
 
-function isConfigDup(entity, tax, sign, excludeId) {
+function isConfigDup(entityCode, tax, sign, excludeId) {
   const sorted = [...tax].sort();
-  return configs.some(c => c.id !== (excludeId||-1) && c.entity === entity && JSON.stringify([...c.tax].sort()) === JSON.stringify(sorted) && c.sign === sign);
+  return configs.some(c => c.id !== (excludeId||-1) && c.entityCode === entityCode && JSON.stringify([...c.tax].sort()) === JSON.stringify(sorted) && c.sign === sign);
 }
 
 let cfgMockChanges = [];
@@ -745,23 +766,23 @@ function showCfgDiff() {
   // Use parsed data, fall back to mock for demo
   const rawImport = cfgImportState.rawData && cfgImportState.rawData.length > 0
     ? cfgImportState.rawData
-    : parseCsvConfig('主体,税率条件,金额类型,适用模版\n加拿大,5% 13%,正数,CA-GST5\n加拿大,5% 13%,负数,CA-GST5N\n美国EL,不适用,正数,EL\n日本,不适用,不区分,JP\n日本,不适用,不区分,JP');
+    : parseCsvConfig('主体编码,主体名称,税率条件,金额类型,适用模版\nCA,加拿大,5% 13%,正数,CA-GST5\nCA,加拿大,5% 13%,负数,CA-GST5N\nEL,美国EL,不适用,正数,EL\nJP,日本,不适用,不适用,JP\nJP,日本,不适用,不适用,JP');
 
   const seen = new Set();
   cfgMockChanges = rawImport.map(item => {
-    const key = item.entity + '|' + [...item.tax].sort().join(',') + '|' + item.sign;
-    const dupExisting = isConfigDup(item.entity, item.tax, item.sign);
+    const key = item.entityCode + '|' + [...item.tax].sort().join(',') + '|' + item.sign;
+    const dupExisting = isConfigDup(item.entityCode, item.tax, item.sign);
     const dupInFile = seen.has(key);
     seen.add(key);
-    if (dupExisting) return {...item, status:'dup', entity:item.entity, note:'系统中已存在相同配置，跳过'};
-    if (dupInFile) return {...item, status:'dup', entity:item.entity, note:'文件中重复，跳过'};
-    return {...item, status:'new', entity:item.entity, note:'新配置'};
+    if (dupExisting) return {...item, status:'dup', note:'系统中已存在相同配置，跳过'};
+    if (dupInFile) return {...item, status:'dup', note:'文件中重复，跳过'};
+    return {...item, status:'new', note:'新配置'};
   });
 
   document.getElementById('cfgDiffBody').innerHTML = cfgMockChanges.map(function(c) {
     const cls = c.status==='new'?'status-new':'status-skip';
     const label = c.status==='new'?'+ 新增':'- 跳过';
-    return '<tr><td><span class="'+cls+'">'+label+'</span></td><td>'+c.entity+'</td><td>'+(Array.isArray(c.tax)?c.tax.join('、'):'')+'</td><td>'+c.sign+'</td><td>'+c.template+'</td><td>'+c.note+'</td></tr>';
+    return '<tr><td><span class="'+cls+'">'+label+'</span></td><td>'+c.entityCode+'</td><td>'+c.entityName+'</td><td>'+(Array.isArray(c.tax)?c.tax.join('、'):'')+'</td><td>'+c.sign+'</td><td>'+c.template+'</td><td>'+c.note+'</td></tr>';
   }).join('');
 
   const news = cfgMockChanges.filter(function(c){return c.status==='new'}).length;
@@ -797,7 +818,7 @@ function showCfgResult() {
   document.getElementById('cfgResultSummary').innerHTML = '导入完成';
   document.getElementById('cfgResultDetail').innerHTML = '成功：'+news+' 个<br>跳过（重复）：'+dups+' 个';
   cfgMockChanges.filter(function(c){return c.status==='new'}).forEach(function(c) {
-    configs.push({id: cfgNextId++, entity: c.entity, tax: c.tax, sign: c.sign, template: c.template});
+    configs.push({id: cfgNextId++, entityCode: c.entityCode, entityName: c.entityName, tax: c.tax, sign: c.sign, template: c.template});
   });
   renderConfigTable();
 }
@@ -818,15 +839,19 @@ function closePreviewModal() {
 }
 
 // ── Toggle Status ──
-function toggleStatus(id, enable) {
+function toggleStatus(id, enable, el) {
   const t = templates.find(x => x.id === id);
   if (!t) return;
+  // Revert checkbox immediately — only change on confirm
+  el.checked = !enable;
   if (enable && t.status === 'disabled') {
     showConfirm('确认启用模版 <strong>'+id+'</strong>？启用后可在主体配置中选择此模版。', function() {
+      el.checked = true;
       t.status = 'enabled'; filterTemplates();
     });
   } else if (!enable && t.status === 'enabled') {
     showConfirm('确认禁用模版 <strong>'+id+'</strong>？<br><span style="color:#e74c3c">禁用后已关联此模版的配置规则将失效，请检查主体配置。</span>', function() {
+      el.checked = false;
       t.status = 'disabled'; filterTemplates();
     });
   }
@@ -918,22 +943,81 @@ function doImport() {
   }, 120);
 }
 
+
+// ── Per-Template Download & Import Update ──
+let importTemplateId = null;
+
+function downloadTemplate(id) {
+  const t = templates.find(x => x.id === id);
+  if (!t) return;
+  alert('下载模版文件：' + t.id + ' - ' + t.name + '（.xlsx）');
+}
+
+function openTemplateImport(id) {
+  importTemplateId = id;
+  const t = templates.find(x => x.id === id);
+  if (!t) return;
+  importState = { file: null, changes: [] };
+  document.getElementById('step1').style.display = 'block';
+  document.getElementById('step2').style.display = 'none';
+  document.getElementById('step3').style.display = 'none';
+  document.getElementById('step4').style.display = 'none';
+  document.getElementById('importConfirmBtn').style.display = 'none';
+  document.getElementById('importDoneBtn').style.display = 'none';
+  document.getElementById('importCancelBtn').style.display = 'inline-block';
+  document.getElementById('importModalTitle').textContent = '导入更新 - ' + t.id;
+  document.getElementById('fileInfo').style.display = 'none';
+  document.getElementById('importModal').classList.add('active');
+}
+
+// ── Override showDiff for per-template import ──
+const _origShowDiff = showDiff;
+showDiff = function _perTemplateShowDiff() {
+  if (!importTemplateId) { _origShowDiff(); return; }
+  const t = templates.find(x => x.id === importTemplateId);
+  if (!t) return;
+  document.getElementById('step1').style.display = 'none';
+  document.getElementById('step2').style.display = 'block';
+  document.getElementById('importConfirmBtn').style.display = 'inline-block';
+  document.getElementById('importCancelBtn').textContent = '取消';
+  document.getElementById('importModalTitle').textContent = '确认更新 - ' + t.id;
+  mockChanges = [
+    {status:'update', code:t.id, name:t.name, note:'导入新版本覆盖'},
+  ];
+  document.getElementById('diffBody').innerHTML = mockChanges.map(function(c) {
+    const cls = 'status-update';
+    const label = '~ 更新';
+    return '<tr><td><span class="'+cls+'">'+label+'</span></td><td>'+c.code+'</td><td>'+c.name+'</td><td>'+c.note+'</td></tr>';
+  }).join('');
+  const ups = 1;
+  document.getElementById('diffSummary').innerHTML = '<strong>1</strong> 个模版将更新';
+};
+
 function showResult() {
   document.getElementById('step3').style.display = 'none';
   document.getElementById('step4').style.display = 'block';
   document.getElementById('importDoneBtn').style.display = 'inline-block';
   document.getElementById('importCancelBtn').style.display = 'none';
-  document.getElementById('importModalTitle').textContent = '导入完成';
-  const news = mockChanges.filter(function(c){return c.status==='new'}).length;
-  const ups = mockChanges.filter(function(c){return c.status==='update'}).length;
-  const skips = mockChanges.filter(function(c){return c.status==='skip'}).length;
-  document.getElementById('resultSummary').innerHTML = '导入完成';
-  document.getElementById('resultDetail').innerHTML = '成功：'+(news+ups)+' 个（'+news+'个新增，'+ups+'个更新）<br>跳过：'+skips+' 个';
-  mockChanges.filter(function(c){return c.status!=='skip'}).forEach(function(c) {
-    const t = templates.find(function(x){return x.id === c.code});
-    if (t) { t.time = new Date().toLocaleString('zh-CN',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}); }
-  });
+  if (importTemplateId) {
+    const t = templates.find(x => x.id === importTemplateId);
+    document.getElementById('importModalTitle').textContent = '更新完成 - ' + (t ? t.id : '');
+    document.getElementById('resultSummary').innerHTML = '更新完成';
+    document.getElementById('resultDetail').innerHTML = '模版 <strong>'+(t?t.id:'')+'</strong> 已成功更新';
+    if (t) t.time = new Date().toLocaleString('zh-CN',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
+  } else {
+    document.getElementById('importModalTitle').textContent = '导入完成';
+    const news = mockChanges.filter(function(c){return c.status==='new'}).length;
+    const ups = mockChanges.filter(function(c){return c.status==='update'}).length;
+    const skips = mockChanges.filter(function(c){return c.status==='skip'}).length;
+    document.getElementById('resultSummary').innerHTML = '导入完成';
+    document.getElementById('resultDetail').innerHTML = '成功：'+(news+ups)+' 个（'+news+'个新增，'+ups+'个更新）<br>跳过：'+skips+' 个';
+    mockChanges.filter(function(c){return c.status!=='skip'}).forEach(function(c) {
+      const t2 = templates.find(function(x){return x.id === c.code});
+      if (t2) { t2.time = new Date().toLocaleString('zh-CN',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}); }
+    });
+  }
   filterTemplates();
+  importTemplateId = null;
 }
 
 // ── Init ──
