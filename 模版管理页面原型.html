@@ -48,6 +48,7 @@
   .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; }
   .badge-enabled { background: #e8f5e9; color: #2e7d32; }
   .badge-disabled { background: #f5f5f5; color: #999; }
+.badge-warn { background: #fff8e1; color: #f57c00; }
 
   .toggle { position: relative; display: inline-block; width: 36px; height: 20px; }
   .toggle input { opacity: 0; width: 0; height: 0; }
@@ -187,7 +188,7 @@
       <table>
         <thead>
           <tr>
-            <th>模版编码</th><th>名称</th><th>状态</th><th>最近更新</th><th>操作</th>
+            <th>模版编码</th><th>名称</th><th>状态</th><th>最近更新</th><th style='min-width:140px'>规则解析状态</th><th style='min-width:160px'>操作</th>
           </tr>
         </thead>
         <tbody id="templateTableBody"></tbody>
@@ -225,7 +226,13 @@
         <button class="btn-sm-close" onclick="closePreviewModal()">x</button>
       </div>
     </div>
-    <div class="preview-scroll" id="previewScroll"></div>
+    <div class="preview-body" style="display:flex;gap:16px;align-items:flex-start;">
+      <div class="preview-scroll" id="previewScroll" style="flex:1;"></div>
+      <div class="rule-panel" id="rulePanel" style="width:320px;background:#fff;border-radius:6px;border:1px solid #eee;padding:16px;max-height:600px;overflow:auto;">
+        <div style="font-size:14px;font-weight:600;margin-bottom:12px;">字段规则解析结果</div>
+        <div id="rulePanelContent"></div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -413,17 +420,17 @@ const ENTITY_OPTIONS = [
 
 // ── Mock Data ──
 const templates = [
-  {id:'CA-GST5', name:'FBU-加拿大-5%GST', status:'enabled', time:'2026-06-22 10:30'},
-  {id:'CA-GST5N', name:'FBU-加拿大-5%GST-负数', status:'enabled', time:'2026-06-22 10:30'},
+  {id:'CA-GST5', name:'FBU-加拿大-5%GST', status:'enabled', time:'2026-06-22 10:30', ruleStatus:{cfg:14, total:16, label:'全部配置化'}},
+  {id:'CA-GST5N', name:'FBU-加拿大-5%GST-负数', status:'enabled', time:'2026-06-22 10:30', ruleStatus:{cfg:16, total:16, label:'全部配置化'}},
   {id:'CA-HST13', name:'FBU-加拿大-13%HST', status:'enabled', time:'2026-06-22 10:30'},
   {id:'CA-HST13N', name:'FBU-加拿大-13%HST-负数', status:'enabled', time:'2026-06-22 10:30'},
   {id:'VC-GST', name:'FBU-温哥华-GST', status:'enabled', time:'2026-06-20 14:15'},
   {id:'VC-GSTN', name:'FBU-温哥华-GST-负数', status:'enabled', time:'2026-06-20 14:15'},
   {id:'VC-HST', name:'FBU-温哥华-HST', status:'enabled', time:'2026-06-20 14:15'},
   {id:'VC-HSTN', name:'FBU-温哥华-HST-负数', status:'enabled', time:'2026-06-20 14:15'},
-  {id:'EL', name:'FBU-美国EL', status:'enabled', time:'2026-06-18 09:00'},
+  {id:'EL', name:'FBU-美国EL', status:'enabled', time:'2026-06-18 09:00', ruleStatus:{cfg:12, total:14, label:'含硬编码规则 2 条'}},
   {id:'EL-N', name:'FBU-美国EL-负数', status:'enabled', time:'2026-06-18 09:00'},
-  {id:'GA', name:'FBU-美国GA', status:'enabled', time:'2026-06-18 09:00'},
+  {id:'GA', name:'FBU-美国GA', status:'enabled', time:'2026-06-18 09:00', ruleStatus:{cfg:13, total:14, label:'含硬编码规则 1 条'}},
   {id:'GA-N', name:'FBU-美国GA-负数', status:'disabled', time:'2026-06-15 16:20'},
   {id:'JP', name:'FBU-日本谷仓', status:'enabled', time:'2026-06-10 11:00'},
   {id:'AU', name:'FBU-澳洲谷仓', status:'enabled', time:'2026-06-10 11:00'},
@@ -535,7 +542,14 @@ function getPreviewHTML(t) {
 // ── Tab 1: Template List ──
 function renderTemplateTable(data) {
   const tbody = document.getElementById('templateTableBody');
-  tbody.innerHTML = data.map(t => '<tr><td><strong>'+t.id+'</strong></td><td>'+t.name+'</td><td><label class="toggle"><input type="checkbox" '+(t.status==='enabled'?'checked':'')+' onchange="toggleStatus(\''+t.id+'\', this.checked, this)"><span class="slider"></span></label><span class="badge '+(t.status==='enabled'?'badge-enabled':'badge-disabled')+'" style="margin-left:6px">'+(t.status==='enabled'?'启用':'禁用')+'</span></td><td style="color:#888;font-size:12px">'+t.time+'</td><td><span class="op-link" onclick="previewTemplate(\''+t.id+'\')">预览</span><span class="op-link" onclick="downloadTemplate(\''+t.id+'\')">下载</span><span class="op-link" onclick="openTemplateImport(\''+t.id+'\')">导入更新</span></td></tr>').join('');
+  tbody.innerHTML = data.map(t => {
+    const rs = t.ruleStatus;
+    const rsBadge = rs ? (rs.cfg === rs.total 
+      ? '<span class="badge badge-enabled">全部配置化</span>' 
+      : '<span class="badge badge-warn">'+rs.label+'</span>') 
+      : '<span class="badge badge-disabled">未解析</span>';
+    return '<tr><td><strong>'+t.id+'</strong></td><td>'+t.name+'</td><td><label class="toggle"><input type="checkbox" '+(t.status==='enabled'?'checked':'')+' onchange="toggleStatus(\''+t.id+'\', this.checked, this)"><span class="slider"></span></label><span class="badge '+(t.status==='enabled'?'badge-enabled':'badge-disabled')+'" style="margin-left:6px">'+(t.status==='enabled'?'启用':'禁用')+'</span></td><td style="color:#888;font-size:12px">'+t.time+'</td><td>'+rsBadge+'</td><td><span class="op-link" onclick="previewTemplate(\''+t.id+'\')">预览</span><span class="op-link" onclick="downloadTemplate(\''+t.id+'\')">下载</span><span class="op-link" onclick="openTemplateImport(\''+t.id+'\')">导入更新</span></td></tr>';
+  }).join('');
   document.getElementById('templateCount').textContent = data.length;
 }
 function filterTemplates() {
@@ -830,6 +844,24 @@ function previewTemplate(id) {
   document.getElementById('previewTitle').textContent = t.id;
   document.getElementById('previewSub').textContent = t.name;
   document.getElementById('previewScroll').innerHTML = '<div class="a4-paper"><div class="a4-inner" style="padding:0;">'+getPreviewHTML(t)+'</div></div>';
+  // Build rule panel
+  const rs = t.ruleStatus;
+  let ruleHTML = '';
+  if (rs) {
+    const hard = rs.total - rs.cfg;
+    ruleHTML += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;padding:10px;background:#f8f9fd;border-radius:6px;">';
+    ruleHTML += '<span style="font-size:12px;color:#555">可配置化规则</span><span style="font-size:16px;font-weight:700;color:#2e7d32">'+rs.cfg+'/'+rs.total+'</span>';
+    ruleHTML += '</div>';
+    if (hard > 0) {
+      ruleHTML += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;padding:10px;background:#fff8e1;border-radius:6px;">';
+      ruleHTML += '<span style="font-size:12px;color:#555">需硬编码规则</span><span style="font-size:16px;font-weight:700;color:#f57c00">'+hard+' 条</span>';
+      ruleHTML += '</div>';
+    }
+    ruleHTML += '<div style="font-size:12px;color:#888;margin-top:8px;border-top:1px solid #eee;padding-top:10px;">硬编码规则包含：开票日期分支判断、发票号码流水号生成、付款条件拼接等，由后端专用函数处理。</div>';
+  } else {
+    ruleHTML = '<div style="font-size:13px;color:#888;text-align:center;padding:30px;">暂无规则解析数据</div>';
+  }
+  document.getElementById('rulePanelContent').innerHTML = ruleHTML;
   document.getElementById('previewOverlay').classList.add('active');
   document.body.style.overflow = 'hidden';
 }

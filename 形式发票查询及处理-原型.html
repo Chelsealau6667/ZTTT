@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>形式发票查询及处理 - 纵腾集团财务共享中心</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-size: 13px;
+    color: #333;
+    background: #f0f2f5;
+    overflow-x: auto;
+  }
+  .layout { display: flex; height: 100vh; }
+
+  /* sidebar */
+  .sidebar {
+    width: 64px;
+    background: #1a5bb5;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-top: 8px;
+    flex-shrink: 0;
+  }
+  .sidebar-logo {
+    width: 40px;
+    height: 40px;
+    margin-bottom: 16px;
+    background: #fff;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: bold;
+    color: #1a5bb5;
+  }
+  .nav-item {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 10px 0;
+    color: rgba(255,255,255,0.7);
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 11px;
+  }
+  .nav-item:hover, .nav-item.active {
+    color: #fff;
+    background: rgba(255,255,255,0.1);
+  }
+  .nav-icon { width: 20px; height: 20px; margin-bottom: 4px; }
+
+  /* header */
+  .header {
+    height: 48px;
+    background: #fff;
+    border-bottom: 1px solid #e8e8e8;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 16px;
+    flex-shrink: 0;
+  }
+  .header-left { display: flex; align-items: center; gap: 8px; }
+  .header-logo { display: flex; align-items: center; gap: 6px; }
+  .header-logo-icon {
+    width: 24px; height: 24px;
+    background: #1a5bb5;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 12px;
+    font-weight: bold;
+  }
+  .header-logo-text { font-size: 14px; font-weight: 600; color: #333; line-height: 1.2; }
+  .header-logo-sub { font-size: 10px; color: #999; line-height: 1; }
+  .header-right { display: flex; align-items: center; gap: 12px; font-size: 12px; color: #666; }
+  .header-user { display: flex; align-items: center; gap: 4px; }
+  .header-lang { cursor: pointer; }
+  .header-logout { color: #999; cursor: pointer; }
+
+  /* content */
+  .content { flex: 1; padding: 12px 16px; overflow: auto; }
+
+  /* tabs */
+  .tabs { display: flex; align-items: center; gap: 4px; margin-bottom: 12px; }
+  .tab-item {
+    display: flex; align-items: center; gap: 6px;
+    padding: 6px 12px;
+    background: #fff;
+    border: 1px solid #d9d9d9;
+    border-radius: 4px 4px 0 0;
+    font-size: 12px;
+    color: #666;
+    cursor: pointer;
+  }
+  .tab-item.active {
+    background: #fff;
+    border-bottom: 1px solid #fff;
+    color: #1a5bb5;
+    font-weight: 500;
+    position: relative; z-index: 1;
+  }
+  .tab-close {
+    font-size: 10px; color: #999; cursor: pointer;
+    width: 14px; height: 14px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 50%;
+  }
+  .tab-close:hover { background: #f0f0f0; color: #333; }
+
+  /* search card */
+  .search-card {
+    background: #fff;
+    border: 1px solid #e8e8e8;
+    border-radius: 0 4px 4px 4px;
+    padding: 12px 16px;
+    margin-bottom: 12px;
+  }
+  .search-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .search-title::before {
+    content: '';
+    display: inline-block;
+    width: 3px;
+    height: 12px;
+    background: #1a5bb5;
+    border-radius: 2px;
+  }
+
+  /* search table */
+  .search-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    table-layout: fixed;
+  }
+  .search-table td {
+    border: 1px solid #d9d9d9;
+    vertical-align: middle;
+    height: 28px;
+  }
+  .search-table .search-label {
+    background: #f5f5f5;
+    color: #666;
+    padding: 0 10px;
+    text-align: right;
+    white-space: nowrap;
+    width: 110px;
+  }
+  .search-table .search-input-cell {
+    background: #fff;
+    padding: 0;
+  }
+  .search-table .search-input-cell input,
+  .search-table .search-input-cell select {
+    width: 100%;
+    height: 28px;
+    border: none;
+    padding: 0 8px;
+    font-size: 12px;
+    color: #333;
+    outline: none;
+    background: transparent;
+  }
+  .search-table .search-input-cell input::placeholder { color: #bfbfbf; }
+  .search-table .search-range {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 0 4px;
+    height: 28px;
+  }
+  .search-table .search-range input {
+    flex: 1;
+    height: 22px;
+    border: 1px solid #d9d9d9;
+    border-radius: 2px;
+    padding: 0 4px;
+    font-size: 11px;
+    outline: none;
+  }
+  .search-table .search-range span {
+    color: #999;
+    font-size: 11px;
+    white-space: nowrap;
+  }
+
+  /* buttons */
+  .search-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 12px;
+  }
+  .btn {
+    height: 28px;
+    padding: 0 16px;
+    border-radius: 3px;
+    font-size: 12px;
+    cursor: pointer;
+    border: 1px solid transparent;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+  }
+  .btn-primary {
+    background: #41B7F6;
+    color: #fff;
+    border-color: #41B7F6;
+  }
+  .btn-primary:hover { background: #2ea3e0; }
+  .btn-default {
+    background: #fff;
+    color: #41B7F6;
+    border-color: #41B7F6;
+  }
+  .btn-default:hover { border-color: #2ea3e0; color: #2ea3e0; }
+
+  /* table card */
+  .table-card {
+    background: #fff;
+    border: 1px solid #e8e8e8;
+    border-radius: 4px;
+    overflow-x: auto;
+  }
+  .table-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    border-bottom: 1px solid #e8e8e8;
+  }
+  .table-header-title { font-size: 12px; font-weight: 600; color: #333; }
+  .table-header-actions { display: flex; gap: 8px; }
+  .table-header-actions .btn { height: 24px; padding: 0 10px; font-size: 11px; }
+
+  /* data table */
+  .data-table {
+    width: auto;
+    min-width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+  }
+  .data-table thead th {
+    background: #f5f5f5;
+    color: #333;
+    font-weight: 500;
+    padding: 8px 6px;
+    text-align: center;
+    border-right: 1px solid #e8e8e8;
+    white-space: nowrap;
+  }
+  .data-table thead th:last-child { border-right: none; }
+  .data-table tbody td {
+    padding: 8px 6px;
+    text-align: center;
+    border-bottom: 1px solid #f0f0f0;
+    border-right: 1px solid #f0f0f0;
+    white-space: nowrap;
+    color: #333;
+  }
+  .data-table tbody td:last-child { border-right: none; }
+  .data-table tbody tr:hover { background: #f6faff; }
+  .data-table tbody tr:nth-child(even) { background: #fafafa; }
+  .data-table tbody tr:nth-child(even):hover { background: #f6faff; }
+  .op-link { color: #1a5bb5; cursor: pointer; text-decoration: none; font-size: 11px; margin: 0 3px; }
+  .op-link:hover { color: #2ea3e0; }
+  .checkbox { width: 14px; height: 14px; cursor: pointer; }
+
+  /* modal */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.4);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+  }
+  .modal-overlay.show { display: flex; }
+  .modal {
+    background: #fff;
+    border-radius: 6px;
+    width: 480px;
+    max-width: 90vw;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    overflow: hidden;
+  }
+  .modal-header {
+    padding: 12px 16px;
+    border-bottom: 1px solid #f0f0f0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .modal-title { font-size: 14px; font-weight: 600; color: #333; }
+  .modal-close {
+    font-size: 16px; color: #999; cursor: pointer;
+    width: 24px; height: 24px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 50%;
+  }
+  .modal-close:hover { background: #f5f5f5; color: #333; }
+  .modal-body { padding: 16px; }
+  .modal-form-group { display: flex; align-items: center; margin-bottom: 12px; }
+  .modal-form-label {
+    width: 100px;
+    font-size: 12px;
+    color: #666;
+    text-align: right;
+    padding-right: 12px;
+  }
+  .modal-form-value {
+    flex: 1;
+    font-size: 12px;
+    color: #333;
+    padding: 6px 10px;
+    background: #f5f5f5;
+    border-radius: 3px;
+    min-height: 28px;
+    display: flex;
+    align-items: center;
+  }
+  .modal-form-input {
+    flex: 1;
+    height: 28px;
+    border: 1px solid #d9d9d9;
+    border-radius: 3px;
+    padding: 0 10px;
+    font-size: 12px;
+    color: #333;
+    outline: none;
+  }
+  .modal-form-input:focus { border-color: #1a5bb5; }
+  .modal-footer {
+    padding: 10px 16px;
+    border-top: 1px solid #f0f0f0;
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+</style>
+</head>
+<body>
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-logo">Z</div>
+    <div class="nav-item">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      <span>与我有关</span>
+    </div>
+    <div class="nav-item active">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>
+      <span>发票管理</span>
+    </div>
+    <div class="nav-item">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+      <span>应付管理</span>
+    </div>
+    <div class="nav-item">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>
+      <span>财务管理</span>
+    </div>
+    <div class="nav-item">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20V10M18 20V4M6 20v-4"/></svg>
+      <span>报表管理</span>
+    </div>
+    <div class="nav-item">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 14.5a2.5 2.5 0 0 0 0-5 2.5 2.5 0 0 0 0 5z"/><path d="M1 12a11 11 0 0 1 22 0 11 11 0 0 1-22 0z"/></svg>
+      <span>票据管理</span>
+    </div>
+  </aside>
+
+  <div class="main">
+    <header class="header">
+      <div class="header-left">
+        <div class="header-logo">
+          <div class="header-logo-icon">Z</div>
+          <div>
+            <div class="header-logo-text">纵腾集团</div>
+            <div class="header-logo-sub">财务共享中心</div>
+          </div>
+        </div>
+      </div>
+      <div class="header-right">
+        <span class="header-user">您好！李娜</span>
+        <span class="header-lang">中文 ▼</span>
+        <span class="header-logout">注销</span>
+      </div>
+    </header>
+
+    <div class="content">
+      <div class="tabs">
+        <div class="tab-item">首页</div>
+        <div class="tab-item active">
+          形式发票查询及处理
+          <span class="tab-close">×</span>
+        </div>
+      </div>
+
+      <div class="search-card">
+        <div class="search-title">查询条件</div>
+        <table class="search-table">
+          <tr>
+            <td class="search-label">单据编号</td>
+            <td class="search-input-cell"><input type="text" /></td>
+            <td class="search-label">销方单位名称</td>
+            <td class="search-input-cell"><input type="text" /></td>
+            <td class="search-label">购方单位名称</td>
+            <td class="search-input-cell"><input type="text" /></td>
+          </tr>
+          <tr>
+            <td class="search-label">发票号码</td>
+            <td class="search-input-cell"><input type="text" /></td>
+            <td class="search-label">签章文件状态</td>
+            <td class="search-input-cell">
+              <select>
+                <option>全部</option>
+                <option>未上传</option>
+                <option>已上传</option>
+                <option>上传异常</option>
+              </select>
+            </td>
+            <td class="search-label">金额</td>
+            <td class="search-input-cell">
+              <div class="search-range">
+                <input type="text" placeholder="" /><span>至</span><input type="text" placeholder="" />
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td class="search-label">报账人</td>
+            <td class="search-input-cell"><input type="text" /></td>
+            <td class="search-label">发票状态</td>
+            <td class="search-input-cell">
+              <select>
+                <option>全部</option>
+                <option>正常</option>
+                <option>作废</option>
+              </select>
+            </td>
+            <td class="search-label">作废单号</td>
+            <td class="search-input-cell"><input type="text" /></td>
+          </tr>
+          <tr>
+            <td class="search-label">审核时间</td>
+            <td class="search-input-cell">
+              <div class="search-range">
+                <input type="text" placeholder="" /><span>至</span><input type="text" placeholder="" />
+              </div>
+            </td>
+            <td class="search-label">申请单号</td>
+            <td class="search-input-cell"><input type="text" /></td>
+            <td class="search-label">申请说明</td>
+            <td class="search-input-cell"><input type="text" /></td>
+          </tr>
+          <tr>
+            <td class="search-label">业务类型</td>
+            <td class="search-input-cell">
+              <select><option>请选择</option></select>
+            </td>
+            <td class="search-label">来源系统</td>
+            <td class="search-input-cell">
+              <select><option>请选择</option></select>
+            </td>
+            <td class="search-label"></td>
+            <td class="search-input-cell"></td>
+          </tr>
+        </table>
+        <div class="search-actions">
+          <button class="btn btn-primary">查询</button>
+          <button class="btn btn-default">清空</button>
+        </div>
+      </div>
+
+      <div class="table-card">
+        <div class="table-header">
+          <span class="table-header-title">单据列表</span>
+          <div class="table-header-actions">
+            <button class="btn btn-default">批量下载签章文件</button>
+            <button class="btn btn-default">批量下载原版文件</button>
+            <button class="btn btn-default">导出Excel</button>
+          </div>
+        </div>
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th style="width: 32px;"><input type="checkbox" class="checkbox" /></th>
+              <th style="width: 40px;">序号</th>
+              <th style="width: 240px;">操作</th>
+              <th style="width: 120px;">单据编号</th>
+              <th style="width: 100px;">申请单号</th>
+              <th style="width: 80px;">申请说明</th>
+              <th style="width: 110px;">发票号码</th>
+              <th style="width: 60px;">发票币种</th>
+              <th style="width: 80px;">金额</th>
+              <th style="width: 140px;">购方单位名称</th>
+              <th style="width: 100px;">客商编码</th>
+              <th style="width: 120px;">销方单位名称</th>
+              <th style="width: 70px;">报账人</th>
+              <th style="width: 90px;">审核时间</th>
+              <th style="width: 60px;">发票状态</th>
+              <th style="width: 100px;">作废单号</th>
+              <th style="width: 70px;">业务类型</th>
+              <th style="width: 70px;">来源系统</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><input type="checkbox" class="checkbox" /></td>
+              <td>1</td>
+              <td>
+                <a class="op-link">下载原版文件</a>
+                <a class="op-link">上传签章文件</a>
+                <a class="op-link" onclick="openModal()">发票修改</a>
+              </td>
+              <td>3000002307280003</td>
+              <td>3000002307280003</td>
+              <td>-</td>
+              <td>25262026F0006</td>
+              <td>GBP</td>
+              <td>22222.12</td>
+              <td>thomas12Z(深圳)</td>
+              <td>PC00137138</td>
+              <td>深圳市宏龙华区吉奈森家庭服务中心</td>
+              <td>李莉</td>
+              <td>2026-07-08</td>
+              <td>正常</td>
+              <td>-</td>
+              <td>出口</td>
+              <td>FPS</td>
+            </tr>
+            <tr>
+              <td><input type="checkbox" class="checkbox" /></td>
+              <td>2</td>
+              <td>
+                <a class="op-link">下载原版文件</a>
+                <a class="op-link">下载签章文件</a>
+              </td>
+              <td>3000002607030179</td>
+              <td>3000002607030179</td>
+              <td>-</td>
+              <td>GCSZ202607F0001</td>
+              <td>PLN</td>
+              <td>2,222.00</td>
+              <td>深圳市宏龙华区吉奈森家庭服务中心</td>
+              <td>PC12949342</td>
+              <td>深圳市宏龙华区吉奈森家庭服务中心</td>
+              <td>王强</td>
+              <td>2026-07-07</td>
+              <td>正常</td>
+              <td>-</td>
+              <td>出口</td>
+              <td>FPS</td>
+            </tr>
+            <tr>
+              <td><input type="checkbox" class="checkbox" /></td>
+              <td>3</td>
+              <td>
+                <a class="op-link">下载原版文件</a>
+                <a class="op-link">上传签章文件</a>
+                <a class="op-link" onclick="openModal()">发票修改</a>
+              </td>
+              <td>3000002607030176</td>
+              <td>3000002607030176</td>
+              <td>-</td>
+              <td>GCSZ202607F0002</td>
+              <td>CNY</td>
+              <td>222.00</td>
+              <td>深圳市宏龙华区吉奈森家庭服务中心</td>
+              <td>PC12949342</td>
+              <td>深圳市宏龙华区吉奈森家庭服务中心</td>
+              <td>张华</td>
+              <td>2026-07-06</td>
+              <td>正常</td>
+              <td>-</td>
+              <td>出口</td>
+              <td>FPS</td>
+            </tr>
+            <tr>
+              <td><input type="checkbox" class="checkbox" /></td>
+              <td>4</td>
+              <td>
+                <a class="op-link">下载原版文件</a>
+                <a class="op-link">上传签章文件</a>
+                <a class="op-link" onclick="openModal()">发票修改</a>
+              </td>
+              <td>3001002601130056</td>
+              <td>3001002601130056</td>
+              <td>-</td>
+              <td>YGHK202606F0001</td>
+              <td>USD</td>
+              <td>15,416.00</td>
+              <td>深圳市宏龙华区吉奈森家庭服务中心</td>
+              <td>PC54889565</td>
+              <td>星璐资本金融科技有限公司A3</td>
+              <td>刘明</td>
+              <td>2026-07-05</td>
+              <td>正常</td>
+              <td>-</td>
+              <td>出口</td>
+              <td>FPS</td>
+            </tr>
+            <tr>
+              <td><input type="checkbox" class="checkbox" /></td>
+              <td>5</td>
+              <td>
+                <a class="op-link">下载原版文件</a>
+                <a class="op-link">下载签章文件</a>
+              </td>
+              <td>4000002605110011</td>
+              <td>4000002605110011</td>
+              <td>-</td>
+              <td>YSSZ202605F0001</td>
+              <td>CNY</td>
+              <td>136.30</td>
+              <td>星璐资本金融科技有限公司A3</td>
+              <td>PC86795397</td>
+              <td>星璐资本金融科技有限公司A3</td>
+              <td>陈静</td>
+              <td>2026-07-04</td>
+              <td>正常</td>
+              <td>-</td>
+              <td>出口</td>
+              <td>FPS</td>
+            </tr>
+            <tr>
+              <td><input type="checkbox" class="checkbox" /></td>
+              <td>6</td>
+              <td>
+                <a class="op-link">下载原版文件</a>
+                <a class="op-link">上传签章文件</a>
+                <a class="op-link" onclick="openModal()">发票修改</a>
+              </td>
+              <td>2006002604240199</td>
+              <td>2006002604240199</td>
+              <td>-</td>
+              <td>34234202604F0001</td>
+              <td>USD</td>
+              <td>931.78</td>
+              <td>深圳市宏龙华区吉奈森家庭服务中心</td>
+              <td>PC12949342</td>
+              <td>星璐资本金融科技有限公司A3</td>
+              <td>赵磊</td>
+              <td>2026-07-03</td>
+              <td>正常</td>
+              <td>-</td>
+              <td>出口</td>
+              <td>FPS</td>
+            </tr>
+            <tr>
+              <td><input type="checkbox" class="checkbox" /></td>
+              <td>7</td>
+              <td>
+                <a class="op-link">下载原版文件</a>
+                <a class="op-link">上传签章文件</a>
+                <a class="op-link" onclick="openModal()">发票修改</a>
+              </td>
+              <td>2006002604240200</td>
+              <td>2006002604240200</td>
+              <td>-</td>
+              <td>34234202604F0002</td>
+              <td>CNY</td>
+              <td>1,200.00</td>
+              <td>星璐资本金融科技有限公司A3</td>
+              <td>PC86795397</td>
+              <td>深圳市宏龙华区吉奈森家庭服务中心</td>
+              <td>孙丽</td>
+              <td>2026-07-02</td>
+              <td>正常</td>
+              <td>-</td>
+              <td>出口</td>
+              <td>FPS</td>
+            </tr>
+            <tr>
+              <td><input type="checkbox" class="checkbox" /></td>
+              <td>8</td>
+              <td>
+                <a class="op-link">下载原版文件</a>
+                <a class="op-link">下载签章文件</a>
+              </td>
+              <td>2006002604240201</td>
+              <td>2006002604240201</td>
+              <td>-</td>
+              <td>34234202604F0003</td>
+              <td>USD</td>
+              <td>3,500.00</td>
+              <td>深圳市宏龙华区吉奈森家庭服务中心</td>
+              <td>PC12949342</td>
+              <td>星璐资本金融科技有限公司A3</td>
+              <td>周杰</td>
+              <td>2026-07-01</td>
+              <td>正常</td>
+              <td>-</td>
+              <td>出口</td>
+              <td>FPS</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="invoiceModal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">发票修改</span>
+      <span class="modal-close" onclick="closeModal()">×</span>
+    </div>
+    <div class="modal-body">
+      <div class="modal-form-group">
+        <label class="modal-form-label">单据名称：</label>
+        <div class="modal-form-value">形式发票-出口业务-20260708-001</div>
+      </div>
+      <div class="modal-form-group">
+        <label class="modal-form-label">报账单号：</label>
+        <div class="modal-form-value">3000002307280003</div>
+      </div>
+      <div class="modal-form-group">
+        <label class="modal-form-label">销方单位编码：</label>
+        <div class="modal-form-value">V00001</div>
+      </div>
+      <div class="modal-form-group">
+        <label class="modal-form-label">销方单位名称：</label>
+        <div class="modal-form-value">深圳市宏龙华区吉奈森家庭服务中心</div>
+      </div>
+      <div class="modal-form-group">
+        <label class="modal-form-label">发票号码：</label>
+        <input class="modal-form-input" type="text" value="25262026F0006" id="invoiceNumInput" />
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-default" onclick="closeModal()">取消</button>
+      <button class="btn btn-primary" onclick="saveInvoice()">保存</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  function openModal() {
+    document.getElementById('invoiceModal').classList.add('show');
+  }
+  function closeModal() {
+    document.getElementById('invoiceModal').classList.remove('show');
+  }
+  function saveInvoice() {
+    const val = document.getElementById('invoiceNumInput').value.trim();
+    if (!val) {
+      alert('发票号码不能为空');
+      return;
+    }
+    alert('保存成功');
+    closeModal();
+  }
+  document.getElementById('invoiceModal').addEventListener('click', function(e) {
+    if (e.target === this) closeModal();
+  });
+</script>
+</body>
+</html>
