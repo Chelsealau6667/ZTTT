@@ -209,7 +209,7 @@
       <table>
         <thead>
           <tr>
-            <th>利润中心编码</th><th>税率条件</th><th>金额类型</th><th>适用模版</th><th>操作</th>
+            <th>利润中心编码</th><th>公司名称</th><th>税率条件</th><th>金额类型</th><th>适用模版</th><th>操作</th>
           </tr>
         </thead>
         <tbody id="configTableBody"></tbody>
@@ -383,7 +383,7 @@
       <div id="cfgStep2" style="display:none;">
         <p style="margin-bottom:12px;font-size:14px;font-weight:600;">检测到以下变更，请确认：</p>
         <table class="diff-table">
-          <thead><tr><th>状态</th><th>利润中心编码</th><th>税率条件</th><th>金额类型</th><th>适用模版</th><th>备注</th></tr></thead>
+          <thead><tr><th>状态</th><th>利润中心编码</th><th>公司名称</th><th>税率条件</th><th>金额类型</th><th>适用模版</th><th>备注</th></tr></thead>
           <tbody id="cfgDiffBody"></tbody>
         </table>
         <div class="status-summary" id="cfgDiffSummary"></div>
@@ -569,7 +569,7 @@ function renderConfigTable() {
   const tbody = document.getElementById('configTableBody');
   tbody.innerHTML = configs.map(c => {
     const signCls = c.sign==='正数'?'cfg-tag-sign-pos':c.sign==='负数'?'cfg-tag-sign-neg':'cfg-tag-sign-na';
-    return '<tr><td style="font-family:Consolas,monospace;font-weight:600">'+c.entityCode+'</td><td>'+c.tax.join('、')+'</td><td><span class="cfg-tag '+signCls+'">'+c.sign+'</span></td><td><span class="cfg-template-view">'+c.template+'</span></td><td><span class="op-link" onclick="editConfig('+c.id+')">编辑</span><span class="op-link-del" onclick="deleteConfig('+c.id+')">删除</span></td></tr>';
+    return '<tr><td style="font-family:Consolas,monospace;font-weight:600">'+c.entityCode+'</td><td><span class="entity-name">'+c.entityName+'</span></td><td>'+c.tax.join('、')+'</td><td><span class="cfg-tag '+signCls+'">'+c.sign+'</span></td><td><span class="cfg-template-view">'+c.template+'</span></td><td><span class="op-link" onclick="editConfig('+c.id+')">编辑</span><span class="op-link-del" onclick="deleteConfig('+c.id+')">删除</span></td></tr>';
   }).join('');
 }
 
@@ -725,16 +725,16 @@ function parseCsvConfig(text) {
   const result = [];
   for (let i = 1; i < lines.length; i++) {
     const cols = lines[i].split(',');
-    if (cols.length < 5) continue;
+    if (cols.length < 4) continue;
     const entityCode = cols[0].trim();
-    const entityName = cols[1].trim();
-    const taxRaw = cols[2].trim();
-    const sign = cols[3].trim();
-    const template = cols[4].trim();
-    if (!entityCode || !entityName || !taxRaw || !template) continue;
-    // Split tax by spaces to support multi-tax (e.g. "5% 13%" → ["5%","13%"])
-    const tax = taxRaw.split(/\s+/);
-    result.push({entityCode, entityName, tax, sign: sign || '不适用', template});
+    const template = cols[cols.length - 1].trim();
+    const sign = cols[cols.length - 2].trim();
+    // taxRaw: everything between entityCode and the last two columns
+    const taxRaw = cols.slice(1, cols.length - 2).join(',').trim();
+    if (!entityCode || !taxRaw || !template) continue;
+    // Split tax by commas (e.g. "5%,13%" → ["5%","13%"])
+    const tax = taxRaw.split(/\s*,\s*/);
+    result.push({entityCode, tax, sign: sign || '不适用', template});
   }
   return result;
 }
@@ -781,7 +781,7 @@ function showCfgDiff() {
   // Use parsed data, fall back to mock for demo
   const rawImport = cfgImportState.rawData && cfgImportState.rawData.length > 0
     ? cfgImportState.rawData
-    : parseCsvConfig('主体编码,主体名称,税率条件,金额类型,适用模版\nCA,加拿大,5% 13%,正数,CA-GST5\nCA,加拿大,5% 13%,负数,CA-GST5N\nEL,美国EL,不适用,正数,EL\nJP,日本,不适用,不适用,JP\nJP,日本,不适用,不适用,JP');
+    : parseCsvConfig('利润中心编码,税率条件,金额类型,适用模版\nCA,5%,13%,正数,CA-GST5\nCA,5%,13%,负数,CA-GST5N\nEL,不适用,正数,EL\nJP,不适用,不适用,JP\nJP,不适用,不适用,JP');
 
   const seen = new Set();
   cfgMockChanges = rawImport.map(item => {
@@ -797,7 +797,7 @@ function showCfgDiff() {
   document.getElementById('cfgDiffBody').innerHTML = cfgMockChanges.map(function(c) {
     const cls = c.status==='new'?'status-new':'status-skip';
     const label = c.status==='new'?'+ 新增':'- 跳过';
-    return '<tr><td><span class="'+cls+'">'+label+'</span></td><td>'+c.entityCode+'</td><td>'+(Array.isArray(c.tax)?c.tax.join('、'):'')+'</td><td>'+c.sign+'</td><td>'+c.template+'</td><td>'+c.note+'</td></tr>';
+    var en = c.entityName || (configs.find(function(x){return x.entityCode===c.entityCode})||{}).entityName || ''; return '<tr><td><span class="'+cls+'">'+label+'</span></td><td>'+c.entityCode+'</td><td>'+en+'</td><td>'+(Array.isArray(c.tax)?c.tax.join('、'):'')+'</td><td>'+c.sign+'</td><td>'+c.template+'</td><td>'+c.note+'</td></tr>';
   }).join('');
 
   const news = cfgMockChanges.filter(function(c){return c.status==='new'}).length;
