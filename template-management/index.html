@@ -724,15 +724,23 @@ function parseCsvConfig(text) {
   const lines = text.split(/\r?\n/).filter(line => line.trim());
   const result = [];
   for (let i = 1; i < lines.length; i++) {
-    const cols = lines[i].split(',');
+    const line = lines[i];
+    const cols = [];
+    let inQuote = false, cur = '';
+    for (let j = 0; j < line.length; j++) {
+      const ch = line[j];
+      if (ch === '"') { inQuote = !inQuote; }
+      else if (ch === ',' && !inQuote) { cols.push(cur); cur = ''; }
+      else { cur += ch; }
+    }
+    cols.push(cur);
     if (cols.length < 4) continue;
     const entityCode = cols[0].trim();
     const template = cols[cols.length - 1].trim();
     const sign = cols[cols.length - 2].trim();
-    // taxRaw: everything between entityCode and the last two columns
-    const taxRaw = cols.slice(1, cols.length - 2).join(',').trim();
+    const taxRaw = cols.slice(1, cols.length - 2).join(',').trim()
+        .replace(/^"|"$/g, '');
     if (!entityCode || !taxRaw || !template) continue;
-    // Split tax by commas (e.g. "5%,13%" → ["5%","13%"])
     const tax = taxRaw.split(/\s*,\s*/);
     result.push({entityCode, tax, sign: sign || '不适用', template});
   }
@@ -754,7 +762,7 @@ function downloadCfgTemplate() {
     ['SZ','不适用','不适用','ABU-SZ'],
     ['HK','不适用','不适用','ABU-HK'],
   ];
-  const csv = BOM + rows.map(r => r.join(',')).join('\n');
+  const csv = BOM + rows.map(r => r.map(c => c.includes(',') ? """+ c +'""' : c).join(',')).join('\n');
   const blob = new Blob([csv], {type: 'text/csv;charset=utf-8'});
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -781,7 +789,7 @@ function showCfgDiff() {
   // Use parsed data, fall back to mock for demo
   const rawImport = cfgImportState.rawData && cfgImportState.rawData.length > 0
     ? cfgImportState.rawData
-    : parseCsvConfig('利润中心编码,税率条件,金额类型,适用模版\nCA,5%,13%,正数,CA-GST5\nCA,5%,13%,负数,CA-GST5N\nEL,不适用,正数,EL\nJP,不适用,不适用,JP\nJP,不适用,不适用,JP');
+    : parseCsvConfig('利润中心编码,税率条件,金额类型,适用模版\nCA,"5%,13%",正数,CA-GST5\nCA,"5%,13%",负数,CA-GST5N\nEL,不适用,正数,EL\nJP,不适用,不适用,JP\nJP,不适用,不适用,JP');
 
   const seen = new Set();
   cfgMockChanges = rawImport.map(item => {
