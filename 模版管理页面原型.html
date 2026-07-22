@@ -208,7 +208,7 @@
       <table>
         <thead>
           <tr>
-            <th>主体编码</th><th>主体名称</th><th>税率条件</th><th>金额类型</th><th>适用模版</th><th>操作</th>
+            <th>利润中心编码</th><th>公司名称</th><th>税率条件</th><th>金额类型</th><th>适用模版</th><th>操作</th>
           </tr>
         </thead>
         <tbody id="configTableBody"></tbody>
@@ -376,7 +376,7 @@
       <div id="cfgStep2" style="display:none;">
         <p style="margin-bottom:12px;font-size:14px;font-weight:600;">检测到以下变更，请确认：</p>
         <table class="diff-table">
-          <thead><tr><th>状态</th><th>主体编码</th><th>主体名称</th><th>税率条件</th><th>金额类型</th><th>适用模版</th><th>备注</th></tr></thead>
+          <thead><tr><th>状态</th><th>利润中心编码</th><th>公司名称</th><th>税率条件</th><th>金额类型</th><th>适用模版</th><th>备注</th></tr></thead>
           <tbody id="cfgDiffBody"></tbody>
         </table>
         <div class="status-summary" id="cfgDiffSummary"></div>
@@ -730,7 +730,7 @@ function parseCsvConfig(text) {
 function downloadCfgTemplate() {
   const BOM = '﻿';
   const rows = [
-    ['主体编码','主体名称','税率条件','金额类型','适用模版'],
+    ['利润中心编码','公司名称','税率条件','金额类型','适用模版'],
     ['CA','加拿大','5% 13%','正数','CA-GST5'],
     ['CA','加拿大','5% 13%','负数','CA-GST5N'],
     ['VC','温哥华','0%','正数','VC-GST'],
@@ -769,7 +769,7 @@ function showCfgDiff() {
   // Use parsed data, fall back to mock for demo
   const rawImport = cfgImportState.rawData && cfgImportState.rawData.length > 0
     ? cfgImportState.rawData
-    : parseCsvConfig('主体编码,主体名称,税率条件,金额类型,适用模版\nCA,加拿大,5% 13%,正数,CA-GST5\nCA,加拿大,5% 13%,负数,CA-GST5N\nEL,美国EL,全部,正数,EL\nJP,日本,全部,全部,JP\nJP,日本,全部,全部,JP');
+    : parseCsvConfig('利润中心编码,公司名称,税率条件,金额类型,适用模版\nCA,加拿大,5% 13%,正数,CA-GST5\nCA,加拿大,5% 13%,负数,CA-GST5N\nEL,美国EL,全部,正数,EL\nJP,日本,全部,全部,JP\nJP,日本,全部,全部,JP');
 
   const seen = new Set();
   cfgMockChanges = rawImport.map(item => {
