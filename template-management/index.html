@@ -158,6 +158,8 @@
   .multi-select-dropdown label { display: block; padding: 7px 14px; font-size: 13px; cursor: pointer; align-items: center; gap: 8px; }
   .multi-select-dropdown label:hover { background: #f5f7ff; }
   .multi-select-dropdown input { width: auto; margin: 0; }
+  .multi-select-search { width: 100%; box-sizing: border-box; padding: 6px 12px; border: 0; border-bottom: 1px solid #eee; font-size: 13px; outline: none; }
+  .multi-select-search::placeholder { color: #bbb; }
 </style>
 </head>
 <body>
@@ -203,6 +205,32 @@
       <button class="btn btn-outline" onclick="openConfigImport()">新增导入</button>
       <span class="spacer"></span>
       <div style="font-size:13px;color:#888;">配置开票主体在指定条件下使用的模版</div>
+    </div>
+    <div style="display:flex;gap:12px;align-items:center;margin:12px 0 8px;flex-wrap:wrap;">
+      <span style="font-size:13px;color:#666;font-weight:500;">查询条件：</span>
+      <div class="multi-select" id="cfgQueryEntitySelect" style="width:220px;">
+        <div class="multi-select-trigger" onclick="toggleQueryEntityDropdown(event)">
+          <div class="multi-select-tags" id="cfgQueryEntityTags"></div>
+          <span class="multi-select-placeholder" id="cfgQueryEntityPlaceholder">利润中心编码</span>
+          <span class="multi-select-arrow" id="cfgQueryEntityArrow">▼</span>
+        </div>
+        <div class="multi-select-dropdown" id="cfgQueryEntityDropdown">
+          <input type="text" class="multi-select-search" placeholder="输入编码或名称筛选…" oninput="filterQueryEntityOptions(this.value)" onclick="event.stopPropagation()">
+          <div id="cfgQueryEntityOptions"></div>
+        </div>
+      </div>
+      <div class="multi-select" id="cfgQueryTemplateSelect" style="width:220px;">
+        <div class="multi-select-trigger" onclick="toggleQueryTemplateDropdown(event)">
+          <div class="multi-select-tags" id="cfgQueryTemplateTags"></div>
+          <span class="multi-select-placeholder" id="cfgQueryTemplatePlaceholder">适用模版编码</span>
+          <span class="multi-select-arrow" id="cfgQueryTemplateArrow">▼</span>
+        </div>
+        <div class="multi-select-dropdown" id="cfgQueryTemplateDropdown">
+          <input type="text" class="multi-select-search" placeholder="输入模版编码筛选…" oninput="filterQueryTemplateOptions(this.value)" onclick="event.stopPropagation()">
+          <div id="cfgQueryTemplateOptions"></div>
+        </div>
+      </div>
+      <button class="btn btn-outline" onclick="resetConfigQuery()" style="font-size:12px;padding:5px 12px;">重置</button>
     </div>
     <div class="table-wrap">
       <table>
@@ -555,11 +583,136 @@ function filterTemplates() {
 // ── Tab 2: Config List ──
 function renderConfigTable() {
   const tbody = document.getElementById('configTableBody');
-  tbody.innerHTML = configs.map(c => {
+  let rows = configs;
+  if (cfgQueryEntity.length > 0) {
+    rows = rows.filter(c => cfgQueryEntity.includes(c.entityCode));
+  }
+  if (cfgQueryTemplate.length > 0) {
+    rows = rows.filter(c => cfgQueryTemplate.some(t => c.template.toUpperCase().includes(t.toUpperCase())));
+  }
+  tbody.innerHTML = rows.map(c => {
     const signCls = c.sign==='正数'?'cfg-tag-sign-pos':c.sign==='负数'?'cfg-tag-sign-neg':'cfg-tag-sign-na';
     return '<tr><td style="font-family:Consolas,monospace;font-weight:600">'+c.entityCode+'</td><td><span class="entity-name">'+c.entityName+'</span></td><td>'+c.tax.join(',')+'</td><td><span class="cfg-tag '+signCls+'">'+c.sign+'</span></td><td><span class="cfg-template-view">'+c.template+'</span></td><td><span class="op-link" onclick="editConfig('+c.id+')">编辑</span><span class="op-link-del" onclick="deleteConfig('+c.id+')">删除</span></td></tr>';
   }).join('');
 }
+
+// ── Config Query State ──
+let cfgQueryEntity = [];
+let cfgQueryTemplate = [];
+
+function buildQueryEntityOptions() {
+  const container = document.getElementById('cfgQueryEntityOptions');
+  container.innerHTML = ENTITY_OPTIONS.map(e => {
+    const checked = cfgQueryEntity.includes(e.code) ? 'checked' : '';
+    return '<label><input type="checkbox" '+checked+' onchange="toggleQueryEntity(\''+e.code+'\', this.checked)"> '+e.code+' - '+e.name+'</label>';
+  }).join('');
+}
+function filterQueryEntityOptions(val) {
+  const v = val.trim().toLowerCase();
+  const container = document.getElementById('cfgQueryEntityOptions');
+  container.innerHTML = ENTITY_OPTIONS.filter(e => e.code.includes(v) || e.name.toLowerCase().includes(v)).map(e => {
+    const checked = cfgQueryEntity.includes(e.code) ? 'checked' : '';
+    return '<label><input type="checkbox" '+checked+' onchange="toggleQueryEntity(\''+e.code+'\', this.checked)"> '+e.code+' - '+e.name+'</label>';
+  }).join('');
+}
+function toggleQueryEntity(code, checked) {
+  if (checked) { if (!cfgQueryEntity.includes(code)) cfgQueryEntity.push(code); }
+  else { cfgQueryEntity = cfgQueryEntity.filter(c => c !== code); }
+  updateQueryEntityTags();
+  renderConfigTable();
+}
+function updateQueryEntityTags() {
+  const tags = document.getElementById('cfgQueryEntityTags');
+  const placeholder = document.getElementById('cfgQueryEntityPlaceholder');
+  tags.innerHTML = '';
+  if (cfgQueryEntity.length === 0) { placeholder.style.display = 'inline'; }
+  else {
+    placeholder.style.display = 'none';
+    cfgQueryEntity.forEach(code => {
+      const e = ENTITY_OPTIONS.find(x => x.code === code);
+      const name = e ? e.name : code;
+      const tag = document.createElement('span');
+      tag.className = 'multi-select-tag';
+      tag.innerHTML = e ? (e.code + ' - ' + e.name) : code;
+      tag.innerHTML += '<span class="multi-select-tag-remove" onclick="removeQueryEntity(\''+code+'\', event)">x</span>';
+      tags.appendChild(tag);
+    });
+  }
+}
+function removeQueryEntity(code, e) {
+  e.stopPropagation();
+  cfgQueryEntity = cfgQueryEntity.filter(c => c !== code);
+  document.querySelector('#cfgQueryEntityOptions input[onchange*="'+code+'"]')?.closest('label')?.querySelector('input') && (document.querySelector('#cfgQueryEntityOptions input[onchange*="'+code+'"]')||{}).checked === false;
+  filterQueryEntityOptions(document.querySelector('#cfgQueryEntityDropdown .multi-select-search')?.value||'');
+  updateQueryEntityTags();
+  renderConfigTable();
+}
+function toggleQueryEntityDropdown(e) { e.stopPropagation(); document.getElementById('cfgQueryEntityDropdown').classList.toggle('open'); buildQueryEntityOptions(); }
+
+function buildQueryTemplateOptions() {
+  const container = document.getElementById('cfgQueryTemplateOptions');
+  container.innerHTML = templates.map(t => {
+    const checked = cfgQueryTemplate.includes(t.id) ? 'checked' : '';
+    return '<label><input type="checkbox" '+checked+' onchange="toggleQueryTemplate(\''+t.id+'\', this.checked)"> '+t.id+' - '+t.name+'</label>';
+  }).join('');
+}
+function filterQueryTemplateOptions(val) {
+  const v = val.trim().toUpperCase();
+  const container = document.getElementById('cfgQueryTemplateOptions');
+  container.innerHTML = templates.filter(t => t.id.toUpperCase().includes(v) || t.name.toLowerCase().includes(v.toLowerCase())).map(t => {
+    const checked = cfgQueryTemplate.includes(t.id) ? 'checked' : '';
+    return '<label><input type="checkbox" '+checked+' onchange="toggleQueryTemplate(\''+t.id+'\', this.checked)"> '+t.id+' - '+t.name+'</label>';
+  }).join('');
+}
+function toggleQueryTemplate(id, checked) {
+  if (checked) { if (!cfgQueryTemplate.includes(id)) cfgQueryTemplate.push(id); }
+  else { cfgQueryTemplate = cfgQueryTemplate.filter(x => x !== id); }
+  updateQueryTemplateTags();
+  renderConfigTable();
+}
+function updateQueryTemplateTags() {
+  const tags = document.getElementById('cfgQueryTemplateTags');
+  const placeholder = document.getElementById('cfgQueryTemplatePlaceholder');
+  tags.innerHTML = '';
+  if (cfgQueryTemplate.length === 0) { placeholder.style.display = 'inline'; }
+  else {
+    placeholder.style.display = 'none';
+    cfgQueryTemplate.forEach(id => {
+      const t = templates.find(x => x.id === id);
+      const tag = document.createElement('span');
+      tag.className = 'multi-select-tag';
+      tag.innerHTML = t ? (t.id + ' - ' + t.name) : id;
+      tag.innerHTML += '<span class="multi-select-tag-remove" onclick="removeQueryTemplate(\''+id+'\', event)">x</span>';
+      tags.appendChild(tag);
+    });
+  }
+}
+function removeQueryTemplate(id, e) {
+  e.stopPropagation();
+  cfgQueryTemplate = cfgQueryTemplate.filter(x => x !== id);
+  filterQueryTemplateOptions(document.querySelector('#cfgQueryTemplateDropdown .multi-select-search')?.value||'');
+  updateQueryTemplateTags();
+  renderConfigTable();
+}
+function toggleQueryTemplateDropdown(e) { e.stopPropagation(); document.getElementById('cfgQueryTemplateDropdown').classList.toggle('open'); buildQueryTemplateOptions(); }
+
+function resetConfigQuery() {
+  cfgQueryEntity = [];
+  cfgQueryTemplate = [];
+  document.querySelectorAll('#cfgQueryEntityDropdown .multi-select-search, #cfgQueryTemplateDropdown .multi-select-search').forEach(i => i.value = '');
+  updateQueryEntityTags();
+  updateQueryTemplateTags();
+  renderConfigTable();
+}
+
+document.addEventListener('click', function(e) {
+  if (document.getElementById('cfgQueryEntitySelect') && !document.getElementById('cfgQueryEntitySelect').contains(e.target)) {
+    document.getElementById('cfgQueryEntityDropdown').classList.remove('open');
+  }
+  if (document.getElementById('cfgQueryTemplateSelect') && !document.getElementById('cfgQueryTemplateSelect').contains(e.target)) {
+    document.getElementById('cfgQueryTemplateDropdown').classList.remove('open');
+  }
+});
 
 // ── Config CRUD ──
 let editingCfgId = null;
