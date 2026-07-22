@@ -160,6 +160,15 @@
   .multi-select-dropdown input { width: auto; margin: 0; }
   .multi-select-search { width: 100%; box-sizing: border-box; padding: 6px 12px; border: 0; border-bottom: 1px solid #eee; font-size: 13px; outline: none; }
   .multi-select-search::placeholder { color: #bbb; }
+
+  /* ── Config Query Row ── */
+  .query-row { display: flex; gap: 12px; align-items: flex-end; margin: 12px 0 8px; flex-wrap: wrap; }
+  .query-item { display: flex; align-items: center; gap: 8px; }
+  .query-label { font-size: 13px; color: #555; font-weight: 500; white-space: nowrap; }
+  .query-btn { font-size: 12px; padding: 5px 12px; border: 1px solid #ddd; border-radius: 5px; background: #fff; color: #555; cursor: pointer; }
+  .query-btn:hover { background: #f5f5f5; border-color: #ccc; }
+  .query-btn.primary { background: #4f6ef7; color: #fff; border-color: #4f6ef7; }
+  .query-btn.primary:hover { background: #3d5be6; border-color: #3d5be6; }
 </style>
 </head>
 <body>
@@ -206,31 +215,37 @@
       <span class="spacer"></span>
       <div style="font-size:13px;color:#888;">配置开票主体在指定条件下使用的模版</div>
     </div>
-    <div style="display:flex;gap:12px;align-items:center;margin:12px 0 8px;flex-wrap:wrap;">
-      <span style="font-size:13px;color:#666;font-weight:500;">查询条件：</span>
-      <div class="multi-select" id="cfgQueryEntitySelect" style="width:220px;">
-        <div class="multi-select-trigger" onclick="toggleQueryEntityDropdown(event)">
-          <div class="multi-select-tags" id="cfgQueryEntityTags"></div>
-          <span class="multi-select-placeholder" id="cfgQueryEntityPlaceholder">利润中心编码</span>
-          <span class="multi-select-arrow" id="cfgQueryEntityArrow">▼</span>
-        </div>
-        <div class="multi-select-dropdown" id="cfgQueryEntityDropdown">
-          <input type="text" class="multi-select-search" placeholder="输入编码或名称筛选…" oninput="filterQueryEntityOptions(this.value)" onclick="event.stopPropagation()">
-          <div id="cfgQueryEntityOptions"></div>
-        </div>
-      </div>
-      <div class="multi-select" id="cfgQueryTemplateSelect" style="width:220px;">
-        <div class="multi-select-trigger" onclick="toggleQueryTemplateDropdown(event)">
-          <div class="multi-select-tags" id="cfgQueryTemplateTags"></div>
-          <span class="multi-select-placeholder" id="cfgQueryTemplatePlaceholder">适用模版编码</span>
-          <span class="multi-select-arrow" id="cfgQueryTemplateArrow">▼</span>
-        </div>
-        <div class="multi-select-dropdown" id="cfgQueryTemplateDropdown">
-          <input type="text" class="multi-select-search" placeholder="输入模版编码筛选…" oninput="filterQueryTemplateOptions(this.value)" onclick="event.stopPropagation()">
-          <div id="cfgQueryTemplateOptions"></div>
+    <div class="query-row">
+      <div class="query-item">
+        <span class="query-label">利润中心编码：</span>
+        <div class="multi-select" id="cfgQueryEntitySelect" style="width:220px;">
+          <div class="multi-select-trigger" onclick="toggleQueryEntityDropdown(event)">
+            <div class="multi-select-tags" id="cfgQueryEntityTags"></div>
+            <span class="multi-select-placeholder" id="cfgQueryEntityPlaceholder">请选择</span>
+            <span class="multi-select-arrow" id="cfgQueryEntityArrow">▼</span>
+          </div>
+          <div class="multi-select-dropdown" id="cfgQueryEntityDropdown">
+            <input type="text" class="multi-select-search" placeholder="输入编码或名称筛选…" oninput="filterQueryEntityOptions(this.value)" onclick="event.stopPropagation()">
+            <div id="cfgQueryEntityOptions"></div>
+          </div>
         </div>
       </div>
-      <button class="btn btn-outline" onclick="resetConfigQuery()" style="font-size:12px;padding:5px 12px;">重置</button>
+      <div class="query-item">
+        <span class="query-label">适用模版编码：</span>
+        <div class="multi-select" id="cfgQueryTemplateSelect" style="width:220px;">
+          <div class="multi-select-trigger" onclick="toggleQueryTemplateDropdown(event)">
+            <div class="multi-select-tags" id="cfgQueryTemplateTags"></div>
+            <span class="multi-select-placeholder" id="cfgQueryTemplatePlaceholder">请选择</span>
+            <span class="multi-select-arrow" id="cfgQueryTemplateArrow">▼</span>
+          </div>
+          <div class="multi-select-dropdown" id="cfgQueryTemplateDropdown">
+            <input type="text" class="multi-select-search" placeholder="输入模版编码筛选…" oninput="filterQueryTemplateOptions(this.value)" onclick="event.stopPropagation()">
+            <div id="cfgQueryTemplateOptions"></div>
+          </div>
+        </div>
+      </div>
+      <button class="query-btn primary" onclick="applyConfigQuery()">查询</button>
+      <button class="query-btn" onclick="resetConfigQuery()">重置</button>
     </div>
     <div class="table-wrap">
       <table>
@@ -619,7 +634,6 @@ function toggleQueryEntity(code, checked) {
   if (checked) { if (!cfgQueryEntity.includes(code)) cfgQueryEntity.push(code); }
   else { cfgQueryEntity = cfgQueryEntity.filter(c => c !== code); }
   updateQueryEntityTags();
-  renderConfigTable();
 }
 function updateQueryEntityTags() {
   const tags = document.getElementById('cfgQueryEntityTags');
@@ -644,7 +658,6 @@ function removeQueryEntity(code, e) {
   cfgQueryEntity = cfgQueryEntity.filter(c => c !== code);
   filterQueryEntityOptions(document.querySelector('#cfgQueryEntityDropdown .multi-select-search')?.value||'');
   updateQueryEntityTags();
-  renderConfigTable();
 }
 function toggleQueryEntityDropdown(e) { e.stopPropagation(); document.getElementById('cfgQueryEntityDropdown').classList.toggle('open'); buildQueryEntityOptions(); }
 
@@ -667,7 +680,6 @@ function toggleQueryTemplate(id, checked) {
   if (checked) { if (!cfgQueryTemplate.includes(id)) cfgQueryTemplate.push(id); }
   else { cfgQueryTemplate = cfgQueryTemplate.filter(x => x !== id); }
   updateQueryTemplateTags();
-  renderConfigTable();
 }
 function updateQueryTemplateTags() {
   const tags = document.getElementById('cfgQueryTemplateTags');
@@ -691,7 +703,6 @@ function removeQueryTemplate(id, e) {
   cfgQueryTemplate = cfgQueryTemplate.filter(x => x !== id);
   filterQueryTemplateOptions(document.querySelector('#cfgQueryTemplateDropdown .multi-select-search')?.value||'');
   updateQueryTemplateTags();
-  renderConfigTable();
 }
 function toggleQueryTemplateDropdown(e) { e.stopPropagation(); document.getElementById('cfgQueryTemplateDropdown').classList.toggle('open'); buildQueryTemplateOptions(); }
 
@@ -701,6 +712,9 @@ function resetConfigQuery() {
   document.querySelectorAll('#cfgQueryEntityDropdown .multi-select-search, #cfgQueryTemplateDropdown .multi-select-search').forEach(i => i.value = '');
   updateQueryEntityTags();
   updateQueryTemplateTags();
+}
+
+function applyConfigQuery() {
   renderConfigTable();
 }
 
