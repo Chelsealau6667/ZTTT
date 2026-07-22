@@ -175,7 +175,7 @@
   <div class="tab-content active" id="tab-templates">
     <div class="toolbar">
       <span style="font-size:13px;color:#888;">共 <strong id="templateCount">16</strong> 个模版</span>
-      <button class="btn btn-primary" onclick="openImport()" style="margin-right:8px">+ 导入模版</button>
+      <button class="btn btn-primary" onclick="openImport()" style="margin-right:8px">+ 新增模版</button>
       <span class="spacer"></span>
       <div class="filter-group">
         <select id="filterStatus" onchange="filterTemplates()">
@@ -200,7 +200,7 @@
   <div class="tab-content" id="tab-config">
     <div class="toolbar">
       <button class="btn btn-primary" onclick="openAddConfig()">+ 新增配置</button>
-      <button class="btn btn-outline" onclick="openConfigImport()">导入配置</button>
+      <button class="btn btn-outline" onclick="openConfigImport()">新增导入</button>
       <span class="spacer"></span>
       <div style="font-size:13px;color:#888;">配置开票主体在指定条件下使用的模版</div>
     </div>
@@ -234,7 +234,7 @@
 <div class="modal-overlay" id="importModal">
   <div class="modal">
     <div class="modal-head">
-      <h2 id="importModalTitle">导入模版</h2>
+      <h2 id="importModalTitle">新增模版</h2>
       <button class="modal-close" onclick="closeModal('importModal')">x</button>
     </div>
     <div class="modal-body" id="importBody">
@@ -298,7 +298,7 @@
           <div class="multi-select" id="cfgTaxSelect">
             <div class="multi-select-trigger" onclick="toggleTaxDropdown(event)">
               <div class="multi-select-tags" id="taxTags"></div>
-              <span class="multi-select-placeholder" id="taxPlaceholder">不适用（可不选）</span>
+              <span class="multi-select-placeholder" id="taxPlaceholder">全部（可不选）</span>
               <span class="multi-select-arrow" id="taxArrow">▼</span>
             </div>
             <div class="multi-select-dropdown" id="taxDropdown">
@@ -307,18 +307,18 @@
               <label><input type="checkbox" class="cfg-tax-cb" value="13%" onchange="onTaxChange()"> 13%</label>
               <label><input type="checkbox" class="cfg-tax-cb" value="14%" onchange="onTaxChange()"> 14%</label>
               <label><input type="checkbox" class="cfg-tax-cb" value="15%" onchange="onTaxChange()"> 15%</label>
-              <label><input type="checkbox" class="cfg-tax-cb" value="不适用" onchange="onTaxChange()"> 不适用</label>
+              <label><input type="checkbox" class="cfg-tax-cb" value="全部" onchange="onTaxChange()"> 全部</label>
             </div>
           </div>
-          <div class="form-hint">未选择则默认为不适用</div>
+          <div class="form-hint">未选择则默认为全部</div>
         </div>
         <div class="form-group">
           <label>金额类型</label>
           <select id="cfgSign">
-            <option value="">不适用（不选则默认）</option>
+            <option value="">全部（不选则默认）</option>
             <option value="正数">正数</option><option value="负数">负数</option>
           </select>
-          <div class="form-hint">未选择则默认为不适用</div>
+          <div class="form-hint">未选择则默认为全部</div>
         </div>
       </div>
       <div class="form-group">
@@ -354,7 +354,7 @@
 <div class="modal-overlay" id="cfgImportModal">
   <div class="modal">
     <div class="modal-head">
-      <h2 id="cfgImportTitle">导入配置</h2>
+      <h2 id="cfgImportTitle">新增导入</h2>
       <button class="modal-close" onclick="closeModal('cfgImportModal')">x</button>
     </div>
     <div class="modal-body" id="cfgImportBody">
@@ -440,14 +440,14 @@ let configs = [
   {id:4, entityCode:'VC', entityName:'温哥华', tax:['0%'], sign:'负数', template:'VC-GSTN'},
   {id:5, entityCode:'VC', entityName:'温哥华', tax:['13%'], sign:'正数', template:'VC-HST'},
   {id:6, entityCode:'VC', entityName:'温哥华', tax:['13%'], sign:'负数', template:'VC-HSTN'},
-  {id:7, entityCode:'EL', entityName:'美国EL', tax:['不适用'], sign:'正数', template:'EL'},
-  {id:8, entityCode:'EL', entityName:'美国EL', tax:['不适用'], sign:'负数', template:'EL-N'},
-  {id:9, entityCode:'GA', entityName:'美国GA', tax:['不适用'], sign:'正数', template:'GA'},
-  {id:10, entityCode:'GA', entityName:'美国GA', tax:['不适用'], sign:'负数', template:'GA-N'},
-  {id:11, entityCode:'JP', entityName:'日本', tax:['不适用'], sign:'不适用', template:'JP'},
-  {id:12, entityCode:'AU', entityName:'澳洲', tax:['不适用'], sign:'不适用', template:'AU'},
-  {id:13, entityCode:'SZ', entityName:'深圳', tax:['不适用'], sign:'不适用', template:'ABU-SZ'},
-  {id:14, entityCode:'HK', entityName:'香港', tax:['不适用'], sign:'不适用', template:'ABU-HK'},
+  {id:7, entityCode:'EL', entityName:'美国EL', tax:['全部'], sign:'正数', template:'EL'},
+  {id:8, entityCode:'EL', entityName:'美国EL', tax:['全部'], sign:'负数', template:'EL-N'},
+  {id:9, entityCode:'GA', entityName:'美国GA', tax:['全部'], sign:'正数', template:'GA'},
+  {id:10, entityCode:'GA', entityName:'美国GA', tax:['全部'], sign:'负数', template:'GA-N'},
+  {id:11, entityCode:'JP', entityName:'日本', tax:['全部'], sign:'全部', template:'JP'},
+  {id:12, entityCode:'AU', entityName:'澳洲', tax:['全部'], sign:'全部', template:'AU'},
+  {id:13, entityCode:'SZ', entityName:'深圳', tax:['全部'], sign:'全部', template:'ABU-SZ'},
+  {id:14, entityCode:'HK', entityName:'香港', tax:['全部'], sign:'全部', template:'ABU-HK'},
 ];
 let cfgNextId = 15;
 
@@ -650,9 +650,9 @@ function saveConfig() {
   const entityOpt = ENTITY_OPTIONS.find(e => e.code === entityCode);
   const taxCbs = document.querySelectorAll('.cfg-tax-cb:checked');
   let tax = Array.from(taxCbs).map(cb => cb.value);
-  if (tax.length === 0) tax = ['不适用'];
+  if (tax.length === 0) tax = ['全部'];
   let sign = document.getElementById('cfgSign').value;
-  if (!sign) sign = '不适用';
+  if (!sign) sign = '全部';
   const template = document.getElementById('cfgTemplate').value;
   if (!entityCode || !template) { alert('请填写必填项（主体、适用模版）'); return; }
   // Check duplicate
@@ -687,7 +687,7 @@ function openConfigImport() {
   document.getElementById('cfgImportConfirmBtn').style.display = 'none';
   document.getElementById('cfgImportDoneBtn').style.display = 'none';
   document.getElementById('cfgImportCancelBtn').style.display = 'inline-block';
-  document.getElementById('cfgImportTitle').textContent = '导入配置';
+  document.getElementById('cfgImportTitle').textContent = '新增导入';
   document.getElementById('cfgFileInfo').style.display = 'none';
   document.getElementById('cfgImportModal').classList.add('active');
 }
@@ -722,7 +722,7 @@ function parseCsvConfig(text) {
     if (!entityCode || !entityName || !taxRaw || !template) continue;
     // Split tax by spaces to support multi-tax (e.g. "5% 13%" → ["5%","13%"])
     const tax = taxRaw.split(/\s+/);
-    result.push({entityCode, entityName, tax, sign: sign || '不适用', template});
+    result.push({entityCode, entityName, tax, sign: sign || '全部', template});
   }
   return result;
 }
@@ -735,12 +735,12 @@ function downloadCfgTemplate() {
     ['CA','加拿大','5% 13%','负数','CA-GST5N'],
     ['VC','温哥华','0%','正数','VC-GST'],
     ['VC','温哥华','13%','正数','VC-HST'],
-    ['EL','美国EL','不适用','正数','EL'],
-    ['EL','美国EL','不适用','负数','EL-N'],
-    ['JP','日本','不适用','不适用','JP'],
-    ['AU','澳洲','不适用','不适用','AU'],
-    ['SZ','深圳','不适用','不适用','ABU-SZ'],
-    ['HK','香港','不适用','不适用','ABU-HK'],
+    ['EL','美国EL','全部','正数','EL'],
+    ['EL','美国EL','全部','负数','EL-N'],
+    ['JP','日本','全部','全部','JP'],
+    ['AU','澳洲','全部','全部','AU'],
+    ['SZ','深圳','全部','全部','ABU-SZ'],
+    ['HK','香港','全部','全部','ABU-HK'],
   ];
   const csv = BOM + rows.map(r => r.join(',')).join('\n');
   const blob = new Blob([csv], {type: 'text/csv;charset=utf-8'});
@@ -769,7 +769,7 @@ function showCfgDiff() {
   // Use parsed data, fall back to mock for demo
   const rawImport = cfgImportState.rawData && cfgImportState.rawData.length > 0
     ? cfgImportState.rawData
-    : parseCsvConfig('主体编码,主体名称,税率条件,金额类型,适用模版\nCA,加拿大,5% 13%,正数,CA-GST5\nCA,加拿大,5% 13%,负数,CA-GST5N\nEL,美国EL,不适用,正数,EL\nJP,日本,不适用,不适用,JP\nJP,日本,不适用,不适用,JP');
+    : parseCsvConfig('主体编码,主体名称,税率条件,金额类型,适用模版\nCA,加拿大,5% 13%,正数,CA-GST5\nCA,加拿大,5% 13%,负数,CA-GST5N\nEL,美国EL,全部,正数,EL\nJP,日本,全部,全部,JP\nJP,日本,全部,全部,JP');
 
   const seen = new Set();
   cfgMockChanges = rawImport.map(item => {
@@ -886,7 +886,7 @@ function openImport() {
   document.getElementById('importConfirmBtn').style.display = 'none';
   document.getElementById('importDoneBtn').style.display = 'none';
   document.getElementById('importCancelBtn').style.display = 'inline-block';
-  document.getElementById('importModalTitle').textContent = '导入模版';
+  document.getElementById('importModalTitle').textContent = '新增模版';
   document.getElementById('fileInfo').style.display = 'none';
   document.getElementById('importModal').classList.add('active');
 }
