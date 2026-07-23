@@ -1,0 +1,1922 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>结转记账单 - 纵腾集团财务共享中心</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-size: 13px;
+    color: #333;
+    background: #f0f2f5;
+    overflow-x: auto;
+  }
+  .layout { display: flex; height: 100vh; }
+
+  /* sidebar */
+  .sidebar {
+    width: 64px;
+    background: #1a5bb5;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-top: 8px;
+    flex-shrink: 0;
+  }
+  .sidebar-logo {
+    width: 40px; height: 40px;
+    margin-bottom: 16px;
+    background: #fff;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: bold; color: #1a5bb5;
+  }
+  .nav-item {
+    width: 100%;
+    display: flex; flex-direction: column; align-items: center;
+    padding: 10px 0;
+    color: rgba(255,255,255,0.7);
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 11px;
+  }
+  .nav-item:hover, .nav-item.active {
+    color: #fff;
+    background: rgba(255,255,255,0.1);
+  }
+  .nav-icon { width: 20px; height: 20px; margin-bottom: 4px; }
+
+  /* header */
+  .header {
+    height: 48px;
+    background: #fff;
+    border-bottom: 1px solid #e8e8e8;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 16px;
+    flex-shrink: 0;
+  }
+  .header-left { display: flex; align-items: center; gap: 8px; }
+  .header-logo { display: flex; align-items: center; gap: 6px; }
+  .header-logo-icon {
+    width: 24px; height: 24px;
+    background: #1a5bb5;
+    border-radius: 4px;
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 12px; font-weight: bold;
+  }
+  .header-logo-text { font-size: 14px; font-weight: 600; color: #333; line-height: 1.2; }
+  .header-logo-sub { font-size: 10px; color: #999; line-height: 1; }
+  .header-right { display: flex; align-items: center; gap: 12px; font-size: 12px; color: #666; }
+  .header-user { display: flex; align-items: center; gap: 4px; }
+  .header-lang { cursor: pointer; }
+  .header-logout { color: #999; cursor: pointer; }
+
+  .main { display: flex; flex-direction: column; flex: 1; overflow: hidden; }
+
+  /* tabs bar */
+  .tabs-bar {
+    padding: 12px 16px 0;
+    background: #f0f2f5;
+    flex-shrink: 0;
+  }
+
+  /* content */
+  .content { flex: 1; padding: 12px 16px; overflow: auto; }
+
+  /* tabs */
+  .tabs { display: flex; align-items: center; gap: 4px; }
+  .tab-item {
+    display: flex; align-items: center; gap: 6px;
+    padding: 6px 12px;
+    background: #fff;
+    border: 1px solid #d9d9d9;
+    border-radius: 4px 4px 0 0;
+    font-size: 12px;
+    color: #666;
+    cursor: pointer;
+  }
+  .tab-item.active {
+    background: #fff;
+    border-bottom: 1px solid #fff;
+    color: #1a5bb5;
+    font-weight: 500;
+    position: relative; z-index: 1;
+  }
+  .tab-close {
+    font-size: 10px; color: #999; cursor: pointer;
+    width: 14px; height: 14px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 50%;
+  }
+  .tab-close:hover { background: #f0f0f0; color: #333; }
+
+  /* card */
+  .card {
+    background: #fff;
+    border: 1px solid #e8e8e8;
+    border-radius: 4px;
+    padding: 8px 16px 12px 16px;
+    margin-bottom: 12px;
+  }
+  .card-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .card-title::before {
+    content: '';
+    display: inline-block;
+    width: 3px;
+    height: 14px;
+    background: #1a5bb5;
+    border-radius: 2px;
+  }
+  .card-title-icon {
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    background: #52c41a;
+    color: #fff;
+    font-size: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .card-title-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+  }
+  .card-subtitle {
+    font-size: 12px;
+    color: #666;
+    margin-bottom: 10px;
+    padding-left: 12px;
+  }
+  .required { color: #ff4d4f; margin-right: 2px; }
+  .section-desc { color: #bfbfbf; font-weight: normal; font-size: 12px; margin-left: 8px; }
+  .section-desc.warn { color: #ff4d4f; }
+
+  /* top info form */
+  .card-title-warn {
+    font-size: 17px;
+    color: #ff4d4f;
+    font-style: italic;
+    font-weight: normal;
+  }
+
+  /* section tip text: red italic, 4px larger than card-title (13px) */
+  .section-desc {
+    color: #ff4d4f;
+    font-weight: normal;
+    font-size: 17px;
+    margin-left: 8px;
+    font-style: italic;
+  }
+  .section-desc.warn {
+    color: #ff4d4f;
+  }
+
+  /* top info form - 3 columns with borders */
+  .info-form {
+    display: grid;
+    grid-template-columns: 1fr 3fr 2.5fr;
+    border: 1px solid #e8e8e8;
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .info-col {
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .info-col:not(:last-child) {
+    border-right: 1px solid #e8e8e8;
+  }
+  .info-row-full {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    min-height: 24px;
+  }
+  .info-row-full .info-label {
+    font-size: 12px;
+    color: #666;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .info-row-full .info-value {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .info-row-full .info-value input {
+    flex: 1;
+    height: 24px;
+    border: 1px solid #e8e8e8;
+    border-radius: 2px;
+    padding: 0 8px;
+    font-size: 12px;
+    color: #333;
+    outline: none;
+    background: #fff;
+  }
+  .info-row-inline {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 20px;
+  }
+  .info-row-inline .info-label {
+    font-size: 11px;
+    color: #999;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .info-row-inline .info-value {
+    font-size: 11px;
+    color: #666;
+    white-space: nowrap;
+  }
+  .info-row-pair {
+    display: flex;
+    gap: 12px;
+  }
+  .info-row-pair .info-row-inline {
+    flex: 1;
+  }
+
+  /* bottom row layout: 编码区(左) + 本位币(右) */
+  .info-bottom-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .info-bottom-left {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .info-bottom-left .info-row-inline {
+    min-height: 24px;
+  }
+
+  /* compact currency box */
+  .currency-box.compact {
+    flex-shrink: 0;
+    width: 72px;
+    min-width: 72px;
+    border: 1px dashed #d9d9d9;
+    border-radius: 4px;
+    padding: 4px 8px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+  }
+  .currency-box.compact .label {
+    font-size: 11px;
+    color: #999;
+  }
+  .currency-box.compact .value {
+    font-size: 13px;
+    font-weight: 600;
+    color: #d48806;
+  }
+
+  /* mini table for inline fields like 所属公司/岗位 */
+  .info-mini-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 11px;
+    border: 1px solid #d9d9d9;
+  }
+  .info-mini-table td {
+    padding: 4px 8px;
+    border: 1px solid #d9d9d9;
+    vertical-align: middle;
+  }
+  .info-mini-table .mt-label {
+    background: #f2f2f2;
+    color: #999;
+    white-space: nowrap;
+    text-align: left;
+    width: 1%;
+  }
+  .info-mini-table .mt-value {
+    color: #666;
+    white-space: nowrap;
+  }
+  .search-icon-btn {
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #e8e8e8;
+    border-left: none;
+    border-radius: 0 2px 2px 0;
+    background: #fff;
+    color: #c0c4cc;
+    cursor: pointer;
+    font-size: 14px;
+    margin-left: -5px;
+  }
+  /* detail table */
+  .detail-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    border: 1px solid #d9d9d9;
+    table-layout: auto;
+  }
+  .detail-table thead th {
+    background: #f5f5f5;
+    color: #333;
+    font-weight: 500;
+    padding: 5px 4px;
+    text-align: center;
+    border: 1px solid #e8e8e8;
+    font-size: 12px;
+    white-space: normal;
+    line-height: 1.2;
+  }
+  .detail-table tbody td {
+    border: 1px solid #e8e8e8;
+    padding: 5px 8px;
+    vertical-align: middle;
+    text-align: center;
+    color: #666;
+    height: 28px;
+  }
+  .detail-table tbody td.empty-cell {
+    color: #c0c4cc;
+  }
+  .detail-table tfoot td {
+    border: 1px solid #e8e8e8;
+    padding: 5px 8px;
+    text-align: center;
+    background: #fafafa;
+    font-weight: 500;
+    color: #333;
+  }
+  .detail-table select {
+    width: 100%;
+    height: 24px;
+    border: 1px solid #d9d9d9;
+    border-radius: 2px;
+    font-size: 12px;
+    background: #fff;
+    outline: none;
+  }
+  .detail-table tr:last-child td {
+    border-bottom: 1px solid #d9d9d9;
+  }
+
+  /* content card layout */
+  .content-layout {
+    display: flex;
+    gap: 12px;
+  }
+  .content-main { flex: 1; }
+  .content-side {
+    width: 320px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .side-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .side-item .side-label {
+    font-size: 12px;
+    color: #666;
+    white-space: nowrap;
+  }
+  .side-item .side-label .cn-label {
+    color: #1a5bb5; font-size: 11px; margin-left: 2px;
+  }
+  .side-item input, .side-item select {
+    flex: 1;
+    height: 28px;
+    border: 1px solid #d9d9d9;
+    border-radius: 4px;
+    padding: 0 8px;
+    font-size: 12px;
+    color: #333;
+    outline: none;
+    background: #fafafa;
+  }
+  .side-textarea {
+    width: 100%;
+    min-height: 80px;
+    border: 1px solid #d9d9d9;
+    border-radius: 4px;
+    padding: 8px;
+    font-size: 12px;
+    color: #333;
+    outline: none;
+    background: #fafafa;
+    resize: vertical;
+  }
+  .char-count {
+    text-align: right;
+    font-size: 11px;
+    color: #999;
+    margin-top: 2px;
+  }
+
+  /* link field */
+  .link-field {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+  .link-field .link-label {
+    font-size: 12px;
+    color: #666;
+    white-space: nowrap;
+  }
+  .link-field input {
+    width: 200px;
+    height: 28px;
+    border: 1px solid #d9d9d9;
+    border-radius: 4px;
+    padding: 0 8px;
+    font-size: 12px;
+    color: #333;
+    outline: none;
+    background: #fafafa;
+  }
+  .link-field .btn-choose {
+    color: #1a5bb5;
+    font-size: 12px;
+    cursor: pointer;
+    background: none;
+    border: none;
+  }
+
+  .link-field .link-select {
+    width: 120px;
+    height: 28px;
+    border: 1px solid #d9d9d9;
+    border-radius: 4px;
+    padding: 0 8px;
+    font-size: 12px;
+    color: #333;
+    outline: none;
+    background: #fafafa;
+  }
+
+  .link-field-row {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    margin-bottom: 2px;
+    flex-wrap: wrap;
+  }
+  .link-field-row .link-field {
+    margin-bottom: 0;
+  }
+  .link-field-row .side-item {
+    margin-bottom: 0;
+  }
+
+  /* buttons */
+  .btn {
+    height: 32px;
+    padding: 0 16px;
+    border-radius: 4px;
+    font-size: 12px;
+    cursor: pointer;
+    border: 1px solid transparent;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+  }
+  .btn-primary {
+    background: #1890ff;
+    color: #fff;
+    border-color: #1890ff;
+  }
+  .btn-primary:hover { background: #40a9ff; }
+  .btn-default {
+    background: #fff;
+    color: #666;
+    border-color: #d9d9d9;
+  }
+  .btn-default:hover { border-color: #1890ff; color: #1890ff; }
+  .btn-danger {
+    background: #fff;
+    color: #ff4d4f;
+    border-color: #d9d9d9;
+  }
+  .btn-danger:hover { color: #ff7875; border-color: #ff7875; }
+  .btn-add {
+    background: #fff;
+    color: #1890ff;
+    border-color: #1890ff;
+  }
+  .btn-add:hover { background: #e6f7ff; }
+  .btn-copy {
+    background: #fff;
+    color: #52c41a;
+    border-color: #52c41a;
+  }
+  .btn-copy:hover { background: #f6ffed; }
+  .btn-delete {
+    background: #fff;
+    color: #ff4d4f;
+    border-color: #ff4d4f;
+  }
+  .btn-delete:hover { background: #fff1f0; }
+  .btn-mini {
+    height: 26px;
+    padding: 0 10px;
+    font-size: 12px;
+  }
+
+  /* table */
+  .table-header-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-bottom: 4px;
+  }
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    border: 1px solid #e8e8e8;
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .data-table thead th {
+    background: #f5f5f5;
+    color: #333;
+    font-weight: 500;
+    padding: 8px 6px;
+    text-align: center;
+    border-right: 1px solid #e8e8e8;
+    border-bottom: 1px solid #e8e8e8;
+    white-space: nowrap;
+  }
+  .data-table thead th:last-child { border-right: none; }
+  .data-table tbody td {
+    padding: 6px 6px;
+    text-align: center;
+    border-bottom: 1px solid #f0f0f0;
+    border-right: 1px solid #f0f0f0;
+    white-space: nowrap;
+    color: #333;
+    height: 28px;
+  }
+  .data-table tbody td:last-child { border-right: none; }
+  .data-table tbody tr:hover { background: #f6faff; }
+  .empty-state {
+    padding: 20px 0;
+    text-align: center;
+    color: #c0c4cc;
+  }
+  .empty-state .icon { font-size: 24px; margin-bottom: 2px; }
+
+  /* summary row */
+  .summary-row {
+    background: #fafafa;
+    border-top: 1px solid #e8e8e8;
+  }
+  .summary-row td {
+    padding: 6px 6px;
+    font-size: 12px;
+    color: #333;
+  }
+
+  /* bottom bar */
+  .bottom-bar {
+    display: flex;
+    justify-content: flex-end;
+    align-items: flex-end;
+    padding: 12px 16px;
+    gap: 16px;
+    background: #fff;
+    border-top: 1px solid #e8e8e8;
+    flex-shrink: 0;
+  }
+  .bottom-actions { display: flex; gap: 8px; }
+  .bottom-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+    font-size: 12px;
+    color: #fff;
+    background: #1890ff;
+    padding: 8px 16px;
+    border-radius: 4px;
+  }
+  .bottom-right .big {
+    font-size: 15px;
+    font-weight: 600;
+    color: #fff;
+  }
+
+  /* modal */
+  .modal-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.4);
+    z-index: 100;
+    display: none;
+    align-items: flex-start;
+    justify-content: center;
+    padding-top: 100px;
+  }
+  .modal-overlay.active { display: flex; }
+  .modal {
+    background: #fff;
+    border-radius: 4px;
+    width: 1200px;
+    max-width: 98vw;
+    max-height: calc(100vh - 40px);
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  }
+  .modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    border-bottom: 1px solid #e8e8e8;
+  }
+  .modal-title { font-size: 15px; font-weight: 600; color: #333; }
+  .modal-close {
+    font-size: 16px; color: #999; cursor: pointer;
+    width: 24px; height: 24px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 50%;
+  }
+  .modal-close:hover { background: #f0f0f0; color: #333; }
+  .modal-body {
+    flex: 1;
+    overflow: auto;
+    padding: 12px 16px;
+  }
+  .modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    padding: 12px 16px;
+    border-top: 1px solid #e8e8e8;
+    flex-shrink: 0;
+  }
+
+  /* modal query section */
+  .query-section {
+    background: #fff;
+    border: 1px solid #e8e8e8;
+    border-radius: 4px;
+    padding: 10px 16px 4px;
+    margin-bottom: 12px;
+  }
+  .query-title-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 6px;
+  }
+  .query-title { font-size: 13px; font-weight: 600; color: #333; }
+  .query-title::before {
+    content: '';
+    display: inline-block;
+    width: 3px; height: 14px;
+    background: #1a5bb5;
+    border-radius: 2px;
+    vertical-align: middle;
+  }
+  .query-meta {
+    font-size: 11px;
+    color: #999;
+    font-style: italic;
+    margin-left: 4px;
+  }
+  .query-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    border: 1px solid #e8e8e8;
+  }
+  .query-table td {
+    border: 1px solid #e8e8e8;
+    padding: 2px 8px;
+    vertical-align: middle;
+    height: 24px;
+  }
+  .query-table .qt-label {
+    background: #f2f2f2;
+    color: #999;
+    white-space: nowrap;
+    width: 12%;
+    text-align: left;
+  }
+  .query-table .qt-value {
+    width: 22%;
+  }
+  .query-table .qt-value input {
+    width: 100%;
+    height: 20px;
+    border: 1px solid #d9d9d9;
+    border-radius: 2px;
+    padding: 0 6px;
+    font-size: 12px;
+    color: #333;
+    outline: none;
+  }
+  .query-table .qt-value select {
+    width: 100%;
+    height: 20px;
+    border: 1px solid #d9d9d9;
+    border-radius: 2px;
+    padding: 0 6px;
+    font-size: 12px;
+    color: #333;
+    outline: none;
+    background: #fff;
+    appearance: none;
+    background: #fff url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23999'/%3E%3C/svg%3E") no-repeat right 6px center;
+    padding-right: 20px;
+  }
+  .query-table .qt-value .range-box {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .query-table .qt-value .range-box input { flex: 1; }
+  .query-table .qt-value .range-box span { color: #999; }
+
+  .query-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 2px;
+    padding-bottom: 0;
+  }
+
+  /* modal table */
+  .modal-table { width: 100%; }
+  .modal-table thead th {
+    background: #e8ecef;
+    color: #333;
+    font-weight: 500;
+    padding: 8px 6px;
+    text-align: center;
+    border: 1px solid #e8e8e8;
+    font-size: 12px;
+    white-space: nowrap;
+  }
+  .modal-table tbody td {
+    padding: 8px 6px;
+    text-align: center;
+    border: 1px solid #f0f0f0;
+    font-size: 12px;
+    color: #333;
+  }
+  .modal-table tbody tr:hover { background: #f6faff; }
+
+  /* pagination */
+  .pagination {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    padding: 8px 0;
+    font-size: 12px;
+    color: #666;
+  }
+  .pagination select {
+    height: 24px;
+    border: 1px solid #d9d9d9;
+    border-radius: 2px;
+    font-size: 12px;
+    padding: 0 4px;
+  }
+  .pagination .page-num {
+    min-width: 24px; height: 24px;
+    display: flex; align-items: center; justify-content: center;
+    border: 1px solid #d9d9d9;
+    border-radius: 2px;
+    font-size: 12px;
+    color: #666;
+    cursor: pointer;
+  }
+  .pagination .page-num.active {
+    background: #1890ff;
+    color: #fff;
+    border-color: #1890ff;
+  }
+  .pagination .page-num:hover:not(.active) {
+    border-color: #1890ff;
+    color: #1890ff;
+  }
+  /* action buttons in modal table */
+  .btn-action {
+    height: 22px;
+    padding: 0 10px;
+    border-radius: 3px;
+    font-size: 11px;
+    cursor: pointer;
+    border: 1px solid transparent;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .btn-delete-row {
+    background: #fff;
+    color: #ff4d4f;
+    border-color: #ff4d4f;
+  }
+  .btn-delete-row:hover { background: #fff1f0; }
+  .btn-restore-row {
+    background: #fff;
+    color: #52c41a;
+    border-color: #52c41a;
+  }
+  .btn-restore-row:hover { background: #f6ffed; }
+  .modal-table tbody tr.row-deleted td {
+    color: #999;
+    background: #fafafa;
+  }
+  .modal-table tbody tr.row-deleted td.col-deleted {
+    color: #ff4d4f;
+    font-weight: 500;
+  }
+  .modal-table tbody tr.row-deleted td:last-child {
+    background: #fff;
+  }
+  /* second modal - biz type */
+  .modal-biz-body { flex: 1; overflow: auto; padding: 12px 16px; display: flex; flex-direction: column; gap: 2px; }
+  .biz-tabs-row { display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #e8e8e8; margin-bottom: 2px; }
+  .biz-tabs { display: flex; align-items: center; }
+  .biz-tab {
+    padding: 6px 16px; font-size: 13px; color: #666; cursor: pointer;
+    border-bottom: 2px solid transparent; margin-bottom: -1px;
+  }
+  .biz-tab.active { color: #1890ff; border-bottom-color: #1890ff; font-weight: 500; }
+  .biz-actions-top { display: flex; gap: 8px; padding-bottom: 2px; }
+  .table-scroll { overflow-x: auto; }
+  .modal-biz-table { width: auto; min-width: 100%; border-collapse: collapse; font-size: 12px; white-space: nowrap; }
+  .modal-biz-table thead th {
+    background: #f5f5f5; color: #333; font-weight: 500; padding: 8px 6px;
+    text-align: center; border: 1px solid #e8e8e8; white-space: nowrap;
+  }
+  .modal-biz-table tbody td {
+    padding: 5px 6px; text-align: center; border: 1px solid #f0f0f0;
+    font-size: 12px; color: #333;
+  }
+  .modal-biz-table tbody tr:hover { background: #f6faff; }
+  .modal-biz-table tbody td:first-child { width: 36px; }
+  .modal-biz-table tbody td:nth-child(2) { width: 50px; }
+  .biz-link {
+    color: #1890ff; font-size: 12px; cursor: pointer;
+    background: none; border: none; padding: 0;
+  }
+  .biz-link:hover { color: #40a9ff; }
+  .biz-radio {
+    width: 14px; height: 14px; accent-color: #1890ff; cursor: pointer;
+  }
+  .modal-biz-footer {
+    display: flex; justify-content: flex-end; gap: 8px;
+    padding: 12px 16px; border-top: 1px solid #e8e8e8; flex-shrink: 0;
+  }
+</style>
+</head>
+<body>
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-logo">Z</div>
+    <div class="nav-item active">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      <span>与我有关</span>
+    </div>
+    <div class="nav-item">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>
+      <span>发起报账</span>
+    </div>
+    <div class="nav-item">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>
+      <span>发票管理</span>
+    </div>
+    <div class="nav-item">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+      <span>报表管理</span>
+    </div>
+    <div class="nav-item">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>
+      <span>应收管理</span>
+    </div>
+    <div class="nav-item">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+      <span>应付管理</span>
+    </div>
+    <div class="nav-item">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>
+      <span>共享中心</span>
+    </div>
+    <div class="nav-item">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>
+      <span>财务管理</span>
+    </div>
+    <div class="nav-item">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>
+      <span>票据管理</span>
+    </div>
+    <div class="nav-item">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20V10M18 20V4M6 20v-4"/></svg>
+      <span>预算管理</span>
+    </div>
+    <div class="nav-item">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      <span>系统管理</span>
+    </div>
+  </aside>
+
+  <div class="main">
+    <header class="header">
+      <div class="header-left">
+        <div class="header-logo">
+          <div class="header-logo-icon">Z</div>
+          <div>
+            <div class="header-logo-text">纵腾集团</div>
+            <div class="header-logo-sub">财务共享中心</div>
+          </div>
+        </div>
+      </div>
+      <div class="header-right">
+        <span class="header-user">您好！张傲</span>
+        <span class="header-lang">中文 ▼</span>
+        <span class="header-logout">注销</span>
+      </div>
+    </header>
+
+    <div class="tabs-bar">
+      <div class="tabs">
+        <div class="tab-item">首页</div>
+        <div class="tab-item active">
+          结转记账单
+          <span class="tab-close">×</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- 基本信息 -->
+      <div class="card">
+        <div class="card-title">
+          基本信息
+          <span class="card-title-warn">请填写【业务大类】</span>
+        </div>
+        <div class="card-subtitle">
+          经办人：张傲
+        </div>
+
+        <div class="info-form">
+          <div class="info-col">
+            <div class="info-row-full">
+              <div class="info-label"><span class="required">*</span>报销人：</div>
+              <div class="info-value">
+                <input type="text" value="张敏（zt20130）" />
+                <span class="search-icon-btn">&#128269;</span>
+              </div>
+            </div>
+            <table class="info-mini-table">
+              <tr>
+                <td class="mt-label">所属公司</td>
+                <td class="mt-value">200014</td>
+                <td class="mt-label">岗位</td>
+                <td class="mt-value">主管</td>
+              </tr>
+            </table>
+          </div>
+
+          <div class="info-col">
+            <div class="info-row-full">
+              <div class="info-label"><span class="required">*</span>费用承担公司：</div>
+              <div class="info-value">
+                <input type="text" value="深圳市前海云途物流有限公司长沙分公司" />
+                <span class="search-icon-btn">&#128269;</span>
+              </div>
+            </div>
+            <div class="info-bottom-row">
+              <div class="info-bottom-left">
+                <div class="info-row-inline">
+                  <div class="info-label">公司编码：</div>
+                  <div class="info-value">200014</div>
+                </div>
+                <div class="info-row-inline">
+                  <div class="info-label">国家编码：</div>
+                  <div class="info-value">CN</div>
+                </div>
+              </div>
+              <div class="currency-box compact">
+                <div class="label">本位币</div>
+                <div class="value">CNY</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="info-col">
+            <div class="info-row-full">
+              <div class="info-label"><span class="required">*</span>流程审批部门：</div>
+              <div class="info-value">
+                <input type="text" value="纵腾网络/FES财经条线/FES技术部/质量保障组/测试二组" />
+                <span class="search-icon-btn">&#128269;</span>
+              </div>
+            </div>
+            <div class="info-row-inline">
+              <div class="info-label">成本中心：</div>
+              <div class="info-value">2000141748</div>
+            </div>
+            <div class="info-row-inline">
+              <div class="info-label">部门：</div>
+              <div class="info-value">测试二组12(3923079)</div>
+            </div>
+            <div class="info-row-full">
+              <div class="info-label"><span class="required">*</span>业务大类：</div>
+              <div class="info-value">
+                <input type="text" value="国内工资支付" placeholder="" />
+                <span class="search-icon-btn">&#128269;</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 报账内容 -->
+      <div class="card">
+        <div class="card-title">
+          报账内容
+          <span class="section-desc">请选择【关联结转单】</span>
+        </div>
+
+        <div class="content-layout">
+          <div class="content-main">
+            <div class="link-field-row">
+              <div class="link-field">
+                <div class="link-label"><span class="required">*</span>关联结转单：</div>
+                <input type="text" placeholder="请选择" />
+                <button class="btn-choose" onclick="document.getElementById('modal').classList.add('active')">选择</button>
+              </div>
+              <div class="link-field">
+                <div class="link-label"><span class="required">*</span>结转币种：</div>
+                <select class="link-select"><option></option></select>
+              </div>
+              <div class="side-item">
+                <div class="side-label">汇率：</div>
+                <input type="text" value="" style="width:60px" />
+                <span class="side-label">7 -> CNY</span>
+              </div>
+              <div class="side-item">
+                <div class="side-label"><span class="required">*</span>结转凭证过账日期：</div>
+                <input type="text" value="2026-07-17" style="width:120px" />
+                <span class="search-icon">📅</span>
+              </div>
+            </div>
+            <div style="margin-bottom:2px">
+              <div style="font-size:12px;color:#666;line-height:1.2;margin-bottom:1px">单据说明：</div>
+              <textarea style="width:100%;height:22px;min-height:22px;background:#fff;border:1px solid #d9d9d9;border-radius:4px;padding:1px 8px;font-size:12px;color:#333;outline:none;resize:none;line-height:1.2"></textarea>
+            </div>
+
+            <table class="detail-table">
+              <thead>
+                <tr>
+                  <th>申请单编号</th>
+                  <th>报账单号</th>
+                  <th>业务大类</th>
+                  <th>表单标题</th>
+                  <th>开始日期</th>
+                  <th>结束日期</th>
+                  <th>表单创建时间</th>
+                  <th>表单结束时间</th>
+                  <th>来源系统</th>
+                  <th>报销总金额</th>
+                  <th>流水币种</th>
+                  <th>申请人</th>
+                  <th>流水金额合计</th>
+                  <th>支出流水合计</th>
+                  <th>收入流水合计</th>
+                  <th>说明</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="empty-cell">-</td>
+                  <td class="empty-cell">-</td>
+                  <td class="empty-cell">-</td>
+                  <td class="empty-cell">-</td>
+                  <td class="empty-cell">-</td>
+                  <td class="empty-cell">-</td>
+                  <td class="empty-cell">-</td>
+                  <td class="empty-cell">-</td>
+                  <td class="empty-cell">-</td>
+                  <td class="empty-cell">-</td>
+                  <td class="empty-cell">-</td>
+                  <td class="empty-cell">-</td>
+                  <td class="empty-cell">-</td>
+                  <td class="empty-cell">-</td>
+                  <td class="empty-cell">-</td>
+                  <td class="empty-cell">-</td>
+                </tr>
+                <tr>
+                  <td class="empty-cell">-</td>
+                  <td class="empty-cell">-</td>
+                  <td class="empty-cell">-</td>
+                  <td class="empty-cell">-</td>
+                  <td class="empty-cell">-</td>
+                  <td class="empty-cell">-</td>
+                  <td class="empty-cell">-</td>
+                  <td class="empty-cell">-</td>
+                  <td class="empty-cell">-</td>
+                  <td class="empty-cell">-</td>
+                  <td class="empty-cell">-</td>
+                  <td class="empty-cell">-</td>
+                  <td class="empty-cell">-</td>
+                  <td class="empty-cell">-</td>
+                  <td class="empty-cell">-</td>
+                  <td class="empty-cell">-</td>
+                </tr>
+                <tr>
+                  <td class="empty-cell">-</td>
+                  <td class="empty-cell">-</td>
+                  <td class="empty-cell">-</td>
+                  <td class="empty-cell">-</td>
+                  <td class="empty-cell">-</td>
+                  <td class="empty-cell">-</td>
+                  <td class="empty-cell">-</td>
+                  <td class="empty-cell">-</td>
+                  <td class="empty-cell">-</td>
+                  <td class="empty-cell">-</td>
+                  <td class="empty-cell">-</td>
+                  <td class="empty-cell">-</td>
+                  <td class="empty-cell">-</td>
+                  <td class="empty-cell">-</td>
+                  <td class="empty-cell">-</td>
+                  <td class="empty-cell">-</td>
+                </tr>
+                <tr>
+                  <td class="empty-cell">-</td>
+                  <td class="empty-cell">-</td>
+                  <td class="empty-cell">-</td>
+                  <td class="empty-cell">-</td>
+                  <td class="empty-cell">-</td>
+                  <td class="empty-cell">-</td>
+                  <td class="empty-cell">-</td>
+                  <td class="empty-cell">-</td>
+                  <td class="empty-cell">-</td>
+                  <td class="empty-cell">-</td>
+                  <td class="empty-cell">-</td>
+                  <td class="empty-cell">-</td>
+                  <td class="empty-cell">-</td>
+                  <td class="empty-cell">-</td>
+                  <td class="empty-cell">-</td>
+                  <td class="empty-cell">-</td>
+                </tr>
+              </tbody>
+              <tfoot>
+                <tr>
+                  <td></td>
+                  <td></td>
+                  <td></td>
+                  <td></td>
+                  <td></td>
+                  <td></td>
+                  <td></td>
+                  <td></td>
+                  <td></td>
+                  <td></td>
+                  <td></td>
+                  <td></td>
+                  <td>合计</td>
+                  <td>合计</td>
+                  <td>合计</td>
+                  <td>合计</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- 结转明细 -->
+      <div class="card">
+        <div class="card-title-row">
+          <div class="card-title" style="margin-bottom:0">
+            结转明细
+            <span class="section-desc warn">【结转明细项】不可为空</span>
+          </div>
+          <div class="table-header-actions" style="margin-bottom:0">
+            <button class="btn btn-add btn-mini" onclick="addDetailRow()">+ 新增</button>
+            <button class="btn btn-copy btn-mini">复制</button>
+            <button class="btn btn-delete btn-mini">删除</button>
+          </div>
+        </div>
+
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th style="width:50px;">No.</th>
+              <th><span class="required">*</span>业务小类</th>
+              <th>金额记账规则</th>
+              <th><span class="required">*</span>业务开始时间</th>
+              <th><span class="required">*</span>业务结束时间</th>
+              <th>结转金额</th>
+              <th>差异金额</th>
+              <th>业务性质</th>
+              <th>客户</th>
+              <th>供应商</th>
+            </tr>
+          </thead>
+          <tbody id="detail-body">
+            <tr>
+              <td colspan="10">
+                <div class="empty-state">
+                  <div class="icon">📂</div>
+                  <div>暂无数据</div>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr class="summary-row">
+              <td style="width:50px; text-align:center;">合计</td>
+              <td></td>
+              <td></td>
+              <td></td>
+              <td></td>
+              <td style="text-align:center;">0.00</td>
+              <td style="text-align:center;">0.00</td>
+              <td></td>
+              <td></td>
+              <td></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      <!-- 附件 -->
+      <div class="card">
+        <div class="card-title-row" style="margin-bottom: 8px;">
+          <div class="card-title" style="margin-bottom:0">
+            附件
+            <span style="color: #999; font-size: 12px; font-style: italic; margin-left: 8px; font-weight: normal;">提醒：单个附件不超过20M。</span>
+          </div>
+          <button class="btn btn-primary btn-mini">上传</button>
+        </div>
+
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th style="width: 50px;">No.</th>
+              <th>文件名</th>
+              <th style="width: 120px;">文件大小</th>
+              <th>标题</th>
+              <th style="width: 80px;">操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td colspan="5">
+                <div class="empty-state" style="padding: 40px 0;">
+                  <div class="icon" style="font-size: 32px;">&#9729;</div>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- 底部 -->
+    </div>
+    <div class="bottom-bar">
+      <div class="bottom-actions">
+        <button class="btn btn-default">保存为草稿</button>
+        <button class="btn btn-primary">提交单据</button>
+      </div>
+      <div class="bottom-right">
+        <div>报账金额：<span class="big">0.00</span></div>
+        <div>核算金额：<span class="big">-</span> &nbsp; CNY</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 选择关联结转单 弹窗 -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">选择关联结转单</div>
+      <div class="modal-close" onclick="document.getElementById('modal').classList.remove('active')">&#215;</div>
+    </div>
+    <div class="modal-body">
+      <!-- 查询条件 -->
+      <div class="query-section">
+        <div class="query-title-row">
+          <span class="query-title">查询条件</span>
+          <span class="query-meta">公司主体：深圳市前海云途物流有限公司长沙分公司(200014)  业务大类：国内工资支付(GNGZ_01)</span>
+        </div>
+        <table class="query-table">
+          <tbody>
+            <tr>
+              <td class="qt-label">报账单号</td>
+              <td class="qt-value"><input type="text" /></td>
+              <td class="qt-label">申请单编号</td>
+              <td class="qt-value"><input type="text" /></td>
+              <td class="qt-label">表单说明</td>
+              <td class="qt-value"><input type="text" /></td>
+            </tr>
+            <tr>
+              <td class="qt-label">申请人工号</td>
+              <td class="qt-value">
+                <select><option>请选择</option></select>
+              </td>
+              <td class="qt-label">流水金额合计</td>
+              <td class="qt-value">
+                <div class="range-box">
+                  <input type="text" />
+                  <span>-</span>
+                  <input type="text" />
+                </div>
+              </td>
+              <td class="qt-label">流水币种</td>
+              <td class="qt-value"><input type="text" /></td>
+            </tr>
+            <tr>
+              <td class="qt-label">系统来源</td>
+              <td class="qt-value"><input type="text" /></td>
+              <td class="qt-label">删除结转单</td>
+              <td class="qt-value">
+                <select><option>请选择</option><option>是</option><option>否</option></select>
+              </td>
+              <td class="qt-label"></td>
+              <td class="qt-value"></td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="query-actions">
+          <button class="btn btn-default btn-mini" onclick="document.getElementById('modal').classList.remove('active')">清空</button>
+          <button class="btn btn-primary btn-mini">查询</button>
+        </div>
+      </div>
+      <!-- 数据列表 -->
+      <table class="data-table modal-table">
+        <thead>
+          <tr>
+            <th style="width: 50px;">No.</th>
+            <th style="width: 36px;"></th>
+            <th>报账单号</th>
+            <th>业务大类</th>
+            <th>申请单编号</th>
+            <th>表单说明</th>
+            <th>申请人</th>
+            <th>流水金额合计</th>
+            <th>支出流水合计</th>
+            <th>收入流水合计</th>
+            <th>流水币种</th>
+            <th>系统来源</th>
+            <th>删除结转单</th>
+            <th style="width: 80px;">操作</th>
+          </tr>
+        </thead>
+        <tbody id="modal-table-body">
+          <tr data-id="1">
+            <td>1</td>
+            <td><input type="checkbox" /></td>
+            <td>BX202607230001</td>
+            <td>国内工资支付</td>
+            <td>SQ202607230001</td>
+            <td>长沙分公司7月工资</td>
+            <td>张敏</td>
+            <td>150,000.00</td>
+            <td>80,000.00</td>
+            <td>70,000.00</td>
+            <td>CNY</td>
+            <td>SAP</td>
+            <td class="col-deleted">否</td>
+            <td><button class="btn-action btn-delete-row" onclick="toggleDelete(this)">删除</button></td>
+          </tr>
+          <tr data-id="2">
+            <td>2</td>
+            <td><input type="checkbox" /></td>
+            <td>BX202607230002</td>
+            <td>国内工资支付</td>
+            <td>SQ202607230002</td>
+            <td>深圳总部7月工资</td>
+            <td>李强</td>
+            <td>320,000.00</td>
+            <td>180,000.00</td>
+            <td>140,000.00</td>
+            <td>CNY</td>
+            <td>SAP</td>
+            <td class="col-deleted">否</td>
+            <td><button class="btn-action btn-delete-row" onclick="toggleDelete(this)">删除</button></td>
+          </tr>
+          <tr data-id="3">
+            <td>3</td>
+            <td><input type="checkbox" /></td>
+            <td>BX202607230003</td>
+            <td>国内工资支付</td>
+            <td>SQ202607230003</td>
+            <td>广州分公司7月工资</td>
+            <td>王芳</td>
+            <td>210,000.00</td>
+            <td>120,000.00</td>
+            <td>90,000.00</td>
+            <td>CNY</td>
+            <td>OA</td>
+            <td class="col-deleted">否</td>
+            <td><button class="btn-action btn-delete-row" onclick="toggleDelete(this)">删除</button></td>
+          </tr>
+          <tr data-id="4">
+            <td>4</td>
+            <td><input type="checkbox" /></td>
+            <td>BX202607230004</td>
+            <td>国内工资支付</td>
+            <td>SQ202607230004</td>
+            <td>武汉分公司7月工资</td>
+            <td>赵磊</td>
+            <td>95,000.00</td>
+            <td>55,000.00</td>
+            <td>40,000.00</td>
+            <td>CNY</td>
+            <td>OA</td>
+            <td class="col-deleted">否</td>
+            <td><button class="btn-action btn-delete-row" onclick="toggleDelete(this)">删除</button></td>
+          </tr>
+          <tr data-id="5">
+            <td>5</td>
+            <td><input type="checkbox" /></td>
+            <td>BX202607230005</td>
+            <td>国内工资支付</td>
+            <td>SQ202607230005</td>
+            <td>杭州分公司7月工资</td>
+            <td>陈婷</td>
+            <td>180,000.00</td>
+            <td>100,000.00</td>
+            <td>80,000.00</td>
+            <td>CNY</td>
+            <td>SAP</td>
+            <td class="col-deleted">否</td>
+            <td><button class="btn-action btn-delete-row" onclick="toggleDelete(this)">删除</button></td>
+          </tr>
+          <tr data-id="6">
+            <td>6</td>
+            <td><input type="checkbox" /></td>
+            <td>BX202607230006</td>
+            <td>国内工资支付</td>
+            <td>SQ202607230006</td>
+            <td>成都分公司7月工资</td>
+            <td>刘洋</td>
+            <td>135,000.00</td>
+            <td>75,000.00</td>
+            <td>60,000.00</td>
+            <td>CNY</td>
+            <td>OA</td>
+            <td class="col-deleted">否</td>
+            <td><button class="btn-action btn-delete-row" onclick="toggleDelete(this)">删除</button></td>
+          </tr>
+          <tr data-id="7">
+            <td>7</td>
+            <td><input type="checkbox" /></td>
+            <td>BX202607230007</td>
+            <td>国内工资支付</td>
+            <td>SQ202607230007</td>
+            <td>南京分公司7月工资</td>
+            <td>孙涛</td>
+            <td>220,000.00</td>
+            <td>130,000.00</td>
+            <td>90,000.00</td>
+            <td>CNY</td>
+            <td>SAP</td>
+            <td class="col-deleted">否</td>
+            <td><button class="btn-action btn-delete-row" onclick="toggleDelete(this)">删除</button></td>
+          </tr>
+          <tr data-id="8">
+            <td>8</td>
+            <td><input type="checkbox" /></td>
+            <td>BX202607230008</td>
+            <td>国内工资支付</td>
+            <td>SQ202607230008</td>
+            <td>西安分公司7月工资</td>
+            <td>周薇</td>
+            <td>105,000.00</td>
+            <td>60,000.00</td>
+            <td>45,000.00</td>
+            <td>CNY</td>
+            <td>OA</td>
+            <td class="col-deleted">否</td>
+            <td><button class="btn-action btn-delete-row" onclick="toggleDelete(this)">删除</button></td>
+          </tr>
+        </tbody>
+      </table>
+      <!-- 分页 -->
+      <div class="pagination">
+        <span>共 8 条</span>
+        <select><option>100条/页</option></select>
+        <span class="page-num">&lt;</span>
+        <span class="page-num active">1</span>
+        <span class="page-num">&gt;</span>
+        <span>前往</span>
+        <input type="text" value="1" style="width: 36px; height: 24px; border: 1px solid #d9d9d9; border-radius: 2px; text-align: center; font-size: 12px;" />
+        <span>页</span>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-default" onclick="document.getElementById('modal').classList.remove('active')">返回</button>
+      <button class="btn btn-primary">确定</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  var detailRowCount = 0;
+  var lastBizInput = null;
+
+  function addDetailRow() {
+    var tbody = document.getElementById('detail-body');
+    var emptyRow = tbody.querySelector('.empty-state');
+    if (emptyRow) {
+      tbody.innerHTML = '';
+    }
+    detailRowCount++;
+    var tr = document.createElement('tr');
+    tr.innerHTML =
+      '<td>' + detailRowCount + '</td>' +
+      '<td><input type="text" class="biz-input" onclick="openBizModal(this)" readonly placeholder="请选择" style="width:100%;height:24px;border:1px solid #d9d9d9;border-radius:2px;padding:0 4px;font-size:12px;cursor:pointer;background:#fff;" /></td>' +
+      '<td><select style="width:100%;height:24px;border:1px solid #d9d9d9;border-radius:2px;font-size:12px;"><option>请选择</option><option>按金额</option><option>按比例</option></select></td>' +
+      '<td><div style="display:flex;align-items:center;"><input type="text" class="date-input" onblur="normalizeDateInput(this)" placeholder="YYYY-MM-DD" style="flex:1;height:24px;border:1px solid #d9d9d9;border-right:none;border-radius:2px 0 0 2px;padding:0 4px;font-size:12px;" /><span style="display:flex;align-items:center;justify-content:center;width:22px;height:24px;border:1px solid #d9d9d9;border-radius:0 2px 2px 0;background:#f5f5f5;cursor:pointer;font-size:12px;color:#666;" onclick="openDatePicker(this)">&#128197;</span></div></td>' +
+      '<td><div style="display:flex;align-items:center;"><input type="text" class="date-input" onblur="normalizeDateInput(this)" placeholder="YYYY-MM-DD" style="flex:1;height:24px;border:1px solid #d9d9d9;border-right:none;border-radius:2px 0 0 2px;padding:0 4px;font-size:12px;" /><span style="display:flex;align-items:center;justify-content:center;width:22px;height:24px;border:1px solid #d9d9d9;border-radius:0 2px 2px 0;background:#f5f5f5;cursor:pointer;font-size:12px;color:#666;" onclick="openDatePicker(this)">&#128197;</span></div></td>' +
+      '<td><input type="text" style="width:100%;height:24px;border:1px solid #d9d9d9;border-radius:2px;padding:0 4px;font-size:12px;text-align:right;" placeholder="0.00" /></td>' +
+      '<td><input type="text" style="width:100%;height:24px;border:1px solid #d9d9d9;border-radius:2px;padding:0 4px;font-size:12px;text-align:right;" placeholder="0.00" /></td>' +
+      '<td><select style="width:100%;height:24px;border:1px solid #d9d9d9;border-radius:2px;font-size:12px;"><option>请选择</option><option>常规</option><option>特殊</option></select></td>' +
+      '<td><input type="text" style="width:100%;height:24px;border:1px solid #d9d9d9;border-radius:2px;padding:0 4px;font-size:12px;" placeholder="" /></td>' +
+      '<td><input type="text" style="width:100%;height:24px;border:1px solid #d9d9d9;border-radius:2px;padding:0 4px;font-size:12px;" placeholder="" /></td>';
+    tbody.appendChild(tr);
+  }
+
+  function openBizModal(input) {
+    lastBizInput = input;
+    document.getElementById('biz-modal').classList.add('active');
+  }
+
+  function selectBiz(code, name) {
+    if (lastBizInput) {
+      lastBizInput.value = code + ' - ' + name;
+    }
+    document.getElementById('biz-modal').classList.remove('active');
+  }
+
+  function sortTable() {
+    var tbody = document.getElementById('modal-table-body');
+    var rows = Array.from(tbody.querySelectorAll('tr'));
+    rows.sort(function(a, b) {
+      var aDel = a.querySelector('.col-deleted').textContent.trim();
+      var bDel = b.querySelector('.col-deleted').textContent.trim();
+      if (aDel !== bDel) {
+        return (aDel === '否' ? -1 : 1);
+      }
+      var aNo = a.querySelector('td:nth-child(3)').textContent.trim();
+      var bNo = b.querySelector('td:nth-child(3)').textContent.trim();
+      return bNo.localeCompare(aNo);
+    });
+    rows.forEach(function(row, idx) {
+      row.querySelector('td:first-child').textContent = idx + 1;
+      tbody.appendChild(row);
+    });
+  }
+
+  function toggleDelete(btn) {
+    var row = btn.closest('tr');
+    var deletedCell = row.querySelector('.col-deleted');
+    if (btn.classList.contains('btn-delete-row')) {
+      deletedCell.textContent = '是';
+      row.classList.add('row-deleted');
+      btn.textContent = '恢复';
+      btn.classList.remove('btn-delete-row');
+      btn.classList.add('btn-restore-row');
+    } else {
+      deletedCell.textContent = '否';
+      row.classList.remove('row-deleted');
+      btn.textContent = '删除';
+      btn.classList.remove('btn-restore-row');
+      btn.classList.add('btn-delete-row');
+    }
+    sortTable();
+  }
+</script>
+
+<!-- 选择业务小类 弹窗 -->
+<div class="modal-overlay" id="biz-modal">
+  <div class="modal" style="width: 800px;">
+    <div class="modal-header">
+      <div class="modal-title">选择业务小类</div>
+      <div class="modal-close" onclick="document.getElementById('biz-modal').classList.remove('active')">&#215;</div>
+    </div>
+    <div class="modal-biz-body">
+      <!-- 查询条件 -->
+      <div style="font-size: 13px; font-weight: 600; color: #333; margin-bottom: 8px;">查询条件</div>
+      <table class="query-table" style="margin-bottom: 2px;">
+        <tbody>
+          <tr>
+            <td class="qt-label">业务小类编码</td>
+            <td class="qt-value"><input type="text" /></td>
+            <td class="qt-label">业务小类名称</td>
+            <td class="qt-value"><input type="text" /></td>
+            <td class="qt-label">科目编码</td>
+            <td class="qt-value"><input type="text" /></td>
+          </tr>
+          <tr>
+            <td class="qt-label">科目名称</td>
+            <td class="qt-value"><input type="text" /></td>
+            <td class="qt-label"></td>
+            <td class="qt-value"></td>
+            <td class="qt-label"></td>
+            <td class="qt-value"></td>
+          </tr>
+        </tbody>
+      </table>
+      <!-- tabs + actions -->
+      <div class="biz-tabs-row">
+        <div class="biz-tabs">
+          <div class="biz-tab active">业务小类</div>
+          <div class="biz-tab">常用业务小类</div>
+        </div>
+        <div class="biz-actions-top">
+          <button class="btn btn-primary btn-mini">查询</button>
+          <button class="btn btn-default btn-mini" onclick="document.getElementById('biz-modal').classList.remove('active')">清空</button>
+        </div>
+      </div>
+      <!-- table -->
+      <div class="table-scroll">
+      <table class="modal-biz-table">
+        <thead>
+          <tr>
+            <th></th>
+            <th>No.</th>
+            <th>业务小类编码</th>
+            <th>业务小类名称</th>
+            <th>科目编码</th>
+            <th>科目名称</th>
+            <th>描述</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><input type="radio" name="biz-radio" class="biz-radio" /></td>
+            <td>1</td>
+            <td>GNSB_01</td>
+            <td>中转差异</td>
+            <td>22110101</td>
+            <td>中转差异</td>
+            <td></td>
+            <td><button class="biz-link">设为常用</button></td>
+          </tr>
+          <tr>
+            <td><input type="radio" name="biz-radio" class="biz-radio" /></td>
+            <td>2</td>
+            <td>GNSB_01_02</td>
+            <td>个人承担保险</td>
+            <td>22310101</td>
+            <td>应付职工薪酬-社保</td>
+            <td></td>
+            <td><button class="biz-link">设为常用</button></td>
+          </tr>
+          <tr>
+            <td><input type="radio" name="biz-radio" class="biz-radio" /></td>
+            <td>3</td>
+            <td>GNSB_01_03</td>
+            <td>个人承担公积金</td>
+            <td>22310201</td>
+            <td>应付职工薪酬-公积金</td>
+            <td></td>
+            <td><button class="biz-link">设为常用</button></td>
+          </tr>
+          <tr>
+            <td><input type="radio" name="biz-radio" class="biz-radio" /></td>
+            <td>4</td>
+            <td>GNSB_01_04</td>
+            <td>养老保险（公司承担）</td>
+            <td>66020101</td>
+            <td>管理费用-养老保险</td>
+            <td></td>
+            <td><button class="biz-link">设为常用</button></td>
+          </tr>
+          <tr>
+            <td><input type="radio" name="biz-radio" class="biz-radio" /></td>
+            <td>5</td>
+            <td>GNSB_01_05</td>
+            <td>医疗保险（公司承担）</td>
+            <td>66020102</td>
+            <td>管理费用-医疗保险</td>
+            <td></td>
+            <td><button class="biz-link">设为常用</button></td>
+          </tr>
+          <tr>
+            <td><input type="radio" name="biz-radio" class="biz-radio" /></td>
+            <td>6</td>
+            <td>GNSB_01_06</td>
+            <td>失业保险（公司承担）</td>
+            <td>66020103</td>
+            <td>管理费用-失业保险</td>
+            <td></td>
+            <td><button class="biz-link">设为常用</button></td>
+          </tr>
+          <tr>
+            <td><input type="radio" name="biz-radio" class="biz-radio" /></td>
+            <td>7</td>
+            <td>GNSB_01_07</td>
+            <td>工伤保险（公司承担）</td>
+            <td>66020104</td>
+            <td>管理费用-工伤保险</td>
+            <td></td>
+            <td><button class="biz-link">设为常用</button></td>
+          </tr>
+          <tr>
+            <td><input type="radio" name="biz-radio" class="biz-radio" /></td>
+            <td>8</td>
+            <td>GNSB_01_08</td>
+            <td>生育保险（公司承担）</td>
+            <td>66020105</td>
+            <td>管理费用-生育保险</td>
+            <td></td>
+            <td><button class="biz-link">设为常用</button></td>
+          </tr>
+          <tr>
+            <td><input type="radio" name="biz-radio" class="biz-radio" /></td>
+            <td>9</td>
+            <td>GNSB_01_09</td>
+            <td>公司承担公积金</td>
+            <td>66020201</td>
+            <td>管理费用-公积金</td>
+            <td></td>
+            <td><button class="biz-link">设为常用</button></td>
+          </tr>
+          <tr>
+            <td><input type="radio" name="biz-radio" class="biz-radio" /></td>
+            <td>10</td>
+            <td>GNSB_01_10</td>
+            <td>单位往来：代缴五险一金</td>
+            <td>12210101</td>
+            <td>其他应收款</td>
+            <td></td>
+            <td><button class="biz-link">设为常用</button></td>
+          </tr>
+          <tr>
+            <td><input type="radio" name="biz-radio" class="biz-radio" /></td>
+            <td>11</td>
+            <td>GNSB_01_11</td>
+            <td>手续费</td>
+            <td>66030101</td>
+            <td>财务费用-手续费</td>
+            <td></td>
+            <td><button class="biz-link">设为常用</button></td>
+          </tr>
+          <tr>
+            <td><input type="radio" name="biz-radio" class="biz-radio" /></td>
+            <td>12</td>
+            <td>GNSB_01_12</td>
+            <td>滞纳金</td>
+            <td>66030102</td>
+            <td>财务费用-滞纳金</td>
+            <td></td>
+            <td><button class="biz-link">设为常用</button></td>
+          </tr>
+        </tbody>
+      </table>
+      </div>
+    </div>
+    <div class="modal-biz-footer">
+      <button class="btn btn-primary btn-mini" onclick="confirmBizSelect()">确定</button>
+      <button class="btn btn-default btn-mini" onclick="document.getElementById('biz-modal').classList.remove('active')">取消</button>
+      <button class="btn btn-default btn-mini" onclick="document.getElementById('biz-modal').classList.remove('active')">清空</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  function confirmBizSelect() {
+    var radios = document.querySelectorAll('#biz-modal .biz-radio');
+    radios.forEach(function(r, idx) {
+      if (r.checked) {
+        var row = r.closest('tr');
+        var code = row.querySelector('td:nth-child(3)').textContent.trim();
+        var name = row.querySelector('td:nth-child(4)').textContent.trim();
+        var subCode = row.querySelector('td:nth-child(5)').textContent.trim();
+        var subName = row.querySelector('td:nth-child(6)').textContent.trim();
+        if (lastBizInput) {
+          lastBizInput.value = code + ' - ' + name;
+        }
+      }
+    });
+    document.getElementById('biz-modal').classList.remove('active');
+  }
+
+  var currentDateInput = null;
+
+  function normalizeDateInput(input) {
+    var val = input.value.trim();
+    if (!val) return;
+    var parts = val.split(/[-\/]/);
+    if (parts.length === 3) {
+      var y = parseInt(parts[0], 10);
+      var m = parseInt(parts[1], 10);
+      var d = parseInt(parts[2], 10);
+      if (!isNaN(y) && !isNaN(m) && !isNaN(d)) {
+        var yy = y < 100 ? 2000 + y : y;
+        input.value = yy + '-' + String(m).padStart(2, '0') + '-' + String(d).padStart(2, '0');
+      }
+    }
+  }
+
+  function openDatePicker(icon) {
+    event.stopPropagation();
+    currentDateInput = icon.previousElementSibling;
+    var rect = icon.getBoundingClientRect();
+    var picker = document.getElementById('date-picker');
+    picker.style.left = rect.left + 'px';
+    picker.style.top = (rect.bottom + 4) + 'px';
+    picker.style.display = 'block';
+    currentDatePickerYear = new Date().getFullYear();
+    currentDatePickerMonth = new Date().getMonth();
+    renderDatePicker();
+  }
+  function closeDatePicker() {
+    document.getElementById('date-picker').style.display = 'none';
+    currentDateInput = null;
+  }
+  var currentDatePickerYear = new Date().getFullYear();
+  var currentDatePickerMonth = new Date().getMonth();
+  function renderDatePicker() {
+    var el = document.getElementById('date-picker');
+    var y = currentDatePickerYear, m = currentDatePickerMonth;
+    var firstDay = new Date(y, m, 1).getDay();
+    var daysInMonth = new Date(y, m + 1, 0).getDate();
+    var today = new Date();
+    var html = '<div style="display:flex;align-items:center;justify-content:space-between;padding:4px 8px;">' +
+      '<span style=\"cursor:pointer;font-size:12px;color:#666;\" onclick=\"changeMonth(-1)\">◀</span>' +
+      '<span style=\"font-size:13px;font-weight:500;\">' + y + '年' + (m+1) + '月</span>' +
+      '<span style=\"cursor:pointer;font-size:12px;color:#666;\" onclick=\"changeMonth(1)\">▶</span></div>' +
+      '<div style=\"display:grid;grid-template-columns:repeat(7,1fr);text-align:center;font-size:11px;color:#999;padding:4px 0;\">' +
+      '<div>日</div><div>一</div><div>二</div><div>三</div><div>四</div><div>五</div><div>六</div></div>' +
+      '<div style=\"display:grid;grid-template-columns:repeat(7,1fr);text-align:center;font-size:12px;\">';
+    for (var i = 0; i < firstDay; i++) html += '<div></div>';
+    for (var d = 1; d <= daysInMonth; d++) {
+      var isToday = (d === today.getDate() && m === today.getMonth() && y === today.getFullYear());
+      var style = 'padding:4px;cursor:pointer;border-radius:2px;transition:background 0.15s;';
+      if (isToday) style += 'background:#1890ff;color:#fff;';
+      else style += 'color:#333;';
+      var hoverIn = 'this.style.background=\'#e6f7ff\';this.style.color=\'#1890ff\';';
+      var hoverOut = isToday ? 'this.style.background=\'#1890ff\';this.style.color=\'#fff\';' : 'this.style.background=\'\';this.style.color=\'#333\';';
+      html += '<div style=\"' + style + '\" onmouseover=\"' + hoverIn + '\" onmouseout=\"' + hoverOut + '\" onclick=\"pickDate(' + y + ',' + (m+1) + ',' + d + ')\">' + d + '</div>';
+    }
+    html += '</div>';
+    el.innerHTML = html;
+  }
+  function changeMonth(delta) {
+    currentDatePickerMonth += delta;
+    if (currentDatePickerMonth < 0) { currentDatePickerMonth = 11; currentDatePickerYear--; }
+    if (currentDatePickerMonth > 11) { currentDatePickerMonth = 0; currentDatePickerYear++; }
+    renderDatePicker();
+  }
+  function pickDate(y, m, d) {
+    if (currentDateInput) {
+      currentDateInput.value = y + '-' + String(m).padStart(2, '0') + '-' + String(d).padStart(2, '0');
+    }
+    closeDatePicker();
+  }
+  document.addEventListener('click', function(e) {
+    if (!e.target.closest('.date-input') && !e.target.closest('#date-picker')) {
+      closeDatePicker();
+    }
+  });
+</script>
+
+<!-- 日期选择器 -->
+<div id="date-picker" style="position:fixed;z-index:200;display:none;background:#fff;border:1px solid #e8e8e8;border-radius:4px;box-shadow:0 4px 12px rgba(0,0,0,0.15);width:220px;padding:4px;font-family:inherit;"></div>
+</body>
+</html>
