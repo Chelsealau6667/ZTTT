@@ -83,7 +83,7 @@
   }
 
   /* content */
-  .content { flex: 1; padding: 12px 16px; overflow: auto; }
+  .content { flex: 1; padding: 12px 16px; overflow-y: auto; overflow-x: hidden; }
 
   /* tabs */
   .tabs { display: flex; align-items: center; gap: 4px; }
@@ -389,7 +389,7 @@
     display: flex;
     gap: 12px;
   }
-  .content-main { flex: 1; }
+  .content-main { flex: 1; min-width: 0; }
   .content-side {
     width: 320px;
     display: flex;
