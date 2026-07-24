@@ -595,6 +595,8 @@
   }
   .empty-state .icon { font-size: 24px; margin-bottom: 2px; }
 
+  .table-scroll { overflow-x: auto; }
+
   /* summary row */
   .summary-row {
     background: #fafafa;
@@ -1114,25 +1116,25 @@
               <textarea style="width:100%;height:22px;min-height:22px;background:#fff;border:1px solid #d9d9d9;border-radius:4px;padding:1px 8px;font-size:12px;color:#333;outline:none;resize:none;line-height:1.2"></textarea>
             </div>
 
-            <table class="detail-table">
+            <div class="table-scroll"><table class="detail-table" style="min-width:1800px;">
               <thead>
                 <tr>
-                  <th>申请单编号</th>
-                  <th>报账单号</th>
-                  <th>业务大类</th>
-                  <th>表单标题</th>
-                  <th>开始日期</th>
-                  <th>结束日期</th>
-                  <th>表单创建时间</th>
-                  <th>表单结束时间</th>
-                  <th>来源系统</th>
-                  <th>报销总金额</th>
-                  <th>流水币种</th>
-                  <th>申请人</th>
-                  <th>流水金额合计</th>
-                  <th>支出流水合计</th>
-                  <th>收入流水合计</th>
-                  <th>说明</th>
+                  <th style="min-width:150px">申请单编号</th>
+                  <th style="min-width:150px">报账单号</th>
+                  <th style="min-width:100px">业务大类</th>
+                  <th style="min-width:180px">表单标题</th>
+                  <th style="min-width:90px">开始日期</th>
+                  <th style="min-width:90px">结束日期</th>
+                  <th style="min-width:120px">表单创建时间</th>
+                  <th style="min-width:120px">表单结束时间</th>
+                  <th style="min-width:90px">来源系统</th>
+                  <th style="min-width:120px">报销总金额</th>
+                  <th style="min-width:80px">流水币种</th>
+                  <th style="min-width:100px">申请人</th>
+                  <th style="min-width:140px">流水金额合计</th>
+                  <th style="min-width:120px">支出流水合计</th>
+                  <th style="min-width:120px">收入流水合计</th>
+                  <th style="min-width:180px">说明</th>
                 </tr>
               </thead>
               <tbody>
