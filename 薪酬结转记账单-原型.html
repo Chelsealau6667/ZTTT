@@ -899,6 +899,10 @@
   .biz-radio {
     width: 14px; height: 14px; accent-color: #1890ff; cursor: pointer;
   }
+  .modal-table tbody td input[type="checkbox"]:disabled {
+    cursor: not-allowed;
+    opacity: 0.4;
+  }
   .modal-biz-footer {
     display: flex; justify-content: flex-end; gap: 8px;
     padding: 12px 16px; border-top: 1px solid #e8e8e8; flex-shrink: 0;
@@ -1084,17 +1088,25 @@
               </div>
               <div class="link-field">
                 <div class="link-label"><span class="required">*</span>结转币种：</div>
-                <select class="link-select"><option></option></select>
+                <select class="link-select" id="currencySelect" onchange="updateExchangeRate()">
+                  <option value="CNY">CNY - 人民币</option>
+                  <option value="USD">USD - 美元</option>
+                  <option value="EUR">EUR - 欧元</option>
+                  <option value="GBP">GBP - 英镑</option>
+                  <option value="JPY">JPY - 日元</option>
+                </select>
               </div>
               <div class="side-item">
                 <div class="side-label">汇率：</div>
-                <input type="text" value="" style="width:60px" />
-                <span class="side-label">7 -> CNY</span>
+                <input type="text" id="exchangeRateInput" value="1" readonly style="width:60px;background:#f5f5f5;color:#999;" />
+                <span class="side-label" id="exchangeRateLabel">1 -> CNY</span>
               </div>
-              <div class="side-item">
+              <div class="side-item" style="display:flex;align-items:center;">
                 <div class="side-label"><span class="required">*</span>结转凭证过账日期：</div>
-                <input type="text" value="2026-07-17" style="width:120px" />
-                <span class="search-icon">📅</span>
+                <div style="display:flex;align-items:center;">
+                  <input type="text" value="2026-07-17" class="date-input" onblur="normalizeDateInput(this)" placeholder="YYYY-MM-DD" style="width:100px;height:24px;border:1px solid #d9d9d9;border-right:none;border-radius:2px 0 0 2px;padding:0 4px;font-size:12px;" />
+                  <span style="display:flex;align-items:center;justify-content:center;width:22px;height:24px;border:1px solid #d9d9d9;border-radius:0 2px 2px 0;background:#f5f5f5;cursor:pointer;font-size:12px;color:#666;" onclick="openDatePicker(this)">&#128197;</span>
+                </div>
               </div>
             </div>
             <div style="margin-bottom:2px">
@@ -1405,7 +1417,7 @@
         <tbody id="modal-table-body">
           <tr data-id="1">
             <td>1</td>
-            <td><input type="checkbox" /></td>
+            <td><input type="checkbox" onchange="handleCheckboxCurrency(this)" /></td>
             <td>BX202607230001</td>
             <td>国内工资支付</td>
             <td>SQ202607230001</td>
@@ -1421,7 +1433,7 @@
           </tr>
           <tr data-id="2">
             <td>2</td>
-            <td><input type="checkbox" /></td>
+            <td><input type="checkbox" onchange="handleCheckboxCurrency(this)" /></td>
             <td>BX202607230002</td>
             <td>国内工资支付</td>
             <td>SQ202607230002</td>
@@ -1437,7 +1449,7 @@
           </tr>
           <tr data-id="3">
             <td>3</td>
-            <td><input type="checkbox" /></td>
+            <td><input type="checkbox" onchange="handleCheckboxCurrency(this)" /></td>
             <td>BX202607230003</td>
             <td>国内工资支付</td>
             <td>SQ202607230003</td>
@@ -1453,7 +1465,7 @@
           </tr>
           <tr data-id="4">
             <td>4</td>
-            <td><input type="checkbox" /></td>
+            <td><input type="checkbox" onchange="handleCheckboxCurrency(this)" /></td>
             <td>BX202607230004</td>
             <td>国内工资支付</td>
             <td>SQ202607230004</td>
@@ -1469,7 +1481,7 @@
           </tr>
           <tr data-id="5">
             <td>5</td>
-            <td><input type="checkbox" /></td>
+            <td><input type="checkbox" onchange="handleCheckboxCurrency(this)" /></td>
             <td>BX202607230005</td>
             <td>国内工资支付</td>
             <td>SQ202607230005</td>
@@ -1485,7 +1497,7 @@
           </tr>
           <tr data-id="6">
             <td>6</td>
-            <td><input type="checkbox" /></td>
+            <td><input type="checkbox" onchange="handleCheckboxCurrency(this)" /></td>
             <td>BX202607230006</td>
             <td>国内工资支付</td>
             <td>SQ202607230006</td>
@@ -1501,7 +1513,7 @@
           </tr>
           <tr data-id="7">
             <td>7</td>
-            <td><input type="checkbox" /></td>
+            <td><input type="checkbox" onchange="handleCheckboxCurrency(this)" /></td>
             <td>BX202607230007</td>
             <td>国内工资支付</td>
             <td>SQ202607230007</td>
@@ -1517,7 +1529,7 @@
           </tr>
           <tr data-id="8">
             <td>8</td>
-            <td><input type="checkbox" /></td>
+            <td><input type="checkbox" onchange="handleCheckboxCurrency(this)" /></td>
             <td>BX202607230008</td>
             <td>国内工资支付</td>
             <td>SQ202607230008</td>
@@ -1531,11 +1543,27 @@
             <td class="col-deleted">否</td>
             <td><button class="btn-action btn-delete-row" onclick="toggleDelete(this)">删除</button></td>
           </tr>
+          <tr data-id="9">
+            <td>9</td>
+            <td><input type="checkbox" onchange="handleCheckboxCurrency(this)" /></td>
+            <td>BX202607230009</td>
+            <td>海外工资支付</td>
+            <td>SQ202607230009</td>
+            <td>海外分公司7月工资</td>
+            <td>Tom Wilson</td>
+            <td>50,000.00</td>
+            <td>50,000.00</td>
+            <td>0.00</td>
+            <td>USD</td>
+            <td>SAP</td>
+            <td class="col-deleted">否</td>
+            <td><button class="btn-action btn-delete-row" onclick="toggleDelete(this)">删除</button></td>
+          </tr>
         </tbody>
       </table>
       <!-- 分页 -->
       <div class="pagination">
-        <span>共 8 条</span>
+        <span>共 9 条</span>
         <select><option>100条/页</option></select>
         <span class="page-num">&lt;</span>
         <span class="page-num active">1</span>
@@ -1606,6 +1634,25 @@
     rows.forEach(function(row, idx) {
       row.querySelector('td:first-child').textContent = idx + 1;
       tbody.appendChild(row);
+    });
+  }
+
+  function handleCheckboxCurrency(cb) {
+    var tbody = document.getElementById('modal-table-body');
+    var allCheckboxes = tbody.querySelectorAll('input[type="checkbox"]');
+    var checked = Array.from(allCheckboxes).filter(function(c) { return c.checked; });
+
+    if (checked.length === 0) {
+      allCheckboxes.forEach(function(c) { c.disabled = false; });
+      return;
+    }
+
+    var lockCurrency = checked[0].closest('tr').querySelector('td:nth-child(11)').textContent.trim();
+    allCheckboxes.forEach(function(c) {
+      if (c.checked) return;
+      var row = c.closest('tr');
+      var currency = row.querySelector('td:nth-child(11)').textContent.trim();
+      c.disabled = currency !== lockCurrency;
     });
   }
 
@@ -1837,6 +1884,20 @@
   }
 
   var currentDateInput = null;
+
+  function updateExchangeRate() {
+    var rates = {
+      CNY: { rate: 1, label: "1 -> CNY" },
+      USD: { rate: 7.2, label: "7.2 -> CNY" },
+      EUR: { rate: 7.85, label: "7.85 -> CNY" },
+      GBP: { rate: 9.25, label: "9.25 -> CNY" },
+      JPY: { rate: 0.046, label: "0.046 -> CNY" }
+    };
+    var cur = document.getElementById("currencySelect").value;
+    var data = rates[cur] || rates.CNY;
+    document.getElementById("exchangeRateInput").value = data.rate;
+    document.getElementById("exchangeRateLabel").textContent = data.label;
+  }
 
   function normalizeDateInput(input) {
     var val = input.value.trim();

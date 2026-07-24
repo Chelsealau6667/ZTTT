@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>单据详情 - 薪酬结转记账单 - 纵腾集团财务共享中心</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-size: 13px;
+    color: #333;
+    background: #f0f2f5;
+    overflow-x: auto;
+  }
+  .layout { display: flex; height: 100vh; }
+
+  /* sidebar */
+  .sidebar {
+    width: 64px;
+    background: #1a5bb5;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-top: 8px;
+    flex-shrink: 0;
+  }
+  .sidebar-logo {
+    width: 40px;
+    height: 40px;
+    margin-bottom: 16px;
+    background: #fff;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: bold;
+    color: #1a5bb5;
+  }
+  .nav-item {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 10px 0;
+    color: rgba(255,255,255,0.7);
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 11px;
+  }
+  .nav-item:hover, .nav-item.active {
+    color: #fff;
+    background: rgba(255,255,255,0.1);
+  }
+  .nav-icon { width: 20px; height: 20px; margin-bottom: 4px; }
+
+  /* header */
+  .header {
+    height: 48px;
+    background: #fff;
+    border-bottom: 1px solid #e8e8e8;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 16px;
+    flex-shrink: 0;
+  }
+  .header-left { display: flex; align-items: center; gap: 8px; }
+  .header-logo { display: flex; align-items: center; gap: 6px; }
+  .header-logo-icon {
+    width: 24px; height: 24px;
+    background: #1a5bb5;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 12px;
+    font-weight: bold;
+  }
+  .header-logo-text { font-size: 14px; font-weight: 600; color: #333; line-height: 1.2; }
+  .header-logo-sub { font-size: 10px; color: #999; line-height: 1; }
+  .header-right { display: flex; align-items: center; gap: 12px; font-size: 12px; color: #666; }
+  .header-user { display: flex; align-items: center; gap: 4px; }
+  .header-lang { cursor: pointer; }
+  .header-logout { color: #999; cursor: pointer; }
+
+  .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+  /* content */
+  .content { flex: 1; padding: 12px 16px; overflow: auto; }
+
+  /* page tabs */
+  .tabs { display: flex; align-items: center; gap: 4px; margin-bottom: 12px; }
+  .tab-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: #fff;
+    border: 1px solid #d9d9d9;
+    border-radius: 4px 4px 0 0;
+    font-size: 12px;
+    color: #666;
+    cursor: pointer;
+  }
+  .tab-item.active {
+    background: #fff;
+    border-bottom: 1px solid #fff;
+    color: #1a5bb5;
+    font-weight: 500;
+    position: relative; z-index: 1;
+  }
+  .tab-close {
+    font-size: 10px; color: #999; cursor: pointer;
+    width: 14px; height: 14px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 50%;
+  }
+  .tab-close:hover { background: #f0f0f0; color: #333; }
+
+  /* sub tabs (单据信息, 付款信息等) */
+  .sub-tabs {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    margin-bottom: 12px;
+    border-bottom: 1px solid #e8e8e8;
+    background: #fff;
+    padding: 0 12px;
+  }
+  .sub-tab-item {
+    padding: 8px 16px;
+    font-size: 12px;
+    color: #666;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    transition: all 0.2s;
+  }
+  .sub-tab-item:hover { color: #1a5bb5; }
+  .sub-tab-item.active {
+    color: #1a5bb5;
+    border-bottom-color: #1a5bb5;
+    font-weight: 500;
+  }
+
+  /* detail section */
+  .detail-section {
+    background: #fff;
+    border: 1px solid #e8e8e8;
+    border-radius: 4px;
+    margin-bottom: 12px;
+  }
+  .detail-section-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: #333;
+    padding: 8px 12px;
+    border-bottom: 1px solid #e8e8e8;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .detail-section-title::before {
+    content: '';
+    display: inline-block;
+    width: 3px;
+    height: 12px;
+    background: #1a5bb5;
+    border-radius: 2px;
+  }
+
+  /* info table */
+  .info-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+  }
+  .info-table td {
+    border: 1px solid #e8e8e8;
+    padding: 6px 10px;
+    vertical-align: middle;
+    height: 32px;
+  }
+  .info-table .info-label {
+    background: #f5f5f5;
+    color: #666;
+    text-align: left;
+    white-space: nowrap;
+    width: 120px;
+  }
+  .info-table .info-value {
+    color: #333;
+    text-align: left;
+  }
+  .info-table .info-value .link-text {
+    color: #1a5bb5;
+    cursor: pointer;
+    text-decoration: none;
+  }
+  .info-table .info-value .link-text:hover { color: #2ea3e0; }
+
+  /* data table */
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+  }
+  .data-table thead th {
+    background: #f5f5f5;
+    color: #333;
+    font-weight: 500;
+    padding: 8px 6px;
+    text-align: center;
+    border: 1px solid #e8e8e8;
+    white-space: nowrap;
+  }
+  .data-table tbody td {
+    padding: 6px;
+    text-align: center;
+    border: 1px solid #e8e8e8;
+    white-space: nowrap;
+    color: #333;
+  }
+  .data-table tbody tr:hover { background: #f6faff; }
+  .data-table tfoot td {
+    padding: 6px;
+    text-align: center;
+    border: 1px solid #e8e8e8;
+    background: #f5f5f5;
+    font-weight: 500;
+    color: #333;
+    white-space: nowrap;
+  }
+  .data-table .text-left { text-align: left; }
+  .data-table .text-right { text-align: right; }
+
+  /* table scroll */
+  .table-scroll { overflow-x: auto; }
+</style>
+</head>
+<body>
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-logo">Z</div>
+    <div class="nav-item">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      <span>与我有关</span>
+    </div>
+    <div class="nav-item">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>
+      <span>发票管理</span>
+    </div>
+    <div class="nav-item">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+      <span>应付管理</span>
+    </div>
+    <div class="nav-item active">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20V10M18 20V4M6 20v-4"/></svg>
+      <span>报表管理</span>
+    </div>
+    <div class="nav-item">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+      <span>财务管理</span>
+    </div>
+    <div class="nav-item">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>
+      <span>票据管理</span>
+    </div>
+  </aside>
+
+  <div class="main">
+    <header class="header">
+      <div class="header-left">
+        <div class="header-logo">
+          <div class="header-logo-icon">Z</div>
+          <div>
+            <div class="header-logo-text">纵腾集团</div>
+            <div class="header-logo-sub">财务共享中心</div>
+          </div>
+        </div>
+      </div>
+      <div class="header-right">
+        <span class="header-user">您好！张敏</span>
+        <span class="header-lang">中文 ▼</span>
+        <span class="header-logout"><svg style="width:14px;height:14px;vertical-align:middle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16,17 21,12 16,7"/><line x1="21" y1="12" x2="9" y2="12"/></svg> 注销</span>
+      </div>
+    </header>
+
+    <div class="content">
+      <!-- page tabs -->
+      <div class="tabs">
+        <div class="tab-item">
+          <svg style="width:14px;height:14px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg>
+        </div>
+        <div class="tab-item">结转记账单</div>
+        <div class="tab-item">单据查询</div>
+        <div class="tab-item">单据查看</div>
+        <div class="tab-item active">
+          单据详情
+          <span class="tab-close" style="margin-left:8px">×</span>
+        </div>
+      </div>
+
+      <!-- sub tabs -->
+      <div class="sub-tabs">
+        <div class="sub-tab-item active">单据信息</div>
+        <div class="sub-tab-item">付款信息</div>
+        <div class="sub-tab-item">附件信息</div>
+        <div class="sub-tab-item">核销信息</div>
+        <div class="sub-tab-item">审批历史</div>
+        <div class="sub-tab-item">凭证信息</div>
+        <div class="sub-tab-item">资金流水</div>
+      </div>
+
+      <!-- 基本信息 -->
+      <div class="detail-section">
+        <div class="detail-section-title">基本信息</div>
+        <table class="info-table">
+          <tr>
+            <td class="info-label">经办人</td>
+            <td class="info-value">杨皓月(zt24314)</td>
+            <td class="info-label">报账人</td>
+            <td class="info-value">杨皓月(zt24314)</td>
+            <td class="info-label">费用承担公司</td>
+            <td class="info-value">深圳市前海云途物流有限公司</td>
+            <td class="info-label">单据编号</td>
+            <td class="info-value">2000002503180533</td>
+            <td class="info-label">创建时间</td>
+            <td class="info-value">2025-03-18</td>
+          </tr>
+        </table>
+      </div>
+
+      <!-- 报账内容 -->
+      <div class="detail-section">
+        <div class="detail-section-title">报账内容</div>
+        <table class="info-table">
+          <tr>
+            <td class="info-label">业务大类</td>
+            <td class="info-value">国内工资支付</td>
+            <td class="info-label">流程审批部门</td>
+            <td class="info-value">纵腾网络/FES财经条线/财务共享中心</td>
+            <td class="info-label">系统来源</td>
+            <td class="info-value">OA</td>
+            <td class="info-label"></td>
+            <td class="info-value"></td>
+          </tr>
+          <tr>
+            <td class="info-label">汇率</td>
+            <td class="info-value">1</td>
+            <td class="info-label">报账金额</td>
+            <td class="info-value">222.00(CNY)</td>
+            <td class="info-label">结转凭证过账日期</td>
+            <td class="info-value">2025-03-18</td>
+            <td class="info-label">结转币种</td>
+            <td class="info-value">CNY</td>
+          </tr>
+          <tr>
+            <td class="info-label">单据说明</td>
+            <td class="info-value" colspan="7">测试序号2</td>
+          </tr>
+        </table>
+      </div>
+
+      <!-- 关联结转单列表 -->
+      <div class="detail-section">
+        <div class="detail-section-title">关联结转单列表</div>
+        <div class="table-scroll">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th style="width: 40px;">序号</th>
+                <th style="width: 160px;">报账单号</th>
+                <th style="width: 140px;">关联结转单流水金额合计</th>
+                <th style="width: 120px;">支出流水合计</th>
+                <th style="width: 120px;">收入流水合计</th>
+                <th style="width: 80px;">流水币种</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>1</td>
+                <td><a class="link-text">2000002503180526</a></td>
+                <td class="text-right">222.00</td>
+                <td class="text-right">222.00</td>
+                <td class="text-right">0.00</td>
+                <td>CNY</td>
+              </tr>
+              <tr>
+                <td>2</td>
+                <td><a class="link-text">2000002503190101</a></td>
+                <td class="text-right">150.00</td>
+                <td class="text-right">150.00</td>
+                <td class="text-right">0.00</td>
+                <td>CNY</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- 财务表单列表 -->
+      <div class="detail-section">
+        <div class="detail-section-title">财务表单列表</div>
+        <div class="table-scroll">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th style="width: 40px;">序号</th>
+                <th style="width: 140px;">申请单编号</th>
+                <th style="min-width: 320px;">表单标题</th>
+                <th style="width: 80px;">开始日期</th>
+                <th style="width: 80px;">结束日期</th>
+                <th style="width: 90px;">报销总金额</th>
+                <th style="width: 50px;">币种</th>
+                <th style="width: 90px;">表单创建时间</th>
+                <th style="width: 90px;">表单结束时间</th>
+                <th style="width: 110px;">申请人</th>
+                <th style="width: 90px;">说明</th>
+                <th style="width: 50px;">系统来源</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>1</td>
+                <td><a class="link-text">ZTJT-LC-202503181101</a></td>
+                <td class="text-left">杨皓月的国内工资支付2025年02月222.0CNY深圳市前海云途物流有限公司</td>
+                <td>2025-02</td>
+                <td>2025-02</td>
+                <td class="text-right">222.00</td>
+                <td>CNY</td>
+                <td>2025-03-18</td>
+                <td>2025-03-18</td>
+                <td>zt24314-杨皓月</td>
+                <td>测试中转*2</td>
+                <td>OA</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- 结转明细 -->
+      <div class="detail-section">
+        <div class="detail-section-title">结转明细</div>
+        <div class="table-scroll">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th style="width: 40px;">序号</th>
+                <th style="width: 100px;">业务小类</th>
+                <th style="width: 100px;">业务开始时间</th>
+                <th style="width: 100px;">业务结束时间</th>
+                <th style="width: 90px;">结转金额</th>
+                <th style="width: 80px;">差异金额</th>
+                <th style="width: 80px;">业务性质</th>
+                <th style="width: 80px;">客户</th>
+                <th style="width: 80px;">供应商</th>
+                <th style="width: 80px;">贸易伙伴</th>
+                <th style="width: 100px;">备注说明</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>1</td>
+                <td>奖金</td>
+                <td>2025-03-01</td>
+                <td>2025-03-15</td>
+                <td class="text-right">122.00</td>
+                <td class="text-right">0.00</td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+              </tr>
+              <tr>
+                <td>2</td>
+                <td>实发月薪</td>
+                <td>2025-03-01</td>
+                <td>2025-03-15</td>
+                <td class="text-right">100.00</td>
+                <td class="text-right">0.00</td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+              </tr>
+            </tbody>
+            <tfoot>
+              <tr>
+                <td colspan="4">合计</td>
+                <td class="text-right">222.00</td>
+                <td class="text-right">0.00</td>
+                <td colspan="3">结转合计</td>
+                <td class="text-right" colspan="2">222.00</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>
