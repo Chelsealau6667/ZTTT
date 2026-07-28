@@ -1,0 +1,1754 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>短期摊销管理 - 纵腾集团财务共享中心</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-size: 13px;
+    color: #333;
+    background: #f0f2f5;
+    overflow-x: auto;
+  }
+  .layout { display: flex; height: 100vh; }
+
+  /* sidebar */
+  .sidebar {
+    width: 64px;
+    background: #1a5bb5;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-top: 8px;
+    flex-shrink: 0;
+  }
+  .sidebar-logo {
+    width: 40px;
+    height: 40px;
+    margin-bottom: 16px;
+    background: #fff;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: bold;
+    color: #1a5bb5;
+  }
+  .nav-item {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 10px 0;
+    color: rgba(255,255,255,0.7);
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 11px;
+  }
+  .nav-item:hover, .nav-item.active {
+    color: #fff;
+    background: rgba(255,255,255,0.1);
+  }
+  .nav-icon { width: 20px; height: 20px; margin-bottom: 4px; }
+
+  /* header */
+  .header {
+    height: 48px;
+    background: #fff;
+    border-bottom: 1px solid #e8e8e8;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 16px;
+    flex-shrink: 0;
+  }
+  .header-left { display: flex; align-items: center; gap: 8px; }
+  .header-logo { display: flex; align-items: center; gap: 6px; }
+  .header-logo-icon {
+    width: 24px; height: 24px;
+    background: #1a5bb5;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 12px;
+    font-weight: bold;
+  }
+  .header-logo-text { font-size: 14px; font-weight: 600; color: #333; line-height: 1.2; }
+  .header-logo-sub { font-size: 10px; color: #999; line-height: 1; }
+  .header-right { display: flex; align-items: center; gap: 12px; font-size: 12px; color: #666; }
+  .header-user { display: flex; align-items: center; gap: 4px; }
+  .header-lang { cursor: pointer; }
+  .header-logout { color: #999; cursor: pointer; }
+
+ /* content */
+ .content { flex: 1; padding: 12px 16px; display: flex; flex-direction: column; overflow: hidden; }
+  /* main */
+  .main { flex: 1; min-width: 0; display: flex; flex-direction: column; overflow: hidden; }
+
+  /* tabs */
+  .tabs { display: flex; align-items: center; gap: 4px; margin-bottom: 12px; }
+  .tab-item {
+    display: flex; align-items: center; gap: 6px;
+    padding: 6px 12px;
+    background: #fff;
+    border: 1px solid #d9d9d9;
+    border-radius: 4px 4px 0 0;
+    font-size: 12px;
+    color: #666;
+    cursor: pointer;
+  }
+  .tab-item.active {
+    background: #fff;
+    border-bottom: 1px solid #fff;
+    color: #1a5bb5;
+    font-weight: 500;
+    position: relative; z-index: 1;
+  }
+  .tab-close {
+    font-size: 10px; color: #999; cursor: pointer;
+    width: 14px; height: 14px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 50%;
+  }
+  .tab-close:hover { background: #f0f0f0; color: #333; }
+
+  /* search card */
+  .search-card {
+    background: #fff;
+    border: 1px solid #e8e8e8;
+    border-radius: 0 4px 4px 4px;
+    padding: 12px 16px;
+    margin-bottom: 12px;
+    flex-shrink: 0;
+  }
+  .search-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .search-title::before {
+    content: '';
+    display: inline-block;
+    width: 3px;
+    height: 12px;
+    background: #1a5bb5;
+    border-radius: 2px;
+  }
+
+  /* search table */
+  .search-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    table-layout: fixed;
+  }
+  .search-table td {
+    border: 1px solid #d9d9d9;
+    vertical-align: middle;
+    height: 28px;
+  }
+  .search-table .search-label {
+    background: #f5f5f5;
+    color: #666;
+    padding: 0 10px;
+    text-align: right;
+    white-space: nowrap;
+    width: 110px;
+  }
+  .search-table .search-input-cell {
+    background: #fff;
+    padding: 0;
+  }
+  .search-table .search-input-cell input,
+  .search-table .search-input-cell select {
+    width: 100%;
+    height: 100%;
+    border: none;
+    padding: 0 8px;
+    font-size: 12px;
+    color: #333;
+    outline: none;
+    background: transparent;
+    vertical-align: middle;
+  }
+  .search-table .search-input-cell input::placeholder { color: #bfbfbf; }
+  .search-table .search-range {
+    display: flex;
+    align-items: center;
+    height: 100%;
+    width: 100%;
+  }
+  .search-range-item {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    height: 100%;
+    position: relative;
+  }
+  .search-table .search-range input {
+    flex: 1;
+    height: 100%;
+    border: none;
+    padding: 0 8px;
+    font-size: 12px;
+    outline: none;
+    background: transparent;
+    vertical-align: middle;
+  }
+  .search-table .search-range span {
+    color: #999;
+    font-size: 12px;
+    white-space: nowrap;
+    padding: 0 4px;
+    flex-shrink: 0;
+  }
+
+  /* search select */
+  .search-select-wrap {
+    position: relative;
+    width: 100%;
+    height: 28px;
+  }
+  .search-select-input {
+    width: 100%;
+    height: 28px;
+    border: none;
+    padding: 0 8px;
+    font-size: 12px;
+    outline: none;
+    background: transparent;
+  }
+  .search-select-dropdown {
+    display: none;
+    position: absolute;
+    top: 28px;
+    left: 0;
+    right: 0;
+    background: #fff;
+    border: 1px solid #d9d9d9;
+    border-radius: 0 0 3px 3px;
+    max-height: 180px;
+    overflow-y: auto;
+    z-index: 50;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  }
+  .search-select-wrap:hover .search-select-dropdown,
+  .search-select-input:focus + .search-select-dropdown,
+  .search-select-dropdown:hover {
+    display: block;
+  }
+  .search-select-item {
+    padding: 6px 8px;
+    font-size: 12px;
+    color: #333;
+    cursor: pointer;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .search-select-item:hover {
+    background: #e6f7ff;
+    color: #1a5bb5;
+  }
+
+  /* multi select */
+  .multi-select-wrap {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+  }
+  .multi-select-trigger {
+    height: 26px;
+    line-height: 26px;
+    padding: 0 8px;
+    font-size: 12px;
+    color: #333;
+    cursor: pointer;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex: 1;
+  }
+  .multi-select-dropdown {
+    display: none;
+    position: absolute;
+    top: 28px;
+    left: 0;
+    right: 0;
+    background: #fff;
+    border: 1px solid #d9d9d9;
+    border-radius: 0 0 3px 3px;
+    padding: 6px 0;
+    z-index: 50;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  }
+  .multi-select-wrap:hover .multi-select-dropdown,
+  .multi-select-dropdown:hover {
+    display: block;
+ }
+ .multi-select-dropdown label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    font-size: 12px;
+    color: #333;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+ .multi-select-dropdown label:hover {
+   background: #e6f7ff;
+ }
+ .multi-select-dropdown input[type="checkbox"] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 12px;
+    height: 12px;
+    border: 1px solid #bfbfbf;
+    border-radius: 2px;
+    cursor: pointer;
+    position: relative;
+    flex-shrink: 0;
+    margin: 0;
+    vertical-align: middle;
+  }
+  .multi-select-dropdown input[type="checkbox"]:checked {
+    background: #1a5bb5;
+    border-color: #1a5bb5;
+  }
+  .multi-select-dropdown input[type="checkbox"]:checked::after {
+    content: '';
+    position: absolute;
+    left: 2px;
+    top: 2px;
+    width: 6px;
+    height: 3px;
+    border-left: 1.5px solid #fff;
+    border-bottom: 1.5px solid #fff;
+    transform: rotate(-45deg);
+ }
+
+ /* buttons */
+  .search-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 12px;
+  }
+  .btn {
+    height: 28px;
+    padding: 0 16px;
+    border-radius: 3px;
+    font-size: 12px;
+    cursor: pointer;
+    border: 1px solid transparent;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+  }
+  .btn-primary {
+    background: #41B7F6;
+    color: #fff;
+    border-color: #41B7F6;
+  }
+  .btn-primary:hover { background: #2ea3e0; }
+  .btn-default {
+    background: #fff;
+    color: #41B7F6;
+    border-color: #41B7F6;
+  }
+  .btn-default:hover { border-color: #2ea3e0; color: #2ea3e0; }
+
+  .table-toolbar {
+    background: #fff;
+    border: 1px solid #e8e8e8;
+    border-radius: 4px 4px 0 0;
+    margin-bottom: -1px;
+    flex-shrink: 0;
+    position: relative;
+  }
+  /* table card */
+  .table-card {
+    background: #fff;
+    border: 1px solid #e8e8e8;
+    border-radius: 0 0 4px 4px;
+    flex: 1;
+    overflow: auto;
+    min-height: 0;
+  }
+  .table-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    border-bottom: 1px solid #e8e8e8;
+  }
+  .table-header-title { font-size: 12px; font-weight: 600; color: #333; }
+  .table-header-actions { display: flex; gap: 8px; }
+  .table-header-actions .btn { height: 24px; padding: 0 10px; font-size: 11px; }
+
+  /* data table */
+  .data-table {
+    width: auto;
+    min-width: 100%;
+    table-layout: fixed;
+    border-collapse: collapse;
+    font-size: 12px;
+  }
+  .data-table thead th {
+    background: #f5f5f5;
+    color: #333;
+    font-weight: 500;
+    padding: 8px 6px;
+    text-align: left;
+    border-right: 1px solid #e8e8e8;
+    white-space: nowrap;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  .data-table thead th:last-child { border-right: none; }
+  .data-table tbody td {
+    padding: 8px 6px;
+    text-align: left;
+    border-bottom: 1px solid #f0f0f0;
+    border-right: 1px solid #f0f0f0;
+    white-space: nowrap;
+    color: #333;
+  }
+  .data-table tbody td:last-child { border-right: none; }
+  .data-table tbody tr:hover { background: #f6faff; }
+  .op-link { color: #1a5bb5; cursor: pointer; text-decoration: none; font-size: 11px; margin: 0 3px; }
+  .op-link:hover { color: #2ea3e0; }
+  .checkbox { width: 12px; height: 12px; cursor: pointer; }
+
+  /* table footer total row */
+  .table-total-row {
+    position: sticky;
+    bottom: 0;
+    background: #e6f7ff;
+    border-top: 1px solid #d9d9d9;
+    display: none;
+  }
+  .table-total-row.show {
+    display: block;
+  }
+  .total-table {
+    width: auto;
+    table-layout: fixed;
+    border-collapse: collapse;
+    font-size: 12px;
+  }
+  .total-table td {
+    padding: 8px 6px;
+    text-align: left;
+    border-right: 1px solid #f0f0f0;
+    white-space: nowrap;
+    color: #333;
+    font-weight: 600;
+    background: #e6f7ff;
+  }
+  .total-table td:last-child {
+    border-right: none;
+  }
+
+  /* pagination */
+  .pagination {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    font-size: 12px;
+    color: #666;
+    background: #fff;
+    border-top: 1px solid #f0f0f0;
+  }
+  .pagination .total { margin-right: auto; }
+  .page-btn {
+    min-width: 24px;
+    height: 24px;
+    padding: 0 6px;
+    border: 1px solid #d9d9d9;
+    background: #fff;
+    border-radius: 2px;
+    cursor: pointer;
+    font-size: 12px;
+    color: #333;
+  }
+  .page-btn:hover { border-color: #1a5bb5; color: #1a5bb5; }
+  .page-btn.active { background: #1a5bb5; color: #fff; border-color: #1a5bb5; }
+  .page-size {
+    height: 24px;
+    border: 1px solid #d9d9d9;
+    border-radius: 2px;
+    padding: 0 4px;
+    font-size: 12px;
+    outline: none;
+    cursor: pointer;
+  }
+  .page-jump {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .page-jump input {
+    width: 40px;
+    height: 24px;
+    border: 1px solid #d9d9d9;
+    border-radius: 2px;
+    text-align: center;
+    font-size: 12px;
+    outline: none;
+  }
+
+  /* modal */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.4);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+  }
+  .modal-overlay.show { display: flex; }
+  .modal {
+    background: #fff;
+    border-radius: 6px;
+    width: 480px;
+    max-width: 90vw;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    overflow: hidden;
+  }
+  .modal-header {
+    padding: 12px 16px;
+    border-bottom: 1px solid #f0f0f0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .modal-title { font-size: 14px; font-weight: 600; color: #333; }
+  .modal-close {
+    font-size: 16px; color: #999; cursor: pointer;
+    width: 24px; height: 24px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 50%;
+  }
+  .modal-close:hover { background: #f5f5f5; color: #333; }
+  .modal-body { padding: 16px; }
+  .modal-form-group { display: flex; align-items: center; margin-bottom: 12px; }
+  .modal-form-label {
+    width: 100px;
+    font-size: 12px;
+    color: #666;
+    text-align: right;
+    padding-right: 12px;
+  }
+  .modal-form-value {
+    flex: 1;
+    font-size: 12px;
+    color: #333;
+    padding: 6px 10px;
+    background: #f5f5f5;
+    border-radius: 3px;
+    min-height: 28px;
+    display: flex;
+    align-items: center;
+  }
+  .modal-form-input {
+    flex: 1;
+    height: 28px;
+    border: 1px solid #d9d9d9;
+    border-radius: 3px;
+    padding: 0 10px;
+    font-size: 12px;
+    color: #333;
+    outline: none;
+  }
+  .modal-form-input:focus { border-color: #1a5bb5; }
+  .modal-footer {
+    padding: 10px 16px;
+    border-top: 1px solid #f0f0f0;
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+
+  /* total bar */
+  .total-bar {
+    background: #fafafa;
+    border: 1px solid #e8e8e8;
+    border-top: none;
+    border-radius: 0 0 4px 4px;
+    padding: 0 12px;
+    height: 36px;
+    line-height: 36px;
+    font-size: 12px;
+    color: #333;
+    display: none;
+    align-items: center;
+    gap: 16px;
+    white-space: nowrap;
+    overflow-x: auto;
+}
+  .total-bar.show { display: flex; }
+  .total-bar .total-label {
+    font-weight: 600;
+    color: #1a5bb5;
+    margin-right: 4px;
+}
+  .total-bar .total-item {
+    color: #666;
+  }
+  .total-bar .total-value {
+    color: #333;
+    font-weight: 600;
+}
+</style>
+</head>
+<body>
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-logo">Z</div>
+    <div class="nav-item">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      <span>与我有关</span>
+    </div>
+    <div class="nav-item">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>
+      <span>发票管理</span>
+    </div>
+    <div class="nav-item">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+      <span>应付管理</span>
+    </div>
+    <div class="nav-item active">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>
+      <span>应收管理</span>
+    </div>
+    <div class="nav-item">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+      <span>总账管理</span>
+    </div>
+    <div class="nav-item">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>
+      <span>共享中心</span>
+    </div>
+    <div class="nav-item">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20V10M18 20V4M6 20v-4"/></svg>
+      <span>报表管理</span>
+    </div>
+    <div class="nav-item">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 14.5a2.5 2.5 0 0 0 0-5 2.5 2.5 0 0 0 0 5z"/><path d="M1 12a11 11 0 0 1 22 0 11 11 0 0 1-22 0z"/></svg>
+      <span>资金管理</span>
+    </div>
+    <div class="nav-item">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+      <span>预算管理</span>
+    </div>
+    <div class="nav-item">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>
+      <span>税务管理</span>
+    </div>
+    <div class="nav-item">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      <span>系统管理</span>
+    </div>
+  </aside>
+
+  <div class="main">
+    <header class="header">
+      <div class="header-left">
+        <div class="header-logo">
+          <div class="header-logo-icon">Z</div>
+          <div>
+            <div class="header-logo-text">纵腾集团</div>
+            <div class="header-logo-sub">财务共享中心</div>
+          </div>
+        </div>
+      </div>
+      <div class="header-right">
+        <span class="header-user">您好！张丽</span>
+        <span class="header-lang">中文 ▼</span>
+        <span class="header-logout">注销</span>
+      </div>
+    </header>
+
+    <div class="content">
+      <div class="tabs">
+        <div class="tab-item">首页</div>
+        <div class="tab-item active">
+          短期摊销管理
+          <span class="tab-close">×</span>
+        </div>
+      </div>
+
+      <div class="search-card">
+        <div class="search-title">查询条件</div>
+        <table class="search-table">
+          <colgroup>
+            <col style="width: 110px;" />
+            <col />
+            <col style="width: 110px;" />
+            <col />
+            <col style="width: 110px;" />
+            <col />
+          </colgroup>
+          <tr>
+            <td class="search-label">摊销单号</td>
+            <td class="search-input-cell"><input type="text" placeholder="多个可以用英文逗号或空格分隔" /></td>
+            <td class="search-label">报账单号</td>
+            <td class="search-input-cell"><input type="text" placeholder="多个可以用英文逗号或空格分隔" /></td>
+            <td class="search-label">报账凭证过账日期</td>
+            <td class="search-input-cell">
+              <div class="search-range">
+                <div class="search-range-item"><input type="text" placeholder="开始日期" /></div>
+                <span>至</span>
+                <div class="search-range-item"><input type="text" placeholder="结束日期" /></div>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td class="search-label">费用承担公司</td>
+            <td class="search-input-cell"><input type="text" /></td>
+            <td class="search-label">业务大类</td>
+            <td class="search-input-cell">
+              <select><option>请选择</option></select>
+            </td>
+            <td class="search-label">业务小类</td>
+            <td class="search-input-cell">
+              <select><option>请选择</option></select>
+            </td>
+          </tr>
+          <tr>
+            <td class="search-label">费用承担部门</td>
+            <td class="search-input-cell">
+              <select><option>请选择</option></select>
+            </td>
+            <td class="search-label">供应商</td>
+            <td class="search-input-cell"><input type="text" /></td>
+            <td class="search-label">创建时间</td>
+            <td class="search-input-cell">
+              <div class="search-range">
+                <div class="search-range-item"><input type="text" placeholder="开始时间" /></div>
+                <span>至</span>
+                <div class="search-range-item"><input type="text" placeholder="结束时间" /></div>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td class="search-label">创建人</td>
+            <td class="search-input-cell"><input type="text" /></td>
+            <td class="search-label">摊销来源</td>
+            <td class="search-input-cell">
+              <div class="multi-select-wrap">
+                <div class="multi-select-trigger">请选择</div>
+                <div class="multi-select-dropdown">
+                  <label><input class="multi-checkbox" type="checkbox" /> 系统</label>
+                  <label><input class="multi-checkbox" type="checkbox" /> 手工新增-OA</label>
+                  <label><input class="multi-checkbox" type="checkbox" /> 手工新增-共享</label>
+                  <label><input class="multi-checkbox" type="checkbox" /> 调整-成本中心</label>
+                  <label><input class="multi-checkbox" type="checkbox" /> 调整-业务期间</label>
+                </div>
+              </div>
+            </td>
+            <td class="search-label">摊销单状态</td>
+            <td class="search-input-cell">
+              <div class="multi-select-wrap">
+                <div class="multi-select-trigger">请选择</div>
+                <div class="multi-select-dropdown">
+                  <label><input class="multi-checkbox" type="checkbox" /> 待导入</label>
+                  <label><input class="multi-checkbox" type="checkbox" /> 已导入</label>
+                  <label><input class="multi-checkbox" type="checkbox" /> 导入失败</label>
+                  <label><input class="multi-checkbox" type="checkbox" /> 已废弃</label>
+                </div>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td class="search-label">摊销金额</td>
+            <td class="search-input-cell">
+              <div class="search-range">
+                <div class="search-range-item"><input type="text" placeholder="最小金额" /></div>
+                <span>至</span>
+                <div class="search-range-item"><input type="text" placeholder="最大金额" /></div>
+              </div>
+            </td>
+            <td class="search-label">剩余摊销金额</td>
+            <td class="search-input-cell">
+              <div class="search-range">
+                <div class="search-range-item"><input type="text" placeholder="最小金额" /></div>
+                <span>至</span>
+                <div class="search-range-item"><input type="text" placeholder="最大金额" /></div>
+              </div>
+            </td>
+            <td class="search-label">关联摊销单号</td>
+            <td class="search-input-cell"><input type="text" /></td>
+          </tr>
+          <tr>
+            <td class="search-label">费用承担部门状态</td>
+            <td class="search-input-cell">
+              <select><option>请选择</option><option>启用</option><option>停用</option></select>
+            </td>
+            <td class="search-label"></td>
+            <td class="search-input-cell"></td>
+            <td class="search-label"></td>
+            <td class="search-input-cell"></td>
+          </tr>
+        </table>
+        <div class="search-actions">
+          <button class="btn btn-default" onclick="toggleTotalBar()">价值合计</button>
+          <button class="btn btn-primary">查询</button>
+          <button class="btn btn-default">清空</button>
+        </div>
+      </div>
+
+      <div class="table-toolbar">
+        <div class="table-header">
+          <span class="table-header-title">单据列表</span>
+          <div class="table-header-actions">
+            <button class="btn btn-default">批量导入</button>
+            <button class="btn btn-default">下载模板</button>
+            <button class="btn btn-default">导入</button>
+            <button class="btn btn-default">新增</button>
+            <button class="btn btn-default">废弃</button>
+            <button class="btn btn-default">导出Excel</button>
+          </div>
+        </div>
+      </div>
+      <div class="table-card">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th style="width: 28px;"><input type="checkbox" class="checkbox" /></th>
+              <th style="width: 140px;">操作</th>
+              <th style="width: 80px;">摊销来源</th>
+              <th style="width: 140px;">摊销单号</th>
+              <th style="width: 140px;">关联摊销单号</th>
+              <th style="width: 140px;">报账单号</th>
+              <th style="width: 110px;">报账凭证过账日期</th>
+              <th style="width: 110px;">创建时间</th>
+              <th style="width: 220px;">费用承担公司</th>
+              <th style="width: 80px;">账套编码</th>
+              <th style="width: 100px;">利润中心编码</th>
+              <th style="width: 120px;">供应商编码</th>
+              <th style="width: 220px;">供应商</th>
+              <th style="width: 100px;">业务大类编码</th>
+              <th style="width: 110px;">业务大类</th>
+              <th style="width: 100px;">业务小类编码</th>
+              <th style="width: 110px;">业务小类</th>
+              <th style="width: 100px;">费用科目编码</th>
+              <th style="width: 110px;">费用科目</th>
+              <th style="width: 120px;">费用承担部门编码</th>
+              <th style="width: 140px;">费用承担部门</th>
+              <th style="width: 120px;">费用承担部门状态</th>
+              <th style="width: 110px;">业务开始时间</th>
+              <th style="width: 110px;">业务结束时间</th>
+              <th style="width: 200px;">摊销内容</th>
+              <th style="width: 60px;">币种</th>
+              <th style="width: 100px;">摊销金额</th>
+              <th style="width: 110px;">初始已摊销金额</th>
+              <th style="width: 110px;">累计摊销金额</th>
+              <th style="width: 110px;">剩余摊销金额</th>
+              <th style="width: 100px;">已调整金额</th>
+              <th style="width: 100px;">摊销单状态</th>
+              <th style="width: 160px;">SAP反馈信息</th>
+              <th style="width: 100px;">创建人</th>
+            </tr>
+          </thead>
+                    <tbody>
+            <tr>
+              <td><input type="checkbox" class="checkbox" /></td>
+              <td>
+                <a class="op-link">修改</a>
+                <a class="op-link">废弃</a>
+                <a class="op-link">调整</a>
+                <a class="op-link">查看</a>
+              </td>
+              <td>系统</td>
+              <td>TX2026027120002</td>
+              <td>2000142607090040</td>
+              <td>2000142607090040</td>
+              <td>2026-07-10</td>
+              <td>2026-07-01 10:00:00</td>
+              <td>深圳市新海运国际货运公司...</td>
+              <td>2000</td>
+              <td>200014</td>
+              <td>SU0000001</td>
+              <td>长沙县顺驰旅游客运服务部</td>
+              <td>CAT001</td>
+              <td>支付日常津贴</td>
+              <td>SUB001</td>
+              <td>支付日常津贴</td>
+              <td>ACC001</td>
+              <td>日常费用</td>
+              <td>DEPT001</td>
+              <td>财务部</td>
+              <td>启用</td>
+              <td>2026-01-01</td>
+              <td>2026-12-31</td>
+              <td>日常运营费用摊销</td>
+              <td>CNY</td>
+              <td>10,000.00</td>
+              <td>2,000.00</td>
+              <td>5,000.00</td>
+              <td>5,000.00</td>
+              <td>0.00</td>
+              <td>进行中</td>
+              <td>成功</td>
+              <td>张丽</td>
+            </tr>
+            <tr>
+              <td><input type="checkbox" class="checkbox" /></td>
+              <td>
+                <a class="op-link">修改</a>
+                <a class="op-link">废弃</a>
+                <a class="op-link">调整</a>
+                <a class="op-link">查看</a>
+              </td>
+              <td>系统</td>
+              <td>TX2026027120001</td>
+              <td>2000142607090040</td>
+              <td>2000142607090040</td>
+              <td>2026-07-10</td>
+              <td>2026-07-01 10:00:00</td>
+              <td>深圳市新海运国际货运公司...</td>
+              <td>2000</td>
+              <td>200014</td>
+              <td>SU0000002</td>
+              <td>长沙县顺驰旅游客运服务部</td>
+              <td>CAT002</td>
+              <td>支付日常津贴</td>
+              <td>SUB002</td>
+              <td>支付日常津贴</td>
+              <td>ACC002</td>
+              <td>日常费用</td>
+              <td>DEPT002</td>
+              <td>财务部</td>
+              <td>启用</td>
+              <td>2026-01-01</td>
+              <td>2026-12-31</td>
+              <td>日常运营费用摊销</td>
+              <td>USD</td>
+              <td>10,500.00</td>
+              <td>2,100.00</td>
+              <td>5,200.00</td>
+              <td>5,300.00</td>
+              <td>0.00</td>
+              <td>进行中</td>
+              <td>成功</td>
+              <td>张丽</td>
+            </tr>
+            <tr>
+              <td><input type="checkbox" class="checkbox" /></td>
+              <td>
+                <a class="op-link">修改</a>
+                <a class="op-link">废弃</a>
+                <a class="op-link">调整</a>
+                <a class="op-link">查看</a>
+              </td>
+              <td>系统</td>
+              <td>TX2026026270001</td>
+              <td>2000142606260021</td>
+              <td>2000142606260021</td>
+              <td>2026-08-01</td>
+              <td>2026-07-01 10:00:00</td>
+              <td>测试新增</td>
+              <td>2000</td>
+              <td>200014</td>
+              <td>SU0000003</td>
+              <td>长沙县顺驰旅游客运服务部</td>
+              <td>CAT003</td>
+              <td>支付日常津贴</td>
+              <td>SUB003</td>
+              <td>支付日常津贴</td>
+              <td>ACC003</td>
+              <td>日常费用</td>
+              <td>DEPT003</td>
+              <td>财务部</td>
+              <td>启用</td>
+              <td>2026-01-01</td>
+              <td>2026-12-31</td>
+              <td>日常运营费用摊销</td>
+              <td>CNY</td>
+              <td>11,000.00</td>
+              <td>2,200.00</td>
+              <td>5,400.00</td>
+              <td>5,600.00</td>
+              <td>0.00</td>
+              <td>进行中</td>
+              <td>成功</td>
+              <td>张丽</td>
+            </tr>
+            <tr>
+              <td><input type="checkbox" class="checkbox" /></td>
+              <td>
+                <a class="op-link">修改</a>
+                <a class="op-link">废弃</a>
+                <a class="op-link">调整</a>
+                <a class="op-link">查看</a>
+              </td>
+              <td>系统</td>
+              <td>TX2026026260001</td>
+              <td>2000142606260020</td>
+              <td>2000142606260020</td>
+              <td>2026-08-26</td>
+              <td>2026-07-01 10:00:00</td>
+              <td>测试新增</td>
+              <td>2000</td>
+              <td>200014</td>
+              <td>SU0000004</td>
+              <td>吉工供应链-财务专用</td>
+              <td>CAT004</td>
+              <td>支付日常津贴</td>
+              <td>SUB004</td>
+              <td>支付日常津贴</td>
+              <td>ACC004</td>
+              <td>日常费用</td>
+              <td>DEPT004</td>
+              <td>财务部</td>
+              <td>启用</td>
+              <td>2026-01-01</td>
+              <td>2026-12-31</td>
+              <td>日常运营费用摊销</td>
+              <td>GBP</td>
+              <td>11,500.00</td>
+              <td>2,300.00</td>
+              <td>5,600.00</td>
+              <td>5,900.00</td>
+              <td>0.00</td>
+              <td>进行中</td>
+              <td>成功</td>
+              <td>张丽</td>
+            </tr>
+            <tr>
+              <td><input type="checkbox" class="checkbox" /></td>
+              <td>
+                <a class="op-link">修改</a>
+                <a class="op-link">废弃</a>
+                <a class="op-link">调整</a>
+                <a class="op-link">查看</a>
+              </td>
+              <td>系统</td>
+              <td>TX2026026070006</td>
+              <td>3008002506062630</td>
+              <td>3008002506062630</td>
+              <td>2025-06-03</td>
+              <td>2026-07-01 10:00:00</td>
+              <td>US ELOGISTICS SERVICE CO...</td>
+              <td>3008</td>
+              <td>300800</td>
+              <td>SU0000005</td>
+              <td>HK WORLOTECH SUPPLY CHAIN...</td>
+              <td>CAT005</td>
+              <td>支付日常津贴</td>
+              <td>SUB005</td>
+              <td>支付日常津贴</td>
+              <td>ACC005</td>
+              <td>日常费用</td>
+              <td>DEPT005</td>
+              <td>财务部</td>
+              <td>启用</td>
+              <td>2026-01-01</td>
+              <td>2026-12-31</td>
+              <td>日常运营费用摊销</td>
+              <td>CNY</td>
+              <td>12,000.00</td>
+              <td>2,400.00</td>
+              <td>5,800.00</td>
+              <td>6,200.00</td>
+              <td>0.00</td>
+              <td>进行中</td>
+              <td>成功</td>
+              <td>张丽</td>
+            </tr>
+            <tr>
+              <td><input type="checkbox" class="checkbox" /></td>
+              <td>
+                <a class="op-link">修改</a>
+                <a class="op-link">废弃</a>
+                <a class="op-link">调整</a>
+                <a class="op-link">查看</a>
+              </td>
+              <td>系统</td>
+              <td>TX202606040001</td>
+              <td>3008002505282640</td>
+              <td>3008002505282640</td>
+              <td>2025-03-22</td>
+              <td>2026-07-01 10:00:00</td>
+              <td>US ELOGISTICS SERVICE CO...</td>
+              <td>3008</td>
+              <td>300800</td>
+              <td>SU0000006</td>
+              <td>HK WORLOTECH SUPPLY CHAIN...</td>
+              <td>CAT006</td>
+              <td>支付日常津贴</td>
+              <td>SUB006</td>
+              <td>支付日常津贴</td>
+              <td>ACC006</td>
+              <td>日常费用</td>
+              <td>DEPT006</td>
+              <td>财务部</td>
+              <td>启用</td>
+              <td>2026-01-01</td>
+              <td>2026-12-31</td>
+              <td>日常运营费用摊销</td>
+              <td>USD</td>
+              <td>12,500.00</td>
+              <td>2,500.00</td>
+              <td>6,000.00</td>
+              <td>6,500.00</td>
+              <td>0.00</td>
+              <td>进行中</td>
+              <td>成功</td>
+              <td>张丽</td>
+            </tr>
+            <tr>
+              <td><input type="checkbox" class="checkbox" /></td>
+              <td>
+                <a class="op-link">修改</a>
+                <a class="op-link">废弃</a>
+                <a class="op-link">调整</a>
+                <a class="op-link">查看</a>
+              </td>
+              <td>系统</td>
+              <td>TX202505300001</td>
+              <td>3008002505293643</td>
+              <td>3008002505293643</td>
+              <td>2025-03-26</td>
+              <td>2026-07-01 10:00:00</td>
+              <td>US ELOGISTICS SERVICE CO...</td>
+              <td>3008</td>
+              <td>300800</td>
+              <td>SU0000007</td>
+              <td>HK WORLOTECH SUPPLY CHAIN...</td>
+              <td>CAT007</td>
+              <td>支付日常津贴</td>
+              <td>SUB007</td>
+              <td>支付日常津贴</td>
+              <td>ACC007</td>
+              <td>日常费用</td>
+              <td>DEPT007</td>
+              <td>财务部</td>
+              <td>启用</td>
+              <td>2026-01-01</td>
+              <td>2026-12-31</td>
+              <td>日常运营费用摊销</td>
+              <td>CNY</td>
+              <td>13,000.00</td>
+              <td>2,600.00</td>
+              <td>6,200.00</td>
+              <td>6,800.00</td>
+              <td>0.00</td>
+              <td>进行中</td>
+              <td>成功</td>
+              <td>张丽</td>
+            </tr>
+            <tr>
+              <td><input type="checkbox" class="checkbox" /></td>
+              <td>
+                <a class="op-link">修改</a>
+                <a class="op-link">废弃</a>
+                <a class="op-link">调整</a>
+                <a class="op-link">查看</a>
+              </td>
+              <td>系统</td>
+              <td>TX202506070005</td>
+              <td>3008002508051592</td>
+              <td>3008002508051592</td>
+              <td>2025-06-03</td>
+              <td>2026-07-01 10:00:00</td>
+              <td>US ELOGISTICS SERVICE CO...</td>
+              <td>3008</td>
+              <td>300800</td>
+              <td>SU0000008</td>
+              <td>HK WORLOTECH SUPPLY CHAIN...</td>
+              <td>CAT008</td>
+              <td>支付日常津贴</td>
+              <td>SUB008</td>
+              <td>支付日常津贴</td>
+              <td>ACC008</td>
+              <td>日常费用</td>
+              <td>DEPT008</td>
+              <td>财务部</td>
+              <td>启用</td>
+              <td>2026-01-01</td>
+              <td>2026-12-31</td>
+              <td>日常运营费用摊销</td>
+              <td>GBP</td>
+              <td>13,500.00</td>
+              <td>2,700.00</td>
+              <td>6,400.00</td>
+              <td>7,100.00</td>
+              <td>0.00</td>
+              <td>进行中</td>
+              <td>成功</td>
+              <td>张丽</td>
+            </tr>
+            <tr>
+              <td><input type="checkbox" class="checkbox" /></td>
+              <td>
+                <a class="op-link">修改</a>
+                <a class="op-link">废弃</a>
+                <a class="op-link">调整</a>
+                <a class="op-link">查看</a>
+              </td>
+              <td>系统</td>
+              <td>TX202505310003</td>
+              <td>3008002505293562</td>
+              <td>3008002505293562</td>
+              <td>2025-03-01</td>
+              <td>2026-07-01 10:00:00</td>
+              <td>US ELOGISTICS SERVICE CO...</td>
+              <td>3008</td>
+              <td>300800</td>
+              <td>SU0000009</td>
+              <td>HK WORLOTECH SUPPLY CHAIN...</td>
+              <td>CAT009</td>
+              <td>支付日常津贴</td>
+              <td>SUB009</td>
+              <td>支付日常津贴</td>
+              <td>ACC009</td>
+              <td>日常费用</td>
+              <td>DEPT009</td>
+              <td>财务部</td>
+              <td>启用</td>
+              <td>2026-01-01</td>
+              <td>2026-12-31</td>
+              <td>日常运营费用摊销</td>
+              <td>CNY</td>
+              <td>14,000.00</td>
+              <td>2,800.00</td>
+              <td>6,600.00</td>
+              <td>7,400.00</td>
+              <td>0.00</td>
+              <td>进行中</td>
+              <td>成功</td>
+              <td>张丽</td>
+            </tr>
+            <tr>
+              <td><input type="checkbox" class="checkbox" /></td>
+              <td>
+                <a class="op-link">修改</a>
+                <a class="op-link">废弃</a>
+                <a class="op-link">调整</a>
+                <a class="op-link">查看</a>
+              </td>
+              <td>系统</td>
+              <td>TX202506070003</td>
+              <td>3008002506052045</td>
+              <td>3008002506052045</td>
+              <td>2025-06-03</td>
+              <td>2026-07-01 10:00:00</td>
+              <td>US ELOGISTICS SERVICE CO...</td>
+              <td>3008</td>
+              <td>300800</td>
+              <td>SU0000010</td>
+              <td>HK WORLOTECH SUPPLY CHAIN...</td>
+              <td>CAT0010</td>
+              <td>支付日常津贴</td>
+              <td>SUB0010</td>
+              <td>支付日常津贴</td>
+              <td>ACC0010</td>
+              <td>日常费用</td>
+              <td>DEPT0010</td>
+              <td>财务部</td>
+              <td>启用</td>
+              <td>2026-01-01</td>
+              <td>2026-12-31</td>
+              <td>日常运营费用摊销</td>
+              <td>USD</td>
+              <td>14,500.00</td>
+              <td>2,900.00</td>
+              <td>6,800.00</td>
+              <td>7,700.00</td>
+              <td>0.00</td>
+              <td>进行中</td>
+              <td>成功</td>
+              <td>张丽</td>
+            </tr>
+            <tr>
+              <td><input type="checkbox" class="checkbox" /></td>
+              <td>
+                <a class="op-link">修改</a>
+                <a class="op-link">废弃</a>
+                <a class="op-link">调整</a>
+                <a class="op-link">查看</a>
+              </td>
+              <td>系统</td>
+              <td>TX202505300009</td>
+              <td>3008002505293643</td>
+              <td>3008002505293643</td>
+              <td>2025-03-01</td>
+              <td>2026-07-01 10:00:00</td>
+              <td>US ELOGISTICS SERVICE CO...</td>
+              <td>3008</td>
+              <td>300800</td>
+              <td>SU0000011</td>
+              <td>HK WORLOTECH SUPPLY CHAIN...</td>
+              <td>CAT0011</td>
+              <td>支付日常津贴</td>
+              <td>SUB0011</td>
+              <td>支付日常津贴</td>
+              <td>ACC0011</td>
+              <td>日常费用</td>
+              <td>DEPT0011</td>
+              <td>财务部</td>
+              <td>启用</td>
+              <td>2026-01-01</td>
+              <td>2026-12-31</td>
+              <td>日常运营费用摊销</td>
+              <td>CNY</td>
+              <td>15,000.00</td>
+              <td>3,000.00</td>
+              <td>7,000.00</td>
+              <td>8,000.00</td>
+              <td>0.00</td>
+              <td>进行中</td>
+              <td>成功</td>
+              <td>张丽</td>
+            </tr>
+            <tr>
+              <td><input type="checkbox" class="checkbox" /></td>
+              <td>
+                <a class="op-link">修改</a>
+                <a class="op-link">废弃</a>
+                <a class="op-link">调整</a>
+                <a class="op-link">查看</a>
+              </td>
+              <td>系统</td>
+              <td>TX202505300007</td>
+              <td>3008002505283349</td>
+              <td>3008002505283349</td>
+              <td>2025-05-01</td>
+              <td>2026-07-01 10:00:00</td>
+              <td>US ELOGISTICS SERVICE CO...</td>
+              <td>3008</td>
+              <td>300800</td>
+              <td>SU0000012</td>
+              <td>HK WORLOTECH SUPPLY CHAIN...</td>
+              <td>CAT0012</td>
+              <td>支付日常津贴</td>
+              <td>SUB0012</td>
+              <td>支付日常津贴</td>
+              <td>ACC0012</td>
+              <td>日常费用</td>
+              <td>DEPT0012</td>
+              <td>财务部</td>
+              <td>启用</td>
+              <td>2026-01-01</td>
+              <td>2026-12-31</td>
+              <td>日常运营费用摊销</td>
+              <td>CNY</td>
+              <td>15,500.00</td>
+              <td>3,100.00</td>
+              <td>7,200.00</td>
+              <td>8,300.00</td>
+              <td>0.00</td>
+              <td>进行中</td>
+              <td>成功</td>
+              <td>张丽</td>
+            </tr>
+            <tr>
+              <td><input type="checkbox" class="checkbox" /></td>
+              <td>
+                <a class="op-link">修改</a>
+                <a class="op-link">废弃</a>
+                <a class="op-link">调整</a>
+                <a class="op-link">查看</a>
+              </td>
+              <td>系统</td>
+              <td>TX202506070004</td>
+              <td>3008002506051968</td>
+              <td>3008002506051968</td>
+              <td>2025-06-03</td>
+              <td>2026-07-01 10:00:00</td>
+              <td>US ELOGISTICS SERVICE CO...</td>
+              <td>3008</td>
+              <td>300800</td>
+              <td>SU0000013</td>
+              <td>HK WORLOTECH SUPPLY CHAIN...</td>
+              <td>CAT0013</td>
+              <td>支付日常津贴</td>
+              <td>SUB0013</td>
+              <td>支付日常津贴</td>
+              <td>ACC0013</td>
+              <td>日常费用</td>
+              <td>DEPT0013</td>
+              <td>财务部</td>
+              <td>启用</td>
+              <td>2026-01-01</td>
+              <td>2026-12-31</td>
+              <td>日常运营费用摊销</td>
+              <td>CNY</td>
+              <td>16,000.00</td>
+              <td>3,200.00</td>
+              <td>7,400.00</td>
+              <td>8,600.00</td>
+              <td>0.00</td>
+              <td>进行中</td>
+              <td>成功</td>
+              <td>张丽</td>
+            </tr>
+            <tr>
+              <td><input type="checkbox" class="checkbox" /></td>
+              <td>
+                <a class="op-link">修改</a>
+                <a class="op-link">废弃</a>
+                <a class="op-link">调整</a>
+                <a class="op-link">查看</a>
+              </td>
+              <td>系统</td>
+              <td>TX202506060004</td>
+              <td>3008002506046963</td>
+              <td>3008002506046963</td>
+              <td>2025-06-01</td>
+              <td>2026-07-01 10:00:00</td>
+              <td>US ELOGISTICS SERVICE CO...</td>
+              <td>3008</td>
+              <td>300800</td>
+              <td>SU0000014</td>
+              <td>HK WORLOTECH SUPPLY CHAIN...</td>
+              <td>CAT0014</td>
+              <td>支付日常津贴</td>
+              <td>SUB0014</td>
+              <td>支付日常津贴</td>
+              <td>ACC0014</td>
+              <td>日常费用</td>
+              <td>DEPT0014</td>
+              <td>财务部</td>
+              <td>启用</td>
+              <td>2026-01-01</td>
+              <td>2026-12-31</td>
+              <td>日常运营费用摊销</td>
+              <td>CNY</td>
+              <td>16,500.00</td>
+              <td>3,300.00</td>
+              <td>7,600.00</td>
+              <td>8,900.00</td>
+              <td>0.00</td>
+              <td>进行中</td>
+              <td>成功</td>
+              <td>张丽</td>
+            </tr>
+            <tr>
+              <td><input type="checkbox" class="checkbox" /></td>
+              <td>
+                <a class="op-link">修改</a>
+                <a class="op-link">废弃</a>
+                <a class="op-link">调整</a>
+                <a class="op-link">查看</a>
+              </td>
+              <td>系统</td>
+              <td>TX202506060003</td>
+              <td>3008002506043453</td>
+              <td>3008002506043453</td>
+              <td>2025-06-04</td>
+              <td>2026-07-01 10:00:00</td>
+              <td>US ELOGISTICS SERVICE CO...</td>
+              <td>3008</td>
+              <td>300800</td>
+              <td>SU0000015</td>
+              <td>HK WORLOTECH SUPPLY CHAIN...</td>
+              <td>CAT0015</td>
+              <td>支付日常津贴</td>
+              <td>SUB0015</td>
+              <td>支付日常津贴</td>
+              <td>ACC0015</td>
+              <td>日常费用</td>
+              <td>DEPT0015</td>
+              <td>财务部</td>
+              <td>启用</td>
+              <td>2026-01-01</td>
+              <td>2026-12-31</td>
+              <td>日常运营费用摊销</td>
+              <td>CNY</td>
+              <td>17,000.00</td>
+              <td>3,400.00</td>
+              <td>7,800.00</td>
+              <td>9,200.00</td>
+              <td>0.00</td>
+              <td>进行中</td>
+              <td>成功</td>
+              <td>张丽</td>
+            </tr>
+            <tr>
+              <td><input type="checkbox" class="checkbox" /></td>
+              <td>
+                <a class="op-link">修改</a>
+                <a class="op-link">废弃</a>
+                <a class="op-link">调整</a>
+                <a class="op-link">查看</a>
+              </td>
+              <td>系统</td>
+              <td>TX202506140004</td>
+              <td>2000142605100015</td>
+              <td>2000142605100015</td>
+              <td>2026-06-10</td>
+              <td>2026-07-01 10:00:00</td>
+              <td>测试新增</td>
+              <td>2000</td>
+              <td>200014</td>
+              <td>SU0000016</td>
+              <td>长沙县顺驰旅游客运服务部</td>
+              <td>CAT0016</td>
+              <td>支付日常津贴</td>
+              <td>SUB0016</td>
+              <td>支付日常津贴</td>
+              <td>ACC0016</td>
+              <td>日常费用</td>
+              <td>DEPT0016</td>
+              <td>财务部</td>
+              <td>启用</td>
+              <td>2026-01-01</td>
+              <td>2026-12-31</td>
+              <td>日常运营费用摊销</td>
+              <td>CNY</td>
+              <td>17,500.00</td>
+              <td>3,500.00</td>
+              <td>8,000.00</td>
+              <td>9,500.00</td>
+              <td>0.00</td>
+              <td>进行中</td>
+              <td>成功</td>
+              <td>张丽</td>
+            </tr>
+            <tr>
+              <td><input type="checkbox" class="checkbox" /></td>
+              <td>
+                <a class="op-link">修改</a>
+                <a class="op-link">废弃</a>
+                <a class="op-link">调整</a>
+                <a class="op-link">查看</a>
+              </td>
+              <td>系统</td>
+              <td>TX202506140003</td>
+              <td>9001002605100025</td>
+              <td>9001002605100025</td>
+              <td>2026-06-01</td>
+              <td>2026-07-01 10:00:00</td>
+              <td>深圳腾海科技有限公司/欧亚分公...</td>
+              <td>9001</td>
+              <td>900100</td>
+              <td>SU0000017</td>
+              <td>深圳市新海运国际货运公司...</td>
+              <td>CAT0017</td>
+              <td>支付日常津贴</td>
+              <td>SUB0017</td>
+              <td>支付日常津贴</td>
+              <td>ACC0017</td>
+              <td>日常费用</td>
+              <td>DEPT0017</td>
+              <td>财务部</td>
+              <td>启用</td>
+              <td>2026-01-01</td>
+              <td>2026-12-31</td>
+              <td>日常运营费用摊销</td>
+              <td>CNY</td>
+              <td>18,000.00</td>
+              <td>3,600.00</td>
+              <td>8,200.00</td>
+              <td>9,800.00</td>
+              <td>0.00</td>
+              <td>进行中</td>
+              <td>成功</td>
+              <td>张丽</td>
+            </tr>
+          </tbody>
+       </table>
+       <div class="table-total-row" id="tableTotalRow" style="display:none;">
+         <table class="data-table total-table">
+           <colgroup>
+             <col style="width: 28px;" />
+             <col style="width: 140px;" />
+             <col style="width: 80px;" />
+             <col style="width: 140px;" />
+             <col style="width: 140px;" />
+             <col style="width: 140px;" />
+             <col style="width: 110px;" />
+             <col style="width: 110px;" />
+             <col style="width: 220px;" />
+             <col style="width: 80px;" />
+             <col style="width: 100px;" />
+             <col style="width: 120px;" />
+             <col style="width: 220px;" />
+             <col style="width: 100px;" />
+             <col style="width: 110px;" />
+             <col style="width: 100px;" />
+             <col style="width: 110px;" />
+             <col style="width: 100px;" />
+             <col style="width: 110px;" />
+             <col style="width: 120px;" />
+             <col style="width: 140px;" />
+             <col style="width: 120px;" />
+             <col style="width: 110px;" />
+             <col style="width: 110px;" />
+             <col style="width: 200px;" />
+             <col style="width: 60px;" />
+             <col style="width: 100px;" />
+             <col style="width: 110px;" />
+             <col style="width: 110px;" />
+             <col style="width: 110px;" />
+             <col style="width: 100px;" />
+             <col style="width: 100px;" />
+             <col style="width: 160px;" />
+             <col style="width: 100px;" />
+           </colgroup>
+           <tbody id="tableTotalBody">
+             <!-- rendered by JS -->
+           </tbody>
+         </table>
+       </div>
+      </div>
+
+      <div class="pagination">
+          <span class="total">共 1049 条</span>
+          <select class="page-size">
+            <option>10条/页</option>
+            <option>20条/页</option>
+            <option>50条/页</option>
+            <option>100条/页</option>
+          </select>
+          <button class="page-btn">‹</button>
+          <button class="page-btn active">1</button>
+          <button class="page-btn">2</button>
+          <button class="page-btn">3</button>
+          <button class="page-btn">4</button>
+          <button class="page-btn">5</button>
+          <button class="page-btn">...</button>
+          <button class="page-btn">11</button>
+          <button class="page-btn">›</button>
+          <div class="page-jump">
+            前往
+            <input type="text" value="1" />
+            页
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+  function toggleAllCheckboxes(source) {
+    const checkboxes = document.querySelectorAll('.data-table tbody input[type="checkbox"]');
+    checkboxes.forEach(cb => cb.checked = source.checked);
+  }
+  document.querySelector('.data-table thead input[type="checkbox"]').addEventListener('change', function(e) {
+    toggleAllCheckboxes(e.target);
+  });
+
+  function toggleTotalBar() {
+    const totalRow = document.getElementById('tableTotalRow');
+    if (!totalRow) return;
+    if (totalRow.style.display === 'none') {
+      calcAndRenderTotals();
+      totalRow.style.display = 'block';
+      totalRow.classList.add('show');
+      syncTotalRowWidths();
+    } else {
+      totalRow.style.display = 'none';
+      totalRow.classList.remove('show');
+    }
+  }
+
+  function calcAndRenderTotals() {
+    const totalBody = document.getElementById('tableTotalBody');
+    const rows = document.querySelectorAll('.data-table:not(.total-table) tbody tr');
+    const totals = {};
+    rows.forEach(function(row) {
+      const cells = row.querySelectorAll('td');
+      if (cells.length < 31) return;
+      const currency = cells[25] ? cells[25].textContent.trim() : '';
+      if (!currency) return;
+
+      function parseAmount(idx) {
+        var text = cells[idx] ? cells[idx].textContent.replace(/,/g, '').trim() : '0';
+        var val = parseFloat(text);
+        return isNaN(val) ? 0 : val;
+      }
+
+      if (!totals[currency]) {
+        totals[currency] = {
+          摊销金额: 0,
+          初始已摊销金额: 0,
+          累计摊销金额: 0,
+          剩余摊销金额: 0,
+          已调整金额: 0
+        };
+      }
+      totals[currency].摊销金额 += parseAmount(26);
+      totals[currency].初始已摊销金额 += parseAmount(27);
+      totals[currency].累计摊销金额 += parseAmount(28);
+      totals[currency].剩余摊销金额 += parseAmount(29);
+      totals[currency].已调整金额 += parseAmount(30);
+    });
+
+    var html = '';
+    Object.keys(totals).forEach(function(currency) {
+      var t = totals[currency];
+      function fmt(n) {
+        return n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      }
+      html += '<tr>' +
+        '<td></td>' +
+        '<td></td>' +
+        '<td colspan="23" style="text-align:right;font-weight:600;color:#1a5bb5;">' + currency + '&nbsp;合计</td>' +
+        '<td>' + currency + '</td>' +
+        '<td>' + fmt(t.摊销金额) + '</td>' +
+        '<td>' + fmt(t.初始已摊销金额) + '</td>' +
+        '<td>' + fmt(t.累计摊销金额) + '</td>' +
+        '<td>' + fmt(t.剩余摊销金额) + '</td>' +
+        '<td>' + fmt(t.已调整金额) + '</td>' +
+        '<td></td>' +
+        '<td></td>' +
+        '<td></td>' +
+      '</tr>';
+    });
+
+    totalBody.innerHTML = html;
+  }
+
+  function syncTotalRowWidths() {
+    var mainTable = document.querySelector('.data-table:not(.total-table)');
+    var totalTable = document.querySelector('.total-table');
+    if (!mainTable || !totalTable) return;
+
+    var mainHeaders = mainTable.querySelectorAll('thead th');
+    var totalCols = totalTable.querySelectorAll('colgroup col');
+
+    mainHeaders.forEach(function(th, i) {
+      var w = th.offsetWidth;
+      if (totalCols[i]) {
+        totalCols[i].style.width = w + 'px';
+      }
+    });
+
+    // Also set total table width exactly = main table scroll width
+    totalTable.style.width = mainTable.scrollWidth + 'px';
+    totalTable.parentElement.style.width = mainTable.scrollWidth + 'px';
+  }
+
+  window.addEventListener('resize', function() {
+    var totalRow = document.getElementById('tableTotalRow');
+    if (totalRow && totalRow.style.display !== 'none') {
+      syncTotalRowWidths();
+    }
+  });
+</script>
+</body>
+</html>
