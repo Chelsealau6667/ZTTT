@@ -919,8 +919,9 @@ function calcAndRenderTotals(){
       var v=parseFloat(text);
       return isNaN(v)?0:v;
     }
-    if(!totals[currency]) totals[currency]={jtdwbbz:0,csjije:0,bqjije:0,ybzsj:0,wbzje:0};
+    if(!totals[currency]) totals[currency]={jtdwbbz:0,ppdzdsl:0,csjije:0,bqjije:0,ybzsj:0,wbzje:0};
     totals[currency].jtdwbbz+=getAmt(21);
+    totals[currency].ppdzdsl+=getAmt(22);
     totals[currency].csjije+=getAmt(26);
     totals[currency].bqjije+=getAmt(27);
     totals[currency].ybzsj+=getAmt(30);
@@ -937,7 +938,8 @@ function calcAndRenderTotals(){
     html+='<td colspan="9" style="background:#e6f7ff;"></td>';
     html+='<td style="background:#e6f7ff;font-weight:600;position:sticky;left:156px;width:50px;min-width:50px;">'+currency+'</td>';
     html+='<td style="background:#e6f7ff;font-weight:600;">'+fmtMoney(t.jtdwbbz)+'</td>';
-    html+='<td colspan="4" style="background:#e6f7ff;"></td>';
+    html+='<td style="background:#e6f7ff;font-weight:600;">'+t.ppdzdsl+'</td>';
+    html+='<td colspan="3" style="background:#e6f7ff;"></td>';
     html+='<td style="background:#e6f7ff;font-weight:600;">'+fmtMoney(t.csjije)+'</td>';
     html+='<td style="background:#e6f7ff;font-weight:600;">'+fmtMoney(t.bqjije)+'</td>';
     html+='<td colspan="2" style="background:#e6f7ff;"></td>';
