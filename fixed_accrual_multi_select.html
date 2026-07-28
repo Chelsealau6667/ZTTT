@@ -1,0 +1,982 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>R407 固定费用计提模块 - 匹配报账单多选优化原型</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:"Microsoft YaHei",Arial,sans-serif;font-size:12px;color:#333;background:#f0f3f4;line-height:1.6}
+
+/* ===== 顶部 ===== */
+.topbar{height:48px;background:linear-gradient(90deg,#001529 0%,#002140 100%);display:flex;align-items:center;justify-content:space-between;padding:0 20px;position:sticky;top:0;z-index:200}
+.topbar .logo{display:flex;align-items:center;gap:10px;color:#fff;font-size:16px;font-weight:600}
+.topbar .right{display:flex;align-items:center;gap:16px;color:rgba(255,255,255,.7);font-size:12px}
+
+/* ===== Tab栏 ===== */
+.tabbar{height:38px;background:#fff;border-bottom:1px solid #d9d9d9;display:flex;align-items:center;padding-left:8px;gap:2px}
+
+/* ===== 布局 ===== */
+.wrap{display:flex;min-height:calc(100vh - 86px)}
+.sidebar{width:200px;background:#001529;color:#fff;flex-shrink:0;overflow-y:auto;font-size:13px}
+.main{flex:1;padding:12px;overflow:auto}
+
+/* ===== 面板 ===== */
+.panel{background:#fff;border:1px solid #e0e4e8;border-radius:2px;margin-bottom:12px}
+.panel-hd{padding:10px 16px;font-size:13px;font-weight:600;color:#333;background:#f7f8fa;border-bottom:1px solid #e8e8e8}
+.panel-bd{padding:16px}
+
+/* ===== 按钮 ===== */
+.btn{display:inline-flex;align-items:center;gap:4px;height:28px;padding:0 14px;border-radius:2px;font-size:12px;cursor:pointer;border:1px solid transparent;transition:all .15s}
+.btn.btn-qry{background:#1890ff;color:#fff;border-color:#1890ff}
+.btn.btn-qry:hover{background:#40a9ff}
+.btn.btn-dft{background:#fff;color:#666;border-color:#d9d9d9}
+.btn.btn-dft:hover{border-color:#1890ff;color:#1890ff}
+.btn.btn-org{background:#fff;color:#d46b08;border-color:#ffd591}
+.btn.btn-org:hover{background:#fff7e6}
+.btn.btn-org-fill{background:#fa8c16;color:#fff;border-color:#fa8c16}
+.btn.btn-org-fill:hover{background:#ff9c2e}
+.btn.btn-red{background:#fff;color:#ff4d4f;border-color:#ffa39e}
+.btn.btn-red:hover{background:#fff1f0}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+
+/* ===== 表格工具栏 ===== */
+.toolbar{display:flex;justify-content:space-between;align-items:center;padding:10px 0}
+.toolbar-l,.toolbar-r{display:flex;gap:8px;align-items:center}
+
+/* ===== 数据表格 ===== */
+.table-wrap{overflow:auto;max-height:500px;border:1px solid #e8e8e8}
+.data-table{width:100%;border-collapse:collapse;font-size:12px;table-layout:auto}
+.data-table th,.data-table td{padding:8px 10px;border:1px solid #e8e8e8;white-space:nowrap;text-align:center}
+.data-table th{background:#fafafa;font-weight:600;color:#333;position:sticky;top:0;z-index:10}
+.data-table td{text-align:left}
+.data-table td:first-child,.data-table th:first-child{text-align:center}
+.data-table tbody tr:nth-child(even){background:#fafbfc}
+.data-table tbody tr:hover{background:#e6f7ff}
+.data-table tbody tr.selected{background:#bae7ff}
+
+/* 操作列 */
+.op-links{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.op-links a{font-size:12px;color:#1890ff;text-decoration:none;white-space:nowrap}
+.op-links a:hover{text-decoration:underline}
+.op-links a.red{color:#ff4d4f}
+.op-links a.gray{color:#999;cursor:not-allowed;text-decoration:none}
+
+/* ===== Tag ===== */
+.tag{display:inline-block;padding:1px 5px;border-radius:2px;font-size:11px;font-weight:500;line-height:1.4}
+.tag-org{background:#fff7e6;color:#d46b08;border:1px solid #ffd591}
+.tag-blue{background:#e6f7ff;color:#096dd9;border:1px solid #91d5ff}
+.tag-green{background:#f6ffed;color:#389e0d;border:1px solid #b7eb8f}
+.tag-red{background:#fff1f0;color:#cf1322;border:1px solid #ffa39e}
+.tag-gray{background:#f5f5f5;color:#666;border:1px solid #d9d9d9}
+.tag-new{display:inline-block;background:#ff4d4f;color:#fff;font-size:10px;padding:1px 4px;border-radius:2px;margin-left:4px;vertical-align:middle;font-weight:500}
+
+/* ===== 弹窗 ===== */
+.modal-bg{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;z-index:1000}
+.modal-bg.show{display:flex}
+.modal-box{background:#fff;border-radius:4px;box-shadow:0 8px 32px rgba(0,0,0,.2);max-width:95vw;max-height:90vh;overflow:hidden;display:flex;flex-direction:column}
+.modal-hd{padding:14px 20px;border-bottom:1px solid #f0f0f0;display:flex;justify-content:space-between;align-items:center}
+.modal-hd h4{margin:0;font-size:15px;font-weight:600}
+.modal-hd .x{font-size:20px;color:#999;cursor:pointer;border:none;background:none}
+.modal-hd .x:hover{color:#333}
+.modal-bd{padding:0;overflow-y:auto;flex:1;display:flex;flex-direction:column}
+.modal-ft{padding:12px 20px;border-top:1px solid #f0f0f0;display:flex;justify-content:flex-end;gap:8px}
+
+/* ===== Toast ===== */
+.toast{position:fixed;top:60px;left:50%;transform:translateX(-50%);padding:10px 24px;border-radius:4px;font-size:13px;z-index:3000;display:none;box-shadow:0 4px 12px rgba(0,0,0,.15)}
+.toast.show{display:block}
+.toast-ok{background:#f6ffed;color:#52c41a;border:1px solid #b7eb8f}
+.toast-err{background:#fff1f0;color:#ff4d4f;border:1px solid #ffa39e}
+.toast-info{background:#e6f7ff;color:#1890ff;border:1px solid #91d5ff}
+
+/* ===== 分页 ===== */
+.pager{display:flex;justify-content:flex-end;align-items:center;padding:12px 0;gap:4px;font-size:12px}
+.pager a,.pager span{padding:4px 10px;border:1px solid #d9d9d9;border-radius:2px;color:#333;text-decoration:none;cursor:pointer}
+.pager a:hover{border-color:#1890ff;color:#1890ff}
+.pager a.active{background:#1890ff;color:#fff;border-color:#1890ff}
+.pager select{height:28px;border:1px solid #d9d9d9;border-radius:2px;font-size:12px}
+
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:#f1f1f1}
+::-webkit-scrollbar-thumb{background:#c1c1c1;border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:#a8a8a8}
+
+/* ===== 方案说明面板 ===== */
+.scheme-panel{background:#fff;border:1px solid #e0e4e8;border-radius:2px;margin-bottom:16px}
+.scheme-panel .hd{padding:12px 16px;font-size:14px;font-weight:600;color:#096dd9;background:#e6f7ff;border-bottom:1px solid #91d5ff}
+.scheme-panel .bd{padding:16px}
+.scheme-panel .section-title{font-size:13px;font-weight:600;color:#333;margin:16px 0 8px;padding-left:8px;border-left:3px solid #1890ff}
+.scheme-panel .section-title:first-child{margin-top:0}
+.scheme-panel ul{margin:8px 0 8px 24px}
+.scheme-panel li{margin:6px 0;color:#555;font-size:12px;line-height:1.8}
+.scheme-panel .highlight{background:#fff7e6;padding:2px 6px;border-radius:2px;color:#d46b08;font-weight:500}
+.scheme-panel .code-like{background:#f6f8fa;padding:8px 12px;border-radius:3px;font-family:'Courier New',monospace;font-size:11px;color:#333;margin:8px 0;border-left:3px solid #1890ff}
+.scheme-panel .flow-step{display:flex;align-items:center;gap:8px;margin:8px 0;padding:8px 12px;background:#f6ffed;border:1px solid #b7eb8f;border-radius:2px}
+.scheme-panel .flow-step .num{width:22px;height:22px;border-radius:50%;background:#52c41a;color:#fff;font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.scheme-panel .compare-table{width:100%;border-collapse:collapse;font-size:12px;margin:12px 0}
+.scheme-panel .compare-table th,.scheme-panel .compare-table td{padding:10px 12px;border:1px solid #e8e8e8;text-align:left}
+.scheme-panel .compare-table th{background:#fafafa;font-weight:600;color:#333}
+.scheme-panel .compare-table .old{color:#999}
+.scheme-panel .compare-table .new{color:#1890ff;font-weight:500}
+
+/* ===== 多选弹窗专用样式 ===== */
+.modal-top-bar{padding:12px 20px;border-bottom:1px solid #f0f0f0;background:#fafafa;display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap}
+.modal-top-bar .field{display:flex;flex-direction:column;gap:4px}
+.modal-top-bar .field label{font-size:12px;color:#666;font-weight:500}
+.modal-top-bar .field input,.modal-top-bar .field select{height:32px;border:1px solid #d9d9d9;border-radius:2px;padding:4px 8px;font-size:12px;min-width:180px}
+.modal-top-bar .field input:disabled{background:#f5f5f5;color:#999}
+
+/* 骨架屏 */
+.skeleton{height:20px;background:linear-gradient(90deg,#f0f0f0 25%,#e0e0e0 50%,#f0f0f0 75%);background-size:200% 100%;animation:skeleton-loading 1.5s ease-in-out infinite;border-radius:2px}
+@keyframes skeleton-loading{0%{background-position:200% 0}100%{background-position:-200% 0}}
+
+/* 弹窗主体：双区域布局 */
+.modal-body{display:flex;flex:1;overflow:hidden}
+.modal-body .left-area{flex:1;display:flex;flex-direction:column;overflow:hidden;border-right:1px solid #f0f0f0}
+.modal-body .right-area{width:260px;background:#fafafa;display:flex;flex-direction:column;overflow:hidden}
+
+/* 左区域 - 表格 */
+.left-area .toolbar{padding:8px 16px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #f0f0f0;flex-wrap:wrap;gap:8px}
+.left-area .toolbar .info{color:#666;font-size:12px}
+.left-area .toolbar .info strong{color:#1890ff}
+.left-area .table-wrap{flex:1;overflow:auto;border:none;max-height:none}
+.left-area .pager{padding:8px 16px;border-top:1px solid #f0f0f0;justify-content:center}
+
+/* 复选框样式 */
+.cb-wrap{display:flex;align-items:center;justify-content:center}
+.cb-wrap input[type="checkbox"]{width:16px;height:16px;cursor:pointer}
+
+/* 右区域 - 已选汇总 */
+.right-area .sel-hd{padding:12px 14px;font-size:13px;font-weight:600;color:#333;border-bottom:1px solid #e8e8e8;background:#f0f8ff}
+.right-area .sel-bd{flex:1;overflow-y:auto;padding:8px}
+.right-area .sel-ft{padding:12px 14px;border-top:1px solid #e8e8e8;background:#fff}
+
+/* 已选卡片 */
+.sel-card{background:#fff;border:1px solid #e8e8e8;border-radius:3px;padding:10px 12px;margin-bottom:8px;position:relative;transition:all .15s}
+.sel-card:hover{border-color:#1890ff;box-shadow:0 2px 6px rgba(24,144,255,.12)}
+.sel-card .del{position:absolute;top:6px;right:8px;color:#ff4d4f;font-size:16px;cursor:pointer;line-height:1;opacity:.6}
+.sel-card .del:hover{opacity:1}
+.sel-card .title{font-size:12px;font-weight:600;color:#333;margin-bottom:4px;padding-right:20px}
+.sel-card .meta{font-size:11px;color:#888;line-height:1.6}
+.sel-card .meta .money{color:#ff4d4f;font-weight:600}
+.sel-card .meta .money.positive{color:#52c41a}
+
+/* 汇总数字 */
+.sel-summary{display:flex;justify-content:space-between;align-items:center;padding:8px 0;font-size:12px}
+.sel-summary .label{color:#666}
+.sel-summary .value{color:#ff4d4f;font-weight:600;font-size:14px;font-family:'Courier New',monospace}
+
+/* 空状态 */
+.empty-state{text-align:center;padding:40px 20px;color:#999;font-size:12px}
+.empty-state .icon{font-size:32px;margin-bottom:8px}
+
+/* 行标记 */
+.row-tag{display:inline-block;font-size:10px;padding:1px 4px;border-radius:2px;margin-left:4px}
+.row-tag-1{background:#e6f7ff;color:#096dd9;border:1px solid #91d5ff}
+.row-tag-2{background:#f6ffed;color:#389e0d;border:1px solid #b7eb8f}
+.row-tag-3{background:#fff7e6;color:#d46b08;border:1px solid #ffd591}
+
+/* 筛选标签 */
+.filter-tags{display:flex;gap:6px;flex-wrap:wrap}
+.filter-tag{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:2px;font-size:11px;background:#f0f0f0;color:#666;border:1px solid #d9d9d9}
+.filter-tag .close{color:#999;cursor:pointer;font-size:12px}
+.filter-tag .close:hover{color:#ff4d4f}
+
+/* 加载动画 */
+.loading-spin{display:inline-block;width:14px;height:14px;border:2px solid #e8e8e8;border-top-color:#1890ff;border-radius:50%;animation:spin .8s linear infinite;vertical-align:middle;margin-right:6px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* 方案对比图 */
+.flow-diagram{display:flex;align-items:center;gap:16px;margin:16px 0;padding:16px;background:#f8f9fa;border-radius:4px;flex-wrap:wrap}
+.flow-diagram .box{background:#fff;border:1px solid #d9d9d9;border-radius:3px;padding:10px 16px;font-size:12px;text-align:center;min-width:120px}
+.flow-diagram .box.primary{border-color:#1890ff;background:#e6f7ff;color:#096dd9;font-weight:600}
+.flow-diagram .arrow{color:#999;font-size:16px}
+
+/* 问题提示 */
+.problem-tag{display:inline-block;padding:2px 6px;border-radius:2px;font-size:11px;margin-left:4px}
+.problem-tag.warn{background:#fff7e6;color:#d46b08;border:1px solid #ffd591}
+.problem-tag.danger{background:#fff1f0;color:#cf1322;border:1px solid #ffa39e}
+.problem-tag.ok{background:#f6ffed;color:#389e0d;border:1px solid #b7eb8f}
+
+/* 主表格 - 可展开行 */
+.expand-row{background:#f0f8ff !important}
+.expand-cell{padding:0 !important}
+.expand-inner{padding:12px 20px;background:#f0f8ff;border-bottom:1px solid #e8e8e8}
+.expand-inner .title{font-size:12px;font-weight:600;color:#096dd9;margin-bottom:8px}
+.expand-inner table{width:100%;border-collapse:collapse;font-size:11px}
+.expand-inner th,.expand-inner td{padding:6px 10px;border:1px solid #d9d9d9;text-align:left}
+.expand-inner th{background:#e6f7ff;color:#096dd9;font-weight:600}
+.expand-inner td{background:#fff}
+</style>
+</head>
+<body>
+<!-- Toast -->
+<div class="toast toast-ok" id="toast">操作成功</div>
+
+<!-- 顶部 -->
+<div class="topbar">
+    <div class="logo">
+        <span style="font-size:20px;">🏢</span>
+        <span>纵腾集团 - 财务共享中心（费用计提多选交互设计原型）</span>
+    </div>
+</div>
+
+<div class="main" style="padding:20px;max-width:1400px;margin:0 auto;">
+
+<!-- ==================== 方案总览 ==================== -->
+<div class="scheme-panel">
+    <div class="hd">📋 方案总览：匹配报账单「费用行多选」交互设计方案</div>
+    <div class="bd">
+        <div class="section-title">一、当前问题诊断</div>
+        <table class="compare-table">
+            <thead><tr><th width="120">维度</th><th>当前方案</th><th style="color:#ff4d4f;">存在的问题</th></tr></thead>
+            <tbody>
+                <tr>
+                    <td><strong>选择方式</strong></td>
+                    <td class="old">点击"报账业务小类" → 弹窗单选一条费用信息行</td>
+                    <td>同一报账单下有多条小类行时，需要反复操作多次，效率低</td>
+                </tr>
+                <tr>
+                    <td><strong>数量级</strong></td>
+                    <td class="old">一次弹窗展示该报账单全部费用行（无分页）</td>
+                    <td>当报账单×小类数量大时，弹窗一次加载过多数据，海外用户等待时间长</td>
+                </tr>
+                <tr>
+                    <td><strong>回显逻辑</strong></td>
+                    <td class="old">单选后回显到当前行的"业务小类"单元格</td>
+                    <td>多选后无法在一个单元格中回显多条记录</td>
+                </tr>
+                <tr>
+                    <td><strong>海外延迟</strong></td>
+                    <td class="old">每次打开弹窗都重新请求费用行数据</td>
+                    <td>海外用户每次点击都需等待网络往返，体验差</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="section-title">二、新版本交互方案（核心改进）</div>
+        <div class="flow-diagram">
+            <div class="box">输入报账单号<br><small style="color:#666;">主表新增行</small></div>
+            <div class="arrow">→</div>
+            <div class="box primary">点击「业务小类」<br><small>弹出多选弹窗</small></div>
+            <div class="arrow">→</div>
+            <div class="box">复选框多选<br><small>费用信息行</small></div>
+            <div class="arrow">→</div>
+            <div class="box primary">确定关闭弹窗<br><small>主表拆行展示</small></div>
+            <div class="arrow">→</div>
+            <div class="box">系统金额自动带出<br><small>每行独立显示</small></div>
+        </div>
+
+        <div class="section-title">三、关键设计决策</div>
+        <ul>
+            <li><strong class="highlight">多选后处理：拆行而非合并</strong> —— 选中3条费用行，主表拆分为3行，每行独立展示小类/时间/金额。原因：不同费用行的业务时间、金额、部门均可能不同，合并会导致信息丢失。</li>
+            <li><strong class="highlight">不回显到弹窗触发单元格</strong> —— 直接在弹窗关闭后刷新主表数据行。因多选后原单行逻辑已无法承载多条数据。</li>
+            <li><strong class="highlight">弹窗内分页加载</strong> —— 默认50条/页，最多展示100条，配合虚拟滚动避免DOM过载。</li>
+            <li><strong class="highlight">前端本地缓存</strong> —— 同一报账单号查询结果缓存到sessionStorage，减少海外网络往返。</li>
+            <li><strong class="highlight">右侧已选汇总区</strong> —— 实时可视化已选中的内容，防止误操作。</li>
+        </ul>
+
+        <div class="section-title">四、海外延迟专项优化</div>
+        <ul>
+            <li><strong>骨架屏过渡：</strong>查询费用行时显示骨架屏，海外用户感知"正在加载"而非白屏等待。</li>
+            <li><strong>本地缓存策略：</strong>报账单号作为key，费用行数据缓存到sessionStorage + 内存缓存，有效期5分钟。</li>
+            <li><strong>服务端预加载（可选）：</strong>主表加载时，服务端自动返回已匹配报账单的费用行摘要（数量、金额区间），减少弹窗内全量查询。</li>
+            <li><strong>分页+字段精简：</strong>仅返回弹窗展示必需字段（8个），而非报账单全量数据。</li>
+            <li><strong>防抖输入查询：</strong>如支持输入报账单号即时查询，使用500ms防抖避免频繁请求。</li>
+        </ul>
+
+        <div class="section-title">五、研发实现建议</div>
+        <div class="code-like">前端接口设计：<br>
+GET /api/bill/{billNo}/expense-lines?category=&subCategory=&page=1&pageSize=50<br>
+返回：{ total: 200, data: [...], fromCache: false }<br><br>
+POST /api/accrual/match-lines/batch-add<br>
+入参：{ accrualProjectId, billNo, expenseLineIds: [101, 102, 103] }<br>
+返回：{ success: true, inserted: 3, lines: [...] }
+        </div>
+        <div class="code-like">数据表设计建议：<br>
+-- 主表每条匹配记录独立存储，通过billNo关联<br>
+CREATE TABLE t_accrual_bill_match (<br>
+&nbsp;&nbsp;id BIGINT PRIMARY KEY,<br>
+&nbsp;&nbsp;accrual_project_id BIGINT,    -- 计提项目ID<br>
+&nbsp;&nbsp;match_type VARCHAR(10),       -- 自动/手动<br>
+&nbsp;&nbsp;bill_no VARCHAR(50),          -- 报账单号<br>
+&nbsp;&nbsp;expense_line_id BIGINT,       -- <span style="color:#ff4d4f;">费用行ID（新增）</span><br>
+&nbsp;&nbsp;sub_category VARCHAR(100),    -- 业务小类<br>
+&nbsp;&nbsp;biz_start_date DATE,          -- 业务开始时间<br>
+&nbsp;&nbsp;biz_end_date DATE,            -- 业务结束时间<br>
+&nbsp;&nbsp;charge_dept VARCHAR(200),     -- 费用承担部门<br>
+&nbsp;&nbsp;bill_amount_system DECIMAL,   -- 报账金额（系统）<br>
+&nbsp;&nbsp;currency VARCHAR(10),         -- 币种<br>
+&nbsp;&nbsp;bill_amount_actual DECIMAL,   -- 报账金额（实际）<br>
+&nbsp;&nbsp;...<br>
+);
+        </div>
+    </div>
+</div>
+
+<!-- ==================== 主表：匹配报账单信息（多选后的效果） ==================== -->
+<div class="panel">
+    <div class="panel-hd">📍 交互效果演示：「匹配报账单信息」表格（多选后拆行效果）</div>
+    <div class="panel-bd">
+        <div style="margin-bottom:10px;font-size:12px;color:#666;">
+            💡 <strong>演示说明：</strong>第2行报账单号 <code>2000002606300127</code> 下有两条费用信息行（办公软件、会员费），点击「业务小类」列后多选了两条，主表自动拆分为2行展示。
+        </div>
+        <div class="toolbar" style="padding:0 0 10px;">
+            <div class="toolbar-l">
+                <button class="btn btn-org" onclick="openMultiSelectModalDemo()">🖱️ 演示：点击弹出多选弹窗</button>
+                <button class="btn btn-red">删除</button>
+            </div>
+        </div>
+        <div class="table-wrap" style="max-height:350px;">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th width="32"><input type="checkbox"></th>
+                        <th>序号</th>
+                        <th>报账单号</th>
+                        <th>匹配类型</th>
+                        <th>报账业务大类</th>
+                        <th>报账业务小类 <span class="tag-new">多选拆行</span></th>
+                        <th>业务开始时间</th>
+                        <th>业务结束时间</th>
+                        <th>费用承担部门</th>
+                        <th>报账金额（系统）<span class="tag-new">自动带出</span></th>
+                        <th>币种</th>
+                        <th>报账金额（实际）</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- 第1行：自动匹配 -->
+                    <tr>
+                        <td><input type="checkbox"></td>
+                        <td>1</td>
+                        <td><a href="#" onclick="showToast('跳转至报账单 2000002605190319','info')">2000002605190319</a></td>
+                        <td><span class="tag tag-blue">自动</span></td>
+                        <td>培训费 Training Fees</td>
+                        <td>培训费 Training Fees</td>
+                        <td>2026-04-01</td>
+                        <td>2026-04-30</td>
+                        <td>纵腾网络/FES财经条线/财务共享中心/总账报表组</td>
+                        <td style="text-align:right;font-family:'Courier New',monospace;">1,000.00</td>
+                        <td>CNY</td>
+                        <td><input type="text" value="1,000.00" style="width:100px;text-align:right;padding:2px 6px;border:1px solid #d9d9d9;"></td>
+                    </tr>
+                    <!-- 第2行：手动 → 拆行后的第1条（办公软件） -->
+                    <tr>
+                        <td><input type="checkbox"></td>
+                        <td>2-1 <span class="row-tag row-tag-1">拆行</span></td>
+                        <td><a href="#">2000002606300127</a></td>
+                        <td><span class="tag tag-org">手动</span></td>
+                        <td>日常办公费 Office Expenses</td>
+                        <td><a href="#" onclick="openMultiSelectModalDemo()" style="font-weight:600;color:#1890ff;">办公软件 Office Supplies</a></td>
+                        <td>2026-06-30</td>
+                        <td>2026-06-30</td>
+                        <td>纵腾网络/FES财经条线/财务共享中心/总账报表组</td>
+                        <td style="text-align:right;font-family:'Courier New',monospace;color:#52c41a;">1,200.00</td>
+                        <td>CNY</td>
+                        <td><input type="text" value="1,200.00" style="width:100px;text-align:right;padding:2px 6px;border:1px solid #d9d9d9;"></td>
+                    </tr>
+                    <!-- 第2行：手动 → 拆行后的第2条（会员费） -->
+                    <tr style="background:#fffbe6;">
+                        <td><input type="checkbox"></td>
+                        <td>2-2 <span class="row-tag row-tag-1">拆行</span></td>
+                        <td><a href="#">2000002606300127</a></td>
+                        <td><span class="tag tag-org">手动</span></td>
+                        <td>日常办公费 Office Expenses</td>
+                        <td><a href="#" onclick="openMultiSelectModalDemo()" style="font-weight:600;color:#1890ff;">会员费 Membership Fee</a></td>
+                        <td>2026-07-08</td>
+                        <td>2026-07-17</td>
+                        <td>纵腾网络/FES财经条线/财务共享中心/总账报表组</td>
+                        <td style="text-align:right;font-family:'Courier New',monospace;color:#ff4d4f;">-280.00</td>
+                        <td>CNY</td>
+                        <td><input type="text" value="-280.00" style="width:100px;text-align:right;padding:2px 6px;border:1px solid #d9d9d9;"></td>
+                    </tr>
+                    <!-- 第3行：手动 → 未选择（空状态演示） -->
+                    <tr>
+                        <td><input type="checkbox"></td>
+                        <td>3</td>
+                        <td><a href="#">2000002607300156</a></td>
+                        <td><span class="tag tag-org">手动</span></td>
+                        <td>—</td>
+                        <td><a href="#" onclick="openMultiSelectModalDemo()" style="color:#999;font-style:italic;">点击选择费用信息行...</a></td>
+                        <td style="color:#999;">—</td>
+                        <td style="color:#999;">—</td>
+                        <td style="color:#999;">—</td>
+                        <td style="color:#999;text-align:right;">—</td>
+                        <td>CNY</td>
+                        <td style="color:#999;text-align:right;">—</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div style="margin-top:10px;padding:10px;background:#f6ffed;border:1px solid #b7eb8f;border-radius:2px;font-size:12px;color:#389e0d;">
+            ✅ <strong>多选拆行规则：</strong>一个报账单选中 N 条费用行 → 主表生成 N 行记录，每行独立保留报账单号/匹配类型，仅业务小类/时间/金额不同。<br>
+            💰 <strong>业务时间自动计算：</strong>业务开始时间 = MIN(所有行的开始时间) = <strong style="color:#ff4d4f;">2026-06-30</strong> | 业务结束时间 = MAX(所有行的结束时间) = <strong style="color:#ff4d4f;">2026-07-17</strong> <span class="tag-new">需求9</span>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== 多选弹窗（核心交互） ==================== -->
+<div class="modal-bg" id="modal-multiselect">
+    <div class="modal-box" style="width:1100px;max-width:95vw;">
+        <div class="modal-hd">
+            <h4>
+                选择费用信息行（多选）
+                <span class="tag-new">复选框多选</span>
+                <span style="font-size:12px;color:#666;font-weight:400;margin-left:12px;">
+                    报账单号：<strong style="color:#1890ff;">2000002606300127</strong>
+                </span>
+            </h4>
+            <button class="x" onclick="closeModal('modal-multiselect')">&times;</button>
+        </div>
+
+        <!-- 顶部查询筛选区 -->
+        <div class="modal-top-bar">
+            <div class="field">
+                <label>报账单号 <span style="color:#ff4d4f;">*</span></label>
+                <input type="text" value="2000002606300127" disabled style="width:200px;">
+            </div>
+            <div class="field">
+                <label>业务大类</label>
+                <select style="width:150px;" onchange="filterTable(this)">
+                    <option value="">全部</option>
+                    <option>日常办公费</option>
+                    <option>培训费</option>
+                    <option>差旅费</option>
+                </select>
+            </div>
+            <div class="field">
+                <label>业务小类（搜索）</label>
+                <input type="text" placeholder="输入小类关键词筛选" style="width:150px;" oninput="searchTable(this)">
+            </div>
+            <div class="field">
+                <label>时间范围</label>
+                <select style="width:130px;">
+                    <option>全部</option>
+                    <option>最近30天</option>
+                    <option>最近90天</option>
+                </select>
+            </div>
+            <button class="btn btn-qry" onclick="showToast('已筛选费用行数据','ok')">🔍 查询</button>
+            <button class="btn btn-dft" onclick="resetFilter()">重置</button>
+        </div>
+
+        <!-- 主体：左列表 + 右已选 -->
+        <div class="modal-body">
+            <!-- 左侧：费用行列表 -->
+            <div class="left-area">
+                <div class="toolbar">
+                    <div class="info">
+                        <label class="cb-wrap"><input type="checkbox" checked onchange="toggleAll(this)"></label>
+                        <span style="margin-left:4px;">共 <strong>47</strong> 条费用行，已选 <strong style="color:#1890ff;">2</strong> 条</span>
+                    </div>
+                    <div style="font-size:11px;color:#888;">
+                        <span class="problem-tag ok">✓ 本地缓存命中</span>
+                        <span style="margin-left:8px;">加载耗时 23ms</span>
+                    </div>
+                </div>
+                <div class="table-wrap">
+                    <table class="data-table" id="expenseTable">
+                        <thead>
+                            <tr>
+                                <th width="40"></th>
+                                <th width="40">序号</th>
+                                <th>业务小类</th>
+                                <th>业务开始时间</th>
+                                <th>业务结束时间</th>
+                                <th>费用承担部门</th>
+                                <th style="text-align:right;">报账金额</th>
+                                <th style="text-align:right;">不含税金额</th>
+                                <th style="text-align:right;">税额</th>
+                                <th>币种</th>
+                                <th>开支说明</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><input type="checkbox" class="exp-cb" checked data-line="1"></td>
+                                <td>1</td>
+                                <td>办公软件 Office Supplies</td>
+                                <td>2026-06-30</td>
+                                <td>2026-06-30</td>
+                                <td>纵腾网络/FES财经条线/财务共享中心/总账报表组</td>
+                                <td style="text-align:right;color:#52c41a;font-weight:600;">1,200.00</td>
+                                <td style="text-align:right;">1,200.00</td>
+                                <td style="text-align:right;">0.00</td>
+                                <td>CNY</td>
+                                <td>Office 365 年度订阅费</td>
+                            </tr>
+                            <tr>
+                                <td><input type="checkbox" class="exp-cb" checked data-line="2"></td>
+                                <td>2</td>
+                                <td>会员费 Membership Fee</td>
+                                <td>2026-07-08</td>
+                                <td>2026-07-17</td>
+                                <td>纵腾网络/FES财经条线/财务共享中心/总账报表组</td>
+                                <td style="text-align:right;color:#ff4d4f;font-weight:600;">-280.00</td>
+                                <td style="text-align:right;">-280.00</td>
+                                <td style="text-align:right;">0.00</td>
+                                <td>CNY</td>
+                                <td>行业协会会员费退款</td>
+                            </tr>
+                            <tr>
+                                <td><input type="checkbox" class="exp-cb" data-line="3"></td>
+                                <td>3</td>
+                                <td>办公用品 Stationery</td>
+                                <td>2026-07-01</td>
+                                <td>2026-07-15</td>
+                                <td>纵腾网络/FES财经条线/财务共享中心/总账报表组</td>
+                                <td style="text-align:right;">560.00</td>
+                                <td style="text-align:right;">495.58</td>
+                                <td style="text-align:right;">64.42</td>
+                                <td>CNY</td>
+                                <td>打印纸、墨盒等耗材</td>
+                            </tr>
+                            <tr>
+                                <td><input type="checkbox" class="exp-cb" data-line="4"></td>
+                                <td>4</td>
+                                <td>快递费 Courier Fee</td>
+                                <td>2026-07-05</td>
+                                <td>2026-07-10</td>
+                                <td>纵腾网络/FES财经条线/财务共享中心/总账报表组</td>
+                                <td style="text-align:right;">128.00</td>
+                                <td style="text-align:right;">120.75</td>
+                                <td style="text-align:right;">7.25</td>
+                                <td>CNY</td>
+                                <td>发票快递费</td>
+                            </tr>
+                            <tr>
+                                <td><input type="checkbox" class="exp-cb" data-line="5"></td>
+                                <td>5</td>
+                                <td>水电费 Utilities</td>
+                                <td>2026-06-01</td>
+                                <td>2026-06-30</td>
+                                <td>纵腾网络/HQU技术中心/运维部/应用运维组</td>
+                                <td style="text-align:right;">3,580.00</td>
+                                <td style="text-align:right;">3,284.40</td>
+                                <td style="text-align:right;">295.60</td>
+                                <td>CNY</td>
+                                <td>深圳办公室6月电费</td>
+                            </tr>
+                            <tr>
+                                <td><input type="checkbox" class="exp-cb" data-line="6"></td>
+                                <td>6</td>
+                                <td>网络通讯费 Internet</td>
+                                <td>2026-06-01</td>
+                                <td>2026-06-30</td>
+                                <td>纵腾网络/DC数字化中心/中后台技术</td>
+                                <td style="text-align:right;">1,200.00</td>
+                                <td style="text-align:right;">1,132.08</td>
+                                <td style="text-align:right;">67.92</td>
+                                <td>CNY</td>
+                                <td>企业宽带月费</td>
+                            </tr>
+                            <tr>
+                                <td><input type="checkbox" class="exp-cb" data-line="7"></td>
+                                <td>7</td>
+                                <td>物业管理费 Property Mgmt</td>
+                                <td>2026-06-01</td>
+                                <td>2026-06-30</td>
+                                <td>纵腾网络/FES财经条线/财务共享中心</td>
+                                <td style="text-align:right;">5,000.00</td>
+                                <td style="text-align:right;">4,716.98</td>
+                                <td style="text-align:right;">283.02</td>
+                                <td>CNY</td>
+                                <td>前海办公室物业费</td>
+                            </tr>
+                            <!-- 模拟更多数据行 -->
+                            <tr>
+                                <td><input type="checkbox" class="exp-cb" data-line="8"></td>
+                                <td>8</td>
+                                <td>办公设备维护 Maintenance</td>
+                                <td>2026-07-10</td>
+                                <td>2026-07-20</td>
+                                <td>纵腾网络/FES财经条线/财务共享中心</td>
+                                <td style="text-align:right;">890.00</td>
+                                <td style="text-align:right;">838.68</td>
+                                <td style="text-align:right;">51.32</td>
+                                <td>CNY</td>
+                                <td>打印机维修保养</td>
+                            </tr>
+                            <tr>
+                                <td><input type="checkbox" class="exp-cb" data-line="9"></td>
+                                <td>9</td>
+                                <td>清洁服务费 Cleaning</td>
+                                <td>2026-06-01</td>
+                                <td>2026-06-30</td>
+                                <td>纵腾网络/FES财经条线/财务共享中心</td>
+                                <td style="text-align:right;">2,400.00</td>
+                                <td style="text-align:right;">2,264.15</td>
+                                <td style="text-align:right;">135.85</td>
+                                <td>CNY</td>
+                                <td>办公室定期清洁</td>
+                            </tr>
+                            <tr>
+                                <td><input type="checkbox" class="exp-cb" data-line="10"></td>
+                                <td>10</td>
+                                <td>绿植租赁 Plant Rental</td>
+                                <td>2026-06-01</td>
+                                <td>2026-08-31</td>
+                                <td>纵腾网络/FES财经条线/财务共享中心</td>
+                                <td style="text-align:right;">600.00</td>
+                                <td style="text-align:right;">566.04</td>
+                                <td style="text-align:right;">33.96</td>
+                                <td>CNY</td>
+                                <td>办公室绿植季度租赁</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <!-- 分页 -->
+                <div class="pager">
+                    <span>共 47 条</span>
+                    <a>⏮</a>
+                    <a>◀</a>
+                    <a class="active">1</a>
+                    <a>2</a>
+                    <a>3</a>
+                    <a>4</a>
+                    <a>5</a>
+                    <span>...</span>
+                    <a>▶</a>
+                    <a>⏭</a>
+                    <select style="height:24px;">
+                        <option>50条/页</option>
+                        <option>100条/页</option>
+                    </select>
+                    <span style="margin-left:12px;">前往 <input type="text" style="width:36px;height:24px;border:1px solid #d9d9d9;border-radius:2px;text-align:center;"> 页</span>
+                </div>
+            </div>
+
+            <!-- 右侧：已选汇总区 -->
+            <div class="right-area">
+                <div class="sel-hd">
+                    ✓ 已选费用行 <span style="color:#1890ff;">(2)</span>
+                </div>
+                <div class="sel-bd" id="selectedCards">
+                    <!-- 已选卡片1 -->
+                    <div class="sel-card">
+                        <span class="del" onclick="removeCard(this)">&times;</span>
+                        <div class="title">办公软件 Office Supplies</div>
+                        <div class="meta">
+                            时间：2026-06-30<br>
+                            金额：<span class="money positive">1,200.00 CNY</span><br>
+                            部门：总账报表组
+                        </div>
+                    </div>
+                    <!-- 已选卡片2 -->
+                    <div class="sel-card">
+                        <span class="del" onclick="removeCard(this)">&times;</span>
+                        <div class="title">会员费 Membership Fee</div>
+                        <div class="meta">
+                            时间：2026-07-08 ~ 2026-07-17<br>
+                            金额：<span class="money">-280.00 CNY</span><br>
+                            部门：总账报表组
+                        </div>
+                    </div>
+                </div>
+                <div class="sel-ft">
+                    <div class="sel-summary">
+                        <span class="label">已选条数</span>
+                        <span class="value" style="color:#1890ff;">2</span>
+                    </div>
+                    <div class="sel-summary" style="border-top:1px solid #f0f0f0;margin-top:8px;padding-top:8px;">
+                        <span class="label">金额合计</span>
+                        <span class="value" id="selTotalAmount">920.00</span>
+                    </div>
+                    <div style="margin-top:10px;padding:8px;background:#e6f7ff;border-radius:2px;font-size:11px;color:#096dd9;line-height:1.6;">
+                        <!-- 💡 提示信息 -->
+                        确定后将拆分为 <strong>2</strong> 条记录
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal-ft">
+            <div style="flex:1;text-align:left;font-size:12px;color:#666;display:flex;align-items:center;gap:8px;">
+                <span class="problem-tag ok">✓ 已启用本地缓存</span>
+                <span class="problem-tag ok">✓ 分页加载 50条/页</span>
+            </div>
+            <button class="btn btn-dft" onclick="closeModal('modal-multiselect')">取消</button>
+            <button class="btn btn-org-fill" onclick="confirmMultiSelect()">确定（添加2条）</button>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== 方案对比与细节 ==================== -->
+<div class="scheme-panel">
+    <div class="hd">🔧 方案对比：单选 vs 多选（新旧方案对照）</div>
+    <div class="bd">
+        <table class="compare-table">
+            <thead>
+                <tr>
+                    <th width="100">对比维度</th>
+                    <th width="45%" class="old">旧方案（单选）</th>
+                    <th width="45%" class="new">新方案（多选）</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>触发方式</strong></td>
+                    <td>点击单元格内「修改」按钮</td>
+                    <td>点击单元格内「业务小类」链接（或旁边的选择图标）</td>
+                </tr>
+                <tr>
+                    <td><strong>弹窗选择</strong></td>
+                    <td>单选框（radio），只能选1条</td>
+                    <td>复选框（checkbox），可多选，右侧实时显示已选汇总</td>
+                </tr>
+                <tr>
+                    <td><strong>数据加载</strong></td>
+                    <td>一次性加载全部费用行</td>
+                    <td>分页加载（50条/页），首次加载仅拉取当前页，支持本地缓存</td>
+                </tr>
+                <tr>
+                    <td><strong>关闭后回显</strong></td>
+                    <td>回显到原行的业务小类单元格</td>
+                    <td>不回显到单元格 → 拆分为多行展示，每条费用行独立成一行</td>
+                </tr>
+                <tr>
+                    <td><strong>系统金额</strong></td>
+                    <td>单选后自动带出当前行金额</td>
+                    <td>每行独立带出对应费用行的报账金额（系统）</td>
+                </tr>
+                <tr>
+                    <td><strong>海外延迟</strong></td>
+                    <td>每次弹窗都请求，无缓存</td>
+                    <td>sessionStorage缓存5分钟，分页减少单次请求数据量</td>
+                </tr>
+                <tr>
+                    <td><strong>数量级</strong></td>
+                    <td>报账单下费用行多时，弹窗卡死</td>
+                    <td>虚拟滚动/分页 + 字段精简，支持千级数据量</td>
+                </tr>
+                <tr>
+                    <td><strong>研发量</strong></td>
+                    <td>已有实现，无需改表结构</td>
+                    <td>前端：复选框状态管理 + 已选卡片区；后端：增加expense_line_id字段 + 批量插入接口</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="scheme-panel">
+    <div class="hd">⚠️ 边界情况处理 & 交互细节</div>
+    <div class="bd">
+        <div class="section-title">边界情况说明</div>
+        <ul>
+            <li><strong>该报账单下无任何费用行：</strong>弹窗表格区域显示空状态（"该报账单暂无费用信息行，请检查报账单号是否正确"），同时提供「重新输入报账单号」按钮。</li>
+            <li><strong>取消已选后只剩1条：</strong>允许只选1条，行为与旧方案一致（不拆行，直接更新原行数据）。</li>
+            <li><strong>同一报账单多次打开弹窗：</strong>从本地缓存读取，已选状态保留（除非页面刷新）。</li>
+            <li><strong>费用行数量为负（如会员费退款-280）：</strong>正常展示，金额字段红色标注，主表拆行后同样红色展示。</li>
+            <li><strong>海外网络超时：</strong>请求超过3秒显示骨架屏 + "网络较慢，正在努力加载..."提示，超过8秒提示重试。</li>
+            <li><strong>跨页多选：</strong>分页不改变已选状态，切换分页后之前选中的保留在右侧已选区。全选仅选中当前页。</li>
+            <li><strong>选中后二次修改：</strong>已存在匹配记录的费用行，复选框旁显示「已匹配」标签，hover提示"该费用行已被其他计提项目匹配"。</li>
+        </ul>
+
+        <div class="section-title">交互细节要点</div>
+        <ul>
+            <li><strong>复选框交互：</strong>点击行内任意位置（非链接）均可切换复选状态，提升操作效率。</li>
+            <li><strong>已选卡片交互：</strong>右侧已选卡片点击「×」取消选中，同时左侧表格对应复选框自动取消。</li>
+            <li><strong>全选交互：</strong>表头全选框仅选中<strong>当前页</strong>，操作后toast提示"已选中当前页 N 条"。</li>
+            <li><strong>搜索交互：</strong>业务小类搜索框输入后前端本地过滤（不再请求服务端），即时响应。</li>
+            <li><strong>金额汇总：</strong>右侧已选区实时计算金额合计（含正负），帮助用户核对。</li>
+        </ul>
+    </div>
+</div>
+
+<div style="text-align:center;padding:20px 0;color:#999;font-size:12px;">
+    © 纵腾集团财务共享中心 — R407费用计提模块 交互原型 v1.0 | 生成日期：2026-07-20
+</div>
+
+</div><!-- main -->
+
+<script>
+/* ========== Toast 基础 ========== */
+function showToast(msg,type){
+    const t=document.getElementById('toast');
+    t.className='toast toast-'+type;t.textContent=msg;t.classList.add('show');
+    setTimeout(()=>t.classList.remove('show'),2500);
+}
+
+/* ========== 弹窗控制 ========== */
+function openMultiSelectModalDemo(){
+    document.getElementById('modal-multiselect').classList.add('show');
+    // 模拟首次打开时从缓存读取（实际为sessionStorage）
+    showToast('已从本地缓存加载费用行数据','ok');
+}
+function closeModal(id){document.getElementById(id).classList.remove('show');}
+
+/* ========== 复选框交互 ========== */
+function toggleAll(cb){
+    const checkboxes = document.querySelectorAll('#expenseTable .exp-cb');
+    checkboxes.forEach(c => c.checked = cb.checked);
+    updateSelectedPanel();
+    showToast(cb.checked ? '已选中当前页全部费用行' : '已取消当前页全部选中','ok');
+}
+
+// 为每个复选框绑定change事件
+document.querySelectorAll('#expenseTable .exp-cb').forEach(cb => {
+    cb.addEventListener('change', function(){
+        updateSelectedPanel();
+    });
+});
+
+// 行点击切换复选
+document.querySelectorAll('#expenseTable tbody tr').forEach(tr => {
+    tr.addEventListener('click', function(e){
+        // 忽略点击复选框本身和链接
+        if(e.target.tagName === 'INPUT' || e.target.tagName === 'A') return;
+        const cb = this.querySelector('.exp-cb');
+        if(cb){
+            cb.checked = !cb.checked;
+            updateSelectedPanel();
+        }
+    });
+});
+
+/* ========== 已选汇总面板更新 ========== */
+const demoData = {
+    1: { name: '办公软件 Office Supplies', start: '2026-06-30', end: '2026-06-30', amount: 1200, currency: 'CNY', dept: '总账报表组', sign: '+' },
+    2: { name: '会员费 Membership Fee', start: '2026-07-08', end: '2026-07-17', amount: -280, currency: 'CNY', dept: '总账报表组', sign: '' },
+    3: { name: '办公用品 Stationery', start: '2026-07-01', end: '2026-07-15', amount: 560, currency: 'CNY', dept: '总账报表组', sign: '+' },
+    4: { name: '快递费 Courier Fee', start: '2026-07-05', end: '2026-07-10', amount: 128, currency: 'CNY', dept: '总账报表组', sign: '+' },
+    5: { name: '水电费 Utilities', start: '2026-06-01', end: '2026-06-30', amount: 3580, currency: 'CNY', dept: '应用运维组', sign: '+' },
+    6: { name: '网络通讯费 Internet', start: '2026-06-01', end: '2026-06-30', amount: 1200, currency: 'CNY', dept: '中后台技术', sign: '+' },
+    7: { name: '物业管理费 Property Mgmt', start: '2026-06-01', end: '2026-06-30', amount: 5000, currency: 'CNY', dept: '财务共享中心', sign: '+' },
+    8: { name: '办公设备维护 Maintenance', start: '2026-07-10', end: '2026-07-20', amount: 890, currency: 'CNY', dept: '财务共享中心', sign: '+' },
+    9: { name: '清洁服务费 Cleaning', start: '2026-06-01', end: '2026-06-30', amount: 2400, currency: 'CNY', dept: '财务共享中心', sign: '+' },
+    10: { name: '绿植租赁 Plant Rental', start: '2026-06-01', end: '2026-08-31', amount: 600, currency: 'CNY', dept: '财务共享中心', sign: '+' },
+};
+
+function updateSelectedPanel(){
+    const container = document.getElementById('selectedCards');
+    const checked = document.querySelectorAll('#expenseTable .exp-cb:checked');
+    let html = '';
+    let total = 0;
+
+    if(checked.length === 0){
+        container.innerHTML = '<div class="empty-state"><div class="icon">📋</div>暂无选中项<br><small>请在左侧勾选费用行</small></div>';
+        updateFooterSummary(0, 0);
+        return;
+    }
+
+    checked.forEach(cb => {
+        const lineId = cb.getAttribute('data-line');
+        const data = demoData[lineId];
+        if(data){
+            total += data.amount;
+            const isPositive = data.amount >= 0;
+            const timeStr = data.start === data.end ? data.start : data.start + ' ~ ' + data.end;
+            html += `
+                <div class="sel-card">
+                    <span class="del" onclick="removeCard(this, ${lineId})">&times;</span>
+                    <div class="title">${data.name}</div>
+                    <div class="meta">
+                        时间：${timeStr}<br>
+                        金额：<span class="money ${isPositive ? 'positive' : ''}">${data.amount >= 0 ? '+' : ''}${data.amount.toLocaleString()} ${data.currency}</span><br>
+                        部门：${data.dept}
+                    </div>
+                </div>
+            `;
+        }
+    });
+
+    container.innerHTML = html;
+    updateFooterSummary(checked.length, total);
+}
+
+function updateFooterSummary(count, total){
+    // 更新底部汇总
+    const selFt = document.querySelector('.sel-ft');
+    const countEls = document.querySelectorAll('.sel-ft .value');
+    if(countEls[0]) countEls[0].textContent = count;
+    if(countEls[1]) countEls[1].textContent = total.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+
+    // 更新提示
+    const tipEl = selFt.querySelector('div:last-child');
+    if(tipEl){
+        tipEl.innerHTML = `确定后将拆分为 <strong>${count}</strong> 条记录`;
+    }
+
+    // 更新顶部标题
+    const selHd = document.querySelector('.right-area .sel-hd');
+    selHd.innerHTML = `✓ 已选费用行 <span style="color:#1890ff;">(${count})</span>`;
+
+    // 更新左侧工具栏计数
+    const countSpan = document.querySelector('.left-area .toolbar .info strong');
+    if(countSpan) countSpan.textContent = count;
+
+    // 更新确定按钮文字
+    const confirmBtn = document.querySelector('.modal-ft .btn-org-fill');
+    if(confirmBtn) confirmBtn.textContent = `确定（添加${count}条）`;
+}
+
+function removeCard(el, lineId){
+    const card = el.closest('.sel-card');
+    card.style.opacity = '0';
+    card.style.transform = 'translateX(20px)';
+    setTimeout(() => {
+        // 取消左侧对应复选框
+        if(lineId){
+            const cb = document.querySelector(`.exp-cb[data-line="${lineId}"]`);
+            if(cb){ cb.checked = false; }
+        }
+        updateSelectedPanel();
+    }, 200);
+}
+
+/* ========== 筛选功能 ========== */
+function filterTable(sel){
+    const val = sel.value.toLowerCase();
+    document.querySelectorAll('#expenseTable tbody tr').forEach(tr => {
+        const cat = tr.cells[2].textContent.toLowerCase(); // 业务小类
+        if(!val || cat.includes(val)){
+            tr.style.display = '';
+        } else {
+            tr.style.display = 'none';
+        }
+    });
+    showToast(val ? `已筛选：${sel.value}` : '已显示全部', 'ok');
+}
+
+function searchTable(input){
+    const val = input.value.toLowerCase();
+    document.querySelectorAll('#expenseTable tbody tr').forEach(tr => {
+        const cat = tr.cells[2].textContent.toLowerCase();
+        if(!val || cat.includes(val)){
+            tr.style.display = '';
+        } else {
+            tr.style.display = 'none';
+        }
+    });
+}
+
+function resetFilter(){
+    document.querySelectorAll('.modal-top-bar select').forEach(s => s.value = '');
+    document.querySelectorAll('.modal-top-bar input[type="text"]').forEach(i => { if(!i.disabled) i.value = ''; });
+    document.querySelectorAll('#expenseTable tbody tr').forEach(tr => tr.style.display = '');
+    showToast('已重置筛选条件', 'ok');
+}
+
+/* ========== 确定多选 ========== */
+function confirmMultiSelect(){
+    const checked = document.querySelectorAll('#expenseTable .exp-cb:checked');
+    if(checked.length === 0){
+        showToast('请至少选择一条费用信息行', 'err');
+        return;
+    }
+    closeModal('modal-multiselect');
+    showToast(`添加成功！共添加 ${checked.length} 条费用信息行，主表已自动拆行展示`, 'ok');
+}
+
+/* ========== 点击遮罩关闭 ========== */
+document.querySelectorAll('.modal-bg').forEach(bg => {
+    bg.addEventListener('click', function(e){ if(e.target === this) this.classList.remove('show'); });
+});
+
+// 初始化
+updateSelectedPanel();
+</script>
+</body>
+</html>

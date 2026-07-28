@@ -1,0 +1,1089 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>R407 固定费用计提模块 - 交互原型</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:"Microsoft YaHei",Arial,sans-serif;font-size:12px;color:#333;background:#f0f3f4;line-height:1.6}
+a{color:#1890ff;text-decoration:none}
+a:hover{text-decoration:underline}
+
+/* ===== 顶部 ===== */
+.topbar{height:48px;background:linear-gradient(90deg,#001529 0%,#002140 100%);display:flex;align-items:center;justify-content:space-between;padding:0 20px;position:sticky;top:0;z-index:200}
+.topbar .logo{display:flex;align-items:center;gap:10px;color:#fff;font-size:16px;font-weight:600}
+.topbar .logo img{height:28px}
+.topbar .right{display:flex;align-items:center;gap:16px;color:rgba(255,255,255,.7);font-size:12px}
+.topbar .right a{color:rgba(255,255,255,.7);text-decoration:none}
+.topbar .right a:hover{color:#fff}
+.topbar .right select{background:transparent;color:#fff;border:1px solid rgba(255,255,255,.3);border-radius:3px;padding:2px 6px;font-size:12px}
+
+/* ===== Tab栏 ===== */
+.tabbar{height:38px;background:#fff;border-bottom:1px solid #d9d9d9;display:flex;align-items:center;padding-left:8px;gap:2px}
+.tabbar .tab-home{width:40px;height:32px;display:flex;align-items:center;justify-content:center;border:1px solid #d9d9d9;border-radius:3px;cursor:pointer;font-size:16px;color:#666;margin-right:4px}
+.tabbar .tab-home:hover{border-color:#1890ff;color:#1890ff}
+.tabbar .tab-item{display:flex;align-items:center;gap:6px;padding:0 14px;height:32px;border:1px solid #d9d9d9;border-radius:3px;cursor:pointer;font-size:12px;color:#333;background:#f5f5f5;position:relative}
+.tabbar .tab-item.active{background:#1890ff;color:#fff;border-color:#1890ff}
+.tabbar .tab-item .close{width:14px;height:14px;display:flex;align-items:center;justify-content:center;border-radius:50%;font-size:12px;color:#999;cursor:pointer}
+.tabbar .tab-item.active .close{color:#fff}
+.tabbar .tab-item .close:hover{background:rgba(0,0,0,.15)}
+
+/* ===== 布局 ===== */
+.wrap{display:flex;min-height:calc(100vh - 86px)}
+.sidebar{width:200px;background:#001529;color:#fff;flex-shrink:0;overflow-y:auto;font-size:13px}
+.sidebar .menu-item{display:flex;align-items:center;padding:12px 16px;color:rgba(255,255,255,.65);cursor:pointer;border-bottom:1px solid rgba(255,255,255,.05)}
+.sidebar .menu-item:hover,.sidebar .menu-item.active{color:#fff;background:rgba(255,255,255,.05)}
+.sidebar .menu-item.active{background:#1890ff}
+.sidebar .menu-item i{margin-right:8px;font-style:normal}
+.sidebar .submenu{padding-left:0;background:#000c17;display:none}
+.sidebar .submenu.open{display:block}
+.sidebar .submenu .sub-item{padding:10px 16px 10px 44px;color:rgba(255,255,255,.5);cursor:pointer;font-size:12px}
+.sidebar .submenu .sub-item:hover{color:#fff}
+.sidebar .submenu .sub-item.active{color:#1890ff;background:rgba(24,144,255,.1)}
+.sidebar .submenu .sub2{padding-left:16px;display:none}
+.sidebar .submenu .sub-item.open+.sub2{display:block}
+.sidebar .sub2 a{display:block;padding:8px 16px 8px 32px;color:rgba(255,255,255,.4);font-size:11px;text-decoration:none}
+.sidebar .sub2 a:hover{color:#1890ff}
+.sidebar .sub2 a.active{color:#1890ff}
+
+.main{flex:1;padding:12px;overflow:auto}
+
+/* ===== 面板 ===== */
+.panel{background:#fff;border:1px solid #e0e4e8;border-radius:2px;margin-bottom:12px}
+.panel-hd{padding:10px 16px;font-size:13px;font-weight:600;color:#333;background:#f7f8fa;border-bottom:1px solid #e8e8e8}
+.panel-bd{padding:16px}
+
+/* ===== 查询区 ===== */
+.query-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px 16px}
+.query-item{display:flex;flex-direction:column;gap:4px}
+.query-item label{font-size:12px;color:#666}
+.query-item input,.query-item select{width:100%;height:32px;border:1px solid #d9d9d9;border-radius:2px;padding:4px 8px;font-size:12px;outline:none}
+.query-item input:focus,.query-item select:focus{border-color:#1890ff}
+.query-item input::placeholder{color:#bfbfbf}
+.query-btns{display:flex;gap:8px;margin-top:16px}
+
+/* ===== 按钮 ===== */
+.btn{display:inline-flex;align-items:center;gap:4px;height:28px;padding:0 14px;border-radius:2px;font-size:12px;cursor:pointer;border:1px solid transparent;transition:all .15s}
+.btn.btn-qry{background:#1890ff;color:#fff;border-color:#1890ff}
+.btn.btn-qry:hover{background:#40a9ff}
+.btn.btn-dft{background:#fff;color:#666;border-color:#d9d9d9}
+.btn.btn-dft:hover{border-color:#1890ff;color:#1890ff}
+.btn.btn-org{background:#fff;color:#d46b08;border-color:#ffd591}
+.btn.btn-org:hover{background:#fff7e6}
+.btn.btn-org-fill{background:#fa8c16;color:#fff;border-color:#fa8c16}
+.btn.btn-org-fill:hover{background:#ff9c2e}
+.btn.btn-red{background:#fff;color:#ff4d4f;border-color:#ffa39e}
+.btn.btn-red:hover{background:#fff1f0}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+
+/* ===== 表格工具栏 ===== */
+.toolbar{display:flex;justify-content:space-between;align-items:center;padding:10px 0}
+.toolbar-l,.toolbar-r{display:flex;gap:8px;align-items:center}
+
+/* ===== 数据表格 ===== */
+.table-wrap{overflow:auto;max-height:500px;border:1px solid #e8e8e8}
+.data-table{width:100%;border-collapse:collapse;font-size:12px;table-layout:auto}
+.data-table th,.data-table td{padding:8px 10px;border:1px solid #e8e8e8;white-space:nowrap;text-align:center}
+.data-table th{background:#fafafa;font-weight:600;color:#333;position:sticky;top:0;z-index:10}
+.data-table td{text-align:left}
+.data-table td:first-child,.data-table th:first-child{text-align:center}
+.data-table tbody tr:nth-child(even){background:#fafbfc}
+.data-table tbody tr:hover{background:#e6f7ff}
+.data-table tbody tr.selected{background:#bae7ff}
+
+/* 固定操作列 */
+.data-table th.op-fix,.data-table td.op-fix{position:sticky;left:0;z-index:20;min-width:140px}
+.data-table th.op-fix{background:#fafafa}
+.data-table td.op-fix{background:#fff}
+.data-table tbody tr:hover td.op-fix{background:#e6f7ff}
+.data-table tbody tr.selected td.op-fix{background:#bae7ff}
+.data-table th.chk-fix,.data-table td.chk-fix{position:sticky;left:0;z-index:20;width:32px;min-width:32px}
+.data-table tbody tr td.chk-fix{background:#fff}
+.data-table tbody tr:hover td.chk-fix{background:#e6f7ff}
+.data-table tbody tr.selected td.chk-fix{background:#bae7ff}
+
+/* 操作按钮 */
+.op-links{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.op-links a{font-size:12px;color:#1890ff;text-decoration:none;white-space:nowrap}
+.op-links a:hover{text-decoration:underline}
+.op-links a.red{color:#ff4d4f}
+.op-links a.gray{color:#999;cursor:not-allowed;text-decoration:none}
+
+/* ===== Tag ===== */
+.tag{display:inline-block;padding:1px 5px;border-radius:2px;font-size:11px;font-weight:500;line-height:1.4}
+.tag-org{background:#fff7e6;color:#d46b08;border:1px solid #ffd591}
+.tag-blue{background:#e6f7ff;color:#096dd9;border:1px solid #91d5ff}
+.tag-green{background:#f6ffed;color:#389e0d;border:1px solid #b7eb8f}
+.tag-red{background:#fff1f0;color:#cf1322;border:1px solid #ffa39e}
+.tag-gray{background:#f5f5f5;color:#666;border:1px solid #d9d9d9}
+.tag-new{display:inline-block;background:#ff4d4f;color:#fff;font-size:10px;padding:1px 4px;border-radius:2px;margin-left:4px;vertical-align:middle;font-weight:500}
+
+/* ===== 分页 ===== */
+.pager{display:flex;justify-content:flex-end;align-items:center;padding:12px 0;gap:4px;font-size:12px}
+.pager a,.pager span{padding:4px 10px;border:1px solid #d9d9d9;border-radius:2px;color:#333;text-decoration:none;cursor:pointer}
+.pager a:hover{border-color:#1890ff;color:#1890ff}
+.pager a.active{background:#1890ff;color:#fff;border-color:#1890ff}
+.pager select{height:28px;border:1px solid #d9d9d9;border-radius:2px;font-size:12px}
+
+/* ===== 价值合计 ===== */
+.val-summary{background:#f0f8ff;border:1px solid #bae7ff;border-radius:2px;margin-bottom:12px;overflow:hidden}
+.val-summary-hd{display:flex;align-items:center;padding:10px 16px;cursor:pointer;gap:8px;color:#096dd9;font-weight:600;font-size:13px;user-select:none}
+.val-summary-hd .arrow{font-size:10px;transition:transform .2s;width:14px;text-align:center}
+.val-summary-hd.expanded .arrow{transform:rotate(90deg)}
+.val-summary-hd .tip{margin-left:auto;font-weight:400;font-size:11px;color:#8cc8ff}
+.val-summary-bd{display:none;max-height:300px;overflow-y:auto;padding:0 16px 12px}
+.val-summary-bd.show{display:block}
+.val-sum-table{width:100%;border-collapse:collapse;font-size:12px}
+.val-sum-table th,.val-sum-table td{padding:8px 12px;border:1px solid #d9d9d9;text-align:center}
+.val-sum-table th{background:#e6f7ff;color:#096dd9;font-weight:600}
+.val-sum-table td{background:#fff}
+.val-sum-table .currency{font-family:'Courier New',monospace;font-weight:600;color:#1890ff;font-size:13px}
+.val-sum-table .money{font-family:'Courier New',monospace}
+.val-sum-table .money.green{color:#52c41a}
+.val-sum-table .money.red{color:#ff4d4f}
+
+/* ===== 明细页面 ===== */
+.detail-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.detail-item{display:flex;flex-direction:column;gap:3px}
+.detail-item .lb{font-size:12px;color:#888}
+.detail-item .val{font-size:13px;color:#333;font-weight:500}
+.detail-item .val.link{color:#1890ff;cursor:pointer}
+
+/* ===== 弹窗 ===== */
+.modal-bg{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;z-index:1000}
+.modal-bg.show{display:flex}
+.modal-box{background:#fff;border-radius:4px;box-shadow:0 8px 32px rgba(0,0,0,.2);max-width:90vw;max-height:85vh;overflow:hidden;display:flex;flex-direction:column}
+.modal-hd{padding:14px 20px;border-bottom:1px solid #f0f0f0;display:flex;justify-content:space-between;align-items:center}
+.modal-hd h4{margin:0;font-size:15px;font-weight:600}
+.modal-hd .x{font-size:20px;color:#999;cursor:pointer;border:none;background:none}
+.modal-hd .x:hover{color:#333}
+.modal-bd{padding:16px 20px;overflow-y:auto;flex:1}
+.modal-ft{padding:12px 20px;border-top:1px solid #f0f0f0;display:flex;justify-content:flex-end;gap:8px}
+
+/* ===== 页面切换 ===== */
+.page{display:none}
+.page.active{display:block}
+
+/* ===== Toast ===== */
+.toast{position:fixed;top:60px;left:50%;transform:translateX(-50%);padding:10px 24px;border-radius:4px;font-size:13px;z-index:3000;display:none;box-shadow:0 4px 12px rgba(0,0,0,.15)}
+.toast.show{display:block}
+.toast-ok{background:#f6ffed;color:#52c41a;border:1px solid #b7eb8f}
+.toast-err{background:#fff1f0;color:#ff4d4f;border:1px solid #ffa39e}
+.toast-info{background:#e6f7ff;color:#1890ff;border:1px solid #91d5ff}
+
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:#f1f1f1}
+::-webkit-scrollbar-thumb{background:#c1c1c1;border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:#a8a8a8}
+
+/* 标签页 */
+.tabs{display:flex;border-bottom:1px solid #e8e8e8;margin-bottom:16px}
+.tab{display:flex;align-items:center;padding:10px 20px;cursor:pointer;border-bottom:2px solid transparent;color:#666;font-size:13px;transition:all .2s}
+.tab:hover{color:#1890ff}
+.tab.active{color:#1890ff;border-bottom-color:#1890ff;font-weight:600}
+</style>
+</head>
+<body>
+<!-- Toast -->
+<div class="toast toast-ok" id="toast">操作成功</div>
+
+<!-- 顶部 -->
+<div class="topbar">
+    <div class="logo">
+        <span style="font-size:20px;">🏢</span>
+        <span>纵腾集团 - 财务共享中心</span>
+    </div>
+    <div class="right">
+        <select><option>中文</option><option>English</option></select>
+        <span>您好！ 张三</span>
+        <a href="#">📱 移动端</a>
+        <a href="#">🚪 注销</a>
+    </div>
+</div>
+
+<!-- Tab栏 -->
+<div class="tabbar">
+    <div class="tab-home">🏠</div>
+    <div class="tab-item active" id="tab-p1" onclick="showPage('project-list')">计提项目处理<span class="close">×</span></div>
+    <div class="tab-item" id="tab-p2" onclick="showPage('bill-list')">计提单据处理<span class="close">×</span></div>
+    <div class="tab-item" id="tab-p3" onclick="showPage('project-edit')">编辑计提项目<span class="close">×</span></div>
+    <div class="tab-item" id="tab-p4" onclick="showPage('bill-edit')">计提单据编辑<span class="close">×</span></div>
+</div>
+
+<div class="wrap">
+<!-- 左侧导航 -->
+<div class="sidebar">
+    <div class="menu-item" onclick="toggleMenu(this)"><i>📋</i>与我有关<span style="margin-left:auto;font-size:10px;">▶</span></div>
+    <div class="submenu">
+        <div class="sub-item">我的单据</div>
+        <div class="sub-item">个人信息</div>
+    </div>
+    <div class="menu-item active" onclick="toggleMenu(this)"><i>📝</i>发起报账<span style="margin-left:auto;font-size:10px;">▼</span></div>
+    <div class="submenu open">
+        <div class="sub-item">员工报账</div>
+        <div class="sub-item">月度固定费用计提</div>
+        <div class="sub2" style="display:block">
+            <a href="#" class="active" onclick="showPage('project-list')">计提项目处理</a>
+            <a href="#" onclick="showPage('bill-list')">计提单据处理</a>
+        </div>
+        <div class="sub-item">对外报账</div>
+    </div>
+    <div class="menu-item" onclick="toggleMenu(this)"><i>💰</i>应付管理<span style="margin-left:auto;font-size:10px;">▶</span></div>
+    <div class="submenu">
+        <div class="sub-item">资金支出流水查询</div>
+        <div class="sub-item">资金支出流水处理</div>
+    </div>
+    <div class="menu-item" onclick="toggleMenu(this)"><i>📊</i>报表管理<span style="margin-left:auto;font-size:10px;">▶</span></div>
+    <div class="submenu">
+        <div class="sub-item">单据查询</div>
+        <div class="sub-item">下载任务中心</div>
+    </div>
+    <div class="menu-item" onclick="toggleMenu(this)"><i>⚙️</i>系统管理<span style="margin-left:auto;font-size:10px;">▶</span></div>
+    <div class="submenu">
+        <div class="sub-item">角色管理</div>
+        <div class="sub-item">编码规则定义</div>
+        <div class="sub-item">凭证生成规则</div>
+    </div>
+</div>
+
+<!-- 主内容 -->
+<div class="main">
+
+<!-- ==================== 计提项目处理列表 ==================== -->
+<div class="page active" id="project-list">
+    <div class="panel">
+        <div class="panel-hd">查询条件</div>
+        <div class="panel-bd">
+            <div class="query-grid">
+                <div class="query-item"><label>计提项目编号</label><input type="text" placeholder="请输入"></div>
+                <div class="query-item"><label>计提单据编号</label><input type="text" placeholder="请输入"></div>
+                <div class="query-item"><label>数据来源</label><select><option value="">请选择</option><option>当月新增计提</option><option>当月新增滚动计提</option><option>历史滚动计提</option></select></div>
+                <div class="query-item"><label>计提类型</label><select><option value="">请选择</option><option>金额固定类</option><option>金额浮动类</option></select></div>
+                <div class="query-item"><label>费用期间</label><input type="text" placeholder="开始月份  -  结束月份"></div>
+                <div class="query-item"><label>公司主体</label><select><option value="">请选择</option><option>深圳市前海云途物流有限公司</option><option>纵腾集团有限公司</option></select></div>
+                <div class="query-item"><label>业务大类</label><select><option value="">请选择</option><option>快递费</option><option>仓储费</option><option>运输费</option></select></div>
+                <div class="query-item"><label>业务小类</label><select><option value="">请选择</option></select></div>
+                <div class="query-item"><label>供应商</label><input type="text" placeholder="请输入"></div>
+                <div class="query-item"><label>供应商编码</label><input type="text" placeholder="请输入"></div>
+                <div class="query-item"><label>创建人</label><input type="text" placeholder="请输入"></div>
+                <div class="query-item"><label>费用承担部门</label><input type="text" placeholder="请输入"></div>
+            </div>
+            <div class="query-btns" style="justify-content:flex-end;">
+                <div style="display:flex;gap:8px;">
+                    <button class="btn btn-qry">🔍 查询</button>
+                    <button class="btn btn-dft">清空</button>
+                    <button class="btn btn-dft">高级查询 ▼</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 按钮工具栏 -->
+    <div class="toolbar">
+        <div class="toolbar-l">
+            <button class="btn btn-org" onclick="showPage('project-edit')">新增</button>
+            <button class="btn btn-org">匹配报账单 <span class="tag-new">开放</span></button>
+            <button class="btn btn-org">提交计提 <span class="tag-new">开放</span></button>
+            <button class="btn btn-org">确认计提</button>
+            <button class="btn btn-red">批量废弃</button>
+        </div>
+        <div class="toolbar-r">
+            <button class="btn btn-dft">下载模板</button>
+            <button class="btn btn-dft">导入</button>
+            <button class="btn btn-dft">导出Excel</button>
+        </div>
+    </div>
+
+    <!-- 价值合计 -->
+    <div class="val-summary">
+        <div class="val-summary-hd" onclick="toggleValSum(this)">
+            <span class="arrow">▶</span>
+            <span>💰 价值合计（按币种）— 基于当前筛选条件所有数据（共4,257条）</span>
+            <span class="tip">点击展开查看按币种明细</span>
+        </div>
+        <div class="val-summary-bd">
+            <table class="val-sum-table">
+                <thead><tr><th>币种</th><th>初始计提金额</th><th>本期计提金额</th><th>已报账金额（实际）</th><th>未报账金额</th><th>匹配报账单数量</th></tr></thead>
+                <tbody>
+                    <tr><td class="currency">CNY</td><td class="money">13,836,800.00</td><td class="money">13,836,800.00</td><td class="money green">5,000,000.00</td><td class="money red">8,836,800.00</td><td>120</td></tr>
+                    <tr><td class="currency">USD</td><td class="money">800,000.00</td><td class="money">800,000.00</td><td class="money green">300,000.00</td><td class="money red">500,000.00</td><td>45</td></tr>
+                    <tr><td class="currency">EUR</td><td class="money">200,000.00</td><td class="money">200,000.00</td><td class="money green">80,000.00</td><td class="money red">120,000.00</td><td>12</td></tr>
+                    <tr><td class="currency">HKD</td><td class="money">500,000.00</td><td class="money">500,000.00</td><td class="money green">200,000.00</td><td class="money red">300,000.00</td><td>8</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- 数据表格 -->
+    <div class="table-wrap">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th class="chk-fix" style="left:0;"><input type="checkbox"></th>
+                    <th class="op-fix" style="left:32px;background:#fafafa;">操作</th>
+                    <th>是否计提</th>
+                    <th>数据来源</th>
+                    <th>计提类型</th>
+                    <th>计提项目编号</th>
+                    <th>计提单据编号</th>
+                    <th>创建人</th>
+                    <th>创建时间</th>
+                    <th>费用期间</th>
+                    <th>费用承担部门</th>
+                    <th>成本中心状态</th>
+                    <th>公司主体</th>
+                    <th>供应商编码</th>
+                    <th>供应商名称</th>
+                    <th>已执行匹配次数<span class="tag-new">新增</span></th>
+                    <th>最新执行匹配时间<span class="tag-new">新增</span></th>
+                    <th>匹配报账单号<span class="tag-new">新增</span></th>
+                    <th>业务开始时间<span class="tag-new">新增</span></th>
+                    <th>业务结束时间<span class="tag-new">新增</span></th>
+                    <th>凭证状态</th>
+                    <th>初始计提金额</th>
+                    <th>本期计提金额</th>
+                    <th>已报账金额(实际)</th>
+                    <th>未报账金额</th>
+                    <th>匹配报账单数量</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="chk-fix" style="left:0;"><input type="checkbox"></td>
+                    <td class="op-fix" style="left:32px;">
+                        <div class="op-links">
+                            <a href="#">查看</a>
+                            <a href="#" onclick="showPage('project-edit')">修改</a>
+                            <a href="#">复制</a>
+                            <a href="#" class="red">废弃</a>
+                        </div>
+                    </td>
+                    <td>是</td>
+                    <td>当月新增计提</td>
+                    <td>金额固定类</td>
+                    <td><a href="#">2000000126050015</a></td>
+                    <td>—</td>
+                    <td>zt25654/李秋艳</td>
+                    <td>2026-05-20 16:08:43</td>
+                    <td>202604</td>
+                    <td>纵腾网络/FES财经条线/财务共享中心/总账报表组</td>
+                    <td><span class="tag tag-green">启用</span></td>
+                    <td>深圳市前海云途物流有限公司</td>
+                    <td>ZT25654</td>
+                    <td>李秋艳</td>
+                    <td>0</td>
+                    <td>—</td>
+                    <td>—</td>
+                    <td>—</td>
+                    <td>—</td>
+                    <td><span class="tag tag-gray">未过账</span></td>
+                    <td>1,000.00</td>
+                    <td>1,000.00</td>
+                    <td>—</td>
+                    <td style="color:#ff4d4f;font-weight:600;">1,000.00</td>
+                    <td>0</td>
+                </tr>
+                <tr class="selected">
+                    <td class="chk-fix" style="left:0;"><input type="checkbox" checked></td>
+                    <td class="op-fix" style="left:32px;background:#bae7ff;">
+                        <div class="op-links">
+                            <a href="#">查看</a>
+                            <a href="#" onclick="showPage('project-edit')">修改</a>
+                            <a href="#">复制</a>
+                            <a href="#" class="red">废弃</a>
+                        </div>
+                    </td>
+                    <td>是</td>
+                    <td>当月新增计提</td>
+                    <td>金额固定类</td>
+                    <td><a href="#">2000140126050014</a></td>
+                    <td>JT0000026050001</td>
+                    <td>zt20130/张敏</td>
+                    <td>2026-05-19 18:44:05</td>
+                    <td>202606</td>
+                    <td>纵腾网络/FES财经条线/FES技术中心/质量保障组/测试二组</td>
+                    <td><span class="tag tag-green">启用</span></td>
+                    <td>测试新增</td>
+                    <td>ZT20130</td>
+                    <td>张敏</td>
+                    <td>2</td>
+                    <td>2026-07-02 14:25:10</td>
+                    <td><a href="#" onclick="showToast('跳转至报账单','info')">BOE20240628001</a>, <a href="#" onclick="showToast('跳转至报账单','info')">BOE20240705003</a></td>
+                    <td>2026-04-01</td>
+                    <td>2026-06-30</td>
+                    <td><span class="tag tag-green">已过账</span></td>
+                    <td>80,000.00</td>
+                    <td>80,000.00</td>
+                    <td>50,000.00</td>
+                    <td style="color:#ff4d4f;font-weight:600;">30,000.00</td>
+                    <td>2</td>
+                </tr>
+                <tr>
+                    <td class="chk-fix" style="left:0;"><input type="checkbox"></td>
+                    <td class="op-fix" style="left:32px;">
+                        <div class="op-links">
+                            <a href="#">查看</a>
+                            <a href="#" onclick="showPage('project-edit')">修改</a>
+                            <a href="#">复制</a>
+                            <a href="#" class="red">废弃</a>
+                        </div>
+                    </td>
+                    <td>是</td>
+                    <td>当月新增计提</td>
+                    <td>金额固定类</td>
+                    <td><a href="#">2000140126050012</a></td>
+                    <td>JT0000026050001</td>
+                    <td>zt20130/张敏</td>
+                    <td>2026-05-19 18:40:44</td>
+                    <td>202606</td>
+                    <td>纵腾网络/FES财经条线/FES技术中心/质量保障组/测试二组</td>
+                    <td><span class="tag tag-green">启用</span></td>
+                    <td>测试新增</td>
+                    <td>ZT20130</td>
+                    <td>张敏</td>
+                    <td>1</td>
+                    <td>2026-06-01 09:00:00</td>
+                    <td><a href="#" onclick="showToast('跳转至报账单','info')">BOE20240710005</a></td>
+                    <td>2026-07-01</td>
+                    <td>2026-07-15</td>
+                    <td><span class="tag tag-gray">未过账</span></td>
+                    <td>55,000.00</td>
+                    <td>55,000.00</td>
+                    <td>30,000.00</td>
+                    <td style="color:#ff4d4f;font-weight:600;">25,000.00</td>
+                    <td>1</td>
+                </tr>
+                <tr>
+                    <td class="chk-fix" style="left:0;"><input type="checkbox"></td>
+                    <td class="op-fix" style="left:32px;">
+                        <div class="op-links">
+                            <a href="#">查看</a>
+                            <a href="#" class="gray">修改</a>
+                            <a href="#" class="gray">复制</a>
+                            <a href="#" class="gray">废弃</a>
+                        </div>
+                    </td>
+                    <td>是</td>
+                    <td>当月新增滚动计提</td>
+                    <td>金额固定类</td>
+                    <td><a href="#">2000140126050011</a></td>
+                    <td>JT0000026050001</td>
+                    <td>zt20130/张敏</td>
+                    <td>2026-05-19 18:08:24</td>
+                    <td>202606</td>
+                    <td>纵腾网络/FES财经条线/FES技术中心/质量保障组/测试二组</td>
+                    <td><span class="tag tag-green">启用</span></td>
+                    <td>测试新增</td>
+                    <td>ZT20130</td>
+                    <td>张敏</td>
+                    <td>0</td>
+                    <td>—</td>
+                    <td>—</td>
+                    <td>—</td>
+                    <td>—</td>
+                    <td><span class="tag tag-gray">未过账</span></td>
+                    <td>35,000.00</td>
+                    <td>35,000.00</td>
+                    <td>—</td>
+                    <td style="color:#ff4d4f;font-weight:600;">35,000.00</td>
+                    <td>0</td>
+                </tr>
+                <tr>
+                    <td class="chk-fix" style="left:0;"><input type="checkbox"></td>
+                    <td class="op-fix" style="left:32px;">
+                        <div class="op-links">
+                            <a href="#">查看</a>
+                            <a href="#" class="gray">修改</a>
+                            <a href="#" class="gray">复制</a>
+                            <a href="#" class="gray">废弃</a>
+                        </div>
+                    </td>
+                    <td>是</td>
+                    <td>历史滚动计提</td>
+                    <td>金额浮动类</td>
+                    <td><a href="#">300800226020001</a></td>
+                    <td>JT30080026040001</td>
+                    <td>zt23507/李娜</td>
+                    <td>2026-04-08 16:13:08</td>
+                    <td>202604</td>
+                    <td>纵腾网络/HQU技术中心/运维部/应用运维组/FBU应用运维组</td>
+                    <td><span class="tag tag-green">启用</span></td>
+                    <td>US ELOGISTICS SERVICE CO...</td>
+                    <td>PS03980606</td>
+                    <td>US ELOGISTICS</td>
+                    <td>3</td>
+                    <td>2026-05-15 10:30:00</td>
+                    <td>BOE20260408001, BOE20260510002, BOE20260620005</td>
+                    <td>2026-04-01</td>
+                    <td>2026-06-30</td>
+                    <td><span class="tag tag-green">已过账</span></td>
+                    <td>100,000.00</td>
+                    <td>100,000.00</td>
+                    <td>70,000.00</td>
+                    <td style="color:#ff4d4f;font-weight:600;">30,000.00</td>
+                    <td>3</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="pager">
+        <span>共 4,257 条</span>
+        <a>⏮</a>
+        <a>◀</a>
+        <a class="active">1</a>
+        <a>2</a>
+        <a>3</a>
+        <a>4</a>
+        <a>5</a>
+        <a>6</a>
+        <span>...</span>
+        <a>43</a>
+        <a>▶</a>
+        <span>前往 <input type="text" style="width:36px;height:24px;border:1px solid #d9d9d9;border-radius:2px;text-align:center;"> 页</span>
+        <select><option>100条/页</option><option>500条/页</option><option>1000条/页</option></select>
+    </div>
+</div>
+
+<!-- ==================== 计提项目编辑 ==================== -->
+<div class="page" id="project-edit">
+    <div class="panel">
+        <div class="panel-hd">基本信息</div>
+        <div class="panel-bd">
+            <div class="detail-grid">
+                <div class="detail-item"><div class="lb">数据来源 <span style="color:#ff4d4f;">*</span></div><select><option>当月新增计提</option><option>当月新增滚动计提</option><option>历史滚动计提 <span class="tag-new">新增导入选项</span></option></select></div>
+                <div class="detail-item"><div class="lb">计提类型 <span style="color:#ff4d4f;">*</span></div><select><option>金额固定类</option><option>金额浮动类</option></select></div>
+                <div class="detail-item"><div class="lb">计提项目编号</div><input type="text" value="2000000126050015" disabled></div>
+                <div class="detail-item"><div class="lb">公司主体 <span style="color:#ff4d4f;">*</span></div><select onchange="autoSF(this)" id="compSel"><option value="1">深圳市前海云途物流有限公司</option><option value="2">纵腾集团有限公司</option><option value="3">Super Smart Service ltd</option></select></div>
+                <div class="detail-item"><div class="lb">费用期间 <span style="color:#ff4d4f;">*</span></div><input type="text" value="202604"></div>
+                <div class="detail-item"><div class="lb">费用承担部门 <span style="color:#ff4d4f;">*</span></div><input type="text" value="纵腾网络/FES财经条线/财务共享中心/总账报表组"></div>
+                <div class="detail-item"><div class="lb">业务大类</div><input type="text" value="培训费Training Fees" disabled></div>
+                <div class="detail-item"><div class="lb">业务小类</div><input type="text" value="培训费Training Fees" disabled></div>
+                <div class="detail-item"><div class="lb">供应商编码</div><input type="text" value="ZT25654" disabled></div>
+                <div class="detail-item"><div class="lb">供应商名称</div><input type="text" value="李秋艳" disabled></div>
+                <div class="detail-item"><div class="lb">业务人员 <span style="color:#ff4d4f;">*</span></div><input type="text" value="李秋艳"></div>
+                <div class="detail-item"><div class="lb">BP财务</div><input type="text" value="李秋艳"></div>
+                <div class="detail-item"><div class="lb">共享财务 <span class="tag-new">自动带出</span></div><input type="text" value="张敏" id="sfField"><div style="font-size:11px;color:#52c41a;margin-top:2px;">选择公司主体后自动带出，可手动修改</div></div>
+                <div class="detail-item"><div class="lb">创建人</div><input type="text" value="李秋艳" disabled></div>
+                <div class="detail-item"><div class="lb">创建时间</div><input type="text" value="2026-05-20 16:08:43" disabled></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="panel">
+        <div class="panel-hd">匹配报账单信息 <span class="tag-new">复选框多选</span></div>
+        <div class="panel-bd">
+            <div class="toolbar" style="padding:0 0 10px;">
+                <div class="toolbar-l">
+                    <button class="btn btn-org" onclick="showModal('modal-bill')">新增 <span class="tag-new">复选框多选</span></button>
+                    <button class="btn btn-red">删除</button>
+                </div>
+            </div>
+            <div class="table-wrap" style="max-height:300px;">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th width="32"><input type="checkbox"></th>
+                            <th>序号</th>
+                            <th>报账单号<span class="tag-new">可跳转</span></th>
+                            <th>匹配类型</th>
+                            <th>报账业务大类</th>
+                            <th>报账业务小类<span class="tag-new">可跳转</span></th>
+                            <th>业务开始时间</th>
+                            <th>业务结束时间</th>
+                            <th>费用承担部门</th>
+                            <th>报账金额（系统）</th>
+                            <th>币种</th>
+                            <th>报账金额（实际）</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><input type="checkbox"></td>
+                            <td>1</td>
+                            <td><a href="#" onclick="showToast('跳转至报账单 2000002605190319','info')">2000002605190319</a></td>
+                            <td><span class="tag tag-blue">自动</span></td>
+                            <td>培训费Training Fees</td>
+                            <td><a href="#">培训费Training Fees</a></td>
+                            <td>2026-04-01</td>
+                            <td>2026-04-30</td>
+                            <td>纵腾网络/FES财经条线/财务共享中心/总账报表组</td>
+                            <td>1,000.00</td>
+                            <td>CNY</td>
+                            <td><input type="text" value="1,000.00" style="width:100px;text-align:right;padding:2px 6px;border:1px solid #d9d9d9;"></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div style="margin-top:10px;padding:10px;background:#f6ffed;border:1px solid #b7eb8f;border-radius:2px;font-size:12px;color:#389e0d;">
+                💡 业务时间范围（多报账单计算）：业务开始时间 = <strong style="color:#ff4d4f;">MIN(2026-04-01) = 2026-04-01</strong> | 业务结束时间 = <strong style="color:#ff4d4f;">MAX(2026-04-30) = 2026-04-30</strong>
+                <span class="tag-new">需求9</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="panel">
+        <div class="panel-hd">计提计算结果</div>
+        <div class="panel-bd">
+            <div class="detail-grid">
+                <div class="detail-item"><div class="lb">计提单据编号</div><div class="val">—</div></div>
+                <div class="detail-item"><div class="lb">计提状态</div><div class="val"><span class="tag tag-org">待提交</span></div></div>
+                <div class="detail-item"><div class="lb">币种</div><div class="val">CNY</div></div>
+                <div class="detail-item"><div class="lb">初始计提金额</div><div class="val">1,000.00</div></div>
+                <div class="detail-item"><div class="lb">本期计提金额</div><div class="val">1,000.00</div></div>
+                <div class="detail-item"><div class="lb">已报账金额（实际）</div><div class="val" style="color:#52c41a;">1,000.00</div></div>
+                <div class="detail-item"><div class="lb">未报账金额</div><div class="val" style="color:#ff4d4f;">0.00</div></div>
+                <div class="detail-item"><div class="lb">报账状态</div><div class="val">全部报账</div></div>
+                <div class="detail-item"><div class="lb">业务开始时间（新）</div><div class="val">2026-04-01</div></div>
+                <div class="detail-item"><div class="lb">业务结束时间（新）</div><div class="val">2026-04-30</div></div>
+                <div class="detail-item"><div class="lb">是否逾期</div><div class="val">否</div></div>
+                <div class="detail-item"><div class="lb">逾期天数</div><div class="val">0</div></div>
+            </div>
+            <div style="margin-top:12px;"><label style="font-size:12px;color:#666;">逾期说明</label><textarea style="width:100%;height:60px;border:1px solid #d9d9d9;border-radius:2px;padding:6px;resize:none;" placeholder="请输入"></textarea></div>
+            <div style="margin-top:12px;"><label style="font-size:12px;color:#666;">计提内容</label><textarea style="width:100%;height:50px;border:1px solid #d9d9d9;border-radius:2px;padding:6px;resize:none;">111</textarea><div style="text-align:right;font-size:11px;color:#999;">3 / 1000</div></div>
+        </div>
+    </div>
+
+    <div style="text-align:right;padding:16px 0;">
+        <button class="btn btn-org-fill" style="height:32px;padding:0 24px;" onclick="showToast('保存成功','ok')">保存</button>
+        <button class="btn btn-dft" style="height:32px;padding:0 24px;" onclick="showPage('project-list')">关闭</button>
+    </div>
+</div>
+
+<!-- ==================== 计提单据处理列表 ==================== -->
+<div class="page" id="bill-list">
+    <div class="panel">
+        <div class="panel-hd">查询条件</div>
+        <div class="panel-bd">
+            <div class="query-grid">
+                <div class="query-item"><label>计提单据编号</label><input type="text" placeholder="请输入"></div>
+                <div class="query-item"><label>计提项目编号</label><input type="text" placeholder="请输入"></div>
+                <div class="query-item"><label>数据来源</label><select><option value="">请选择</option><option>当月新增计提</option><option>当月新增滚动计提</option><option>历史滚动计提</option></select></div>
+                <div class="query-item"><label>供应商</label><input type="text" placeholder="请输入"></div>
+                <div class="query-item"><label>公司主体</label><select><option value="">请选择</option><option>深圳市前海云途物流有限公司</option><option>纵腾集团有限公司</option></select></div>
+                <div class="query-item"><label>费用期间</label><input type="text" placeholder="开始月份  -  结束月份"></div>
+                <div class="query-item"><label>业务大类</label><select><option value="">请选择</option></select></div>
+                <div class="query-item"><label>业务小类</label><select><option value="">请选择</option></select></div>
+            </div>
+            <div class="query-btns" style="justify-content:flex-end;">
+                <button class="btn btn-qry">🔍 查询</button>
+                <button class="btn btn-dft">清空</button>
+                <button class="btn btn-dft">高级查询 ▼</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="toolbar">
+        <div class="toolbar-l">
+            <button class="btn btn-org">整单审批通过/确认</button>
+            <button class="btn btn-org">整单驳回</button>
+            <button class="btn btn-red">整单批量废弃</button>
+        </div>
+        <div class="toolbar-r">
+            <button class="btn btn-dft">导出Excel</button>
+        </div>
+    </div>
+
+    <!-- 价值合计 -->
+    <div class="val-summary">
+        <div class="val-summary-hd" onclick="toggleValSum(this)">
+            <span class="arrow">▶</span>
+            <span>💰 价值合计（按币种）— 基于当前筛选条件所有数据（共1,856条）</span>
+            <span class="tip">点击展开查看按币种明细</span>
+        </div>
+        <div class="val-summary-bd">
+            <table class="val-sum-table">
+                <thead><tr><th>币种</th><th>计提单未报账金额</th><th>初始计提金额</th><th>本期计提金额</th><th>已报账金额(实际)</th><th>未报账金额</th><th>匹配报账单数量</th></tr></thead>
+                <tbody>
+                    <tr><td class="currency">CNY</td><td class="money red">530,000.00</td><td class="money">980,000.00</td><td class="money">980,000.00</td><td class="money green">450,000.00</td><td class="money red">530,000.00</td><td>8</td></tr>
+                    <tr><td class="currency">USD</td><td class="money red">55,000.00</td><td class="money">135,000.00</td><td class="money">135,000.00</td><td class="money green">80,000.00</td><td class="money red">55,000.00</td><td>3</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="table-wrap">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th class="chk-fix" style="left:0;"><input type="checkbox"></th>
+                    <th class="op-fix" style="left:32px;">操作</th>
+                    <th>是否计提</th>
+                    <th>数据来源</th>
+                    <th>计提类型</th>
+                    <th>计提项目编号</th>
+                    <th>计提单据编号</th>
+                    <th>创建人</th>
+                    <th>创建时间</th>
+                    <th>单据状态</th>
+                    <th>费用期间</th>
+                    <th>费用承担部门</th>
+                    <th>公司主体</th>
+                    <th>供应商</th>
+                    <th>业务人员</th>
+                    <th>匹配报账单数量</th>
+                    <th>匹配报账单号<span class="tag-new">新增</span></th>
+                    <th>凭证状态</th>
+                    <th>记账期间</th>
+                    <th>计提单未报账金额</th>
+                    <th>初始计提金额</th>
+                    <th>本期计提金额</th>
+                    <th>已报账金额(实际)</th>
+                    <th>未报账金额</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="chk-fix" style="left:0;"><input type="checkbox"></td>
+                    <td class="op-fix" style="left:32px;">
+                        <div class="op-links">
+                            <a href="#" onclick="showPage('bill-edit')">查看</a>
+                            <a href="#">修改</a>
+                            <a href="#" class="red">废弃</a>
+                            <a href="#">操作记录</a>
+                        </div>
+                    </td>
+                    <td>是</td>
+                    <td>当月新增计提</td>
+                    <td>金额浮动类</td>
+                    <td><a href="#">900100224100001</a></td>
+                    <td><a href="#" onclick="showPage('bill-edit')">JT90010024100001</a></td>
+                    <td>zt23507/李娜</td>
+                    <td>2024-10-15 09:52:54</td>
+                    <td><span class="tag tag-green">已完成</span></td>
+                    <td>202404</td>
+                    <td>纵腾网络/DC 数字化中心/中后台技术/创新技术深圳/深圳项目</td>
+                    <td>深圳闽星科技有限公司</td>
+                    <td>深圳闽星科技有限公司</td>
+                    <td>李娜</td>
+                    <td>0</td>
+                    <td>—</td>
+                    <td><span class="tag tag-green">已过账</span></td>
+                    <td>202409</td>
+                    <td style="color:#ff4d4f;font-weight:600;">1,200.00</td>
+                    <td>1,200.00</td>
+                    <td>1,200.00</td>
+                    <td style="color:#52c41a;">0.00</td>
+                    <td style="color:#ff4d4f;font-weight:600;">1,200.00</td>
+                </tr>
+                <tr class="selected">
+                    <td class="chk-fix" style="left:0;"><input type="checkbox" checked></td>
+                    <td class="op-fix" style="left:32px;background:#bae7ff;">
+                        <div class="op-links">
+                            <a href="#" onclick="showPage('bill-edit')">查看</a>
+                            <a href="#">修改</a>
+                            <a href="#" class="red">废弃</a>
+                            <a href="#">操作记录</a>
+                        </div>
+                    </td>
+                    <td>是</td>
+                    <td>当月新增计提</td>
+                    <td>金额浮动类</td>
+                    <td><a href="#">900100224050055</a></td>
+                    <td><a href="#" onclick="showPage('bill-edit')">JT90010024505013</a></td>
+                    <td>zt16995/周扬青</td>
+                    <td>2024-05-31 10:51:21</td>
+                    <td><span class="tag tag-org">待业务确认</span></td>
+                    <td>202404</td>
+                    <td>深圳闽星科技有限公司·测试</td>
+                    <td>深圳闽星科技有限公司</td>
+                    <td>深圳闽星科技有限公司</td>
+                    <td>周扬青</td>
+                    <td>2</td>
+                    <td><a href="#" onclick="showToast('跳转至报账单','info')">BOE20240501001</a></td>
+                    <td><span class="tag tag-gray">未过账</span></td>
+                    <td>202403</td>
+                    <td style="color:#ff4d4f;font-weight:600;">2,500.00</td>
+                    <td>5,000.00</td>
+                    <td>5,000.00</td>
+                    <td style="color:#52c41a;">2,500.00</td>
+                    <td style="color:#ff4d4f;font-weight:600;">2,500.00</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <div class="pager">
+        <span>共 1,856 条</span>
+        <a>⏮</a><a>◀</a><a class="active">1</a><a>2</a><a>3</a><a>▶</a><a>⏭</a>
+        <span>前往 <input type="text" style="width:36px;height:24px;border:1px solid #d9d9d9;border-radius:2px;text-align:center;"> 页</span>
+        <select><option>100条/页</option></select>
+    </div>
+</div>
+
+<!-- ==================== 计提单据编辑 ==================== -->
+<div class="page" id="bill-edit">
+    <div class="panel">
+        <div class="panel-hd">基本信息</div>
+        <div class="panel-bd">
+            <div class="detail-grid">
+                <div class="detail-item"><div class="lb">计提单据编号</div><input type="text" value="JT90010024100001" disabled></div>
+                <div class="detail-item"><div class="lb">费用期间</div><input type="text" value="202404" disabled></div>
+                <div class="detail-item"><div class="lb">公司主体</div><input type="text" value="深圳闽星科技有限公司" disabled></div>
+                <div class="detail-item"><div class="lb">供应商</div><input type="text" value="李娜" disabled></div>
+                <div class="detail-item"><div class="lb">业务大类</div><input type="text" value="保险费·闽星" disabled></div>
+                <div class="detail-item"><div class="lb">业务小类</div><input type="text" value="财产保险" disabled></div>
+                <div class="detail-item"><div class="lb">业务人员</div><input type="text" value="李娜" disabled></div>
+                <div class="detail-item"><div class="lb">BP财务</div><input type="text" value="李娜" disabled></div>
+                <div class="detail-item"><div class="lb">共享财务</div><input type="text" value="李娜" disabled></div>
+                <div class="detail-item"><div class="lb">记账期间</div><input type="text" value="202409" disabled></div>
+                <div class="detail-item"><div class="lb">币种</div><input type="text" value="CNY" disabled></div>
+                <div class="detail-item"><div class="lb">计提单未报账金额</div><div class="val" style="color:#ff4d4f;">1,200.00</div></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="panel">
+        <div class="panel-hd">计提明细</div>
+        <div class="panel-bd">
+            <div class="table-wrap" style="max-height:300px;">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>序号</th>
+                            <th>操作</th>
+                            <th>是否计提</th>
+                            <th>数据来源</th>
+                            <th>计提类型</th>
+                            <th>计提项目编号</th>
+                            <th>创建人</th>
+                            <th>创建时间</th>
+                            <th>费用承担部门</th>
+                            <th>成本中心状态</th>
+                            <th>公司主体</th>
+                            <th>计提内容</th>
+                            <th>初始计提金额</th>
+                            <th>本期计提金额</th>
+                            <th>匹配报账单数量</th>
+                            <th>业务开始时间（新）</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>1</td>
+                            <td>
+                                <div class="op-links">
+                                    <a href="#" onclick="showModal('modal-detail')">修改</a>
+                                    <a href="#" class="red">删除</a>
+                                </div>
+                            </td>
+                            <td>是</td>
+                            <td>当月新增计提</td>
+                            <td>金额浮动类</td>
+                            <td><a href="#">900100224100001</a></td>
+                            <td>李娜</td>
+                            <td>2024-10-15 09:52:54</td>
+                            <td>纵腾网络/DC 数字化中心/中后台技术/创...</td>
+                            <td><span class="tag tag-green">启用</span></td>
+                            <td>深圳闽星科技有限公司</td>
+                            <td>保险费</td>
+                            <td>1,200.00</td>
+                            <td>1,200.00</td>
+                            <td>0</td>
+                            <td>—</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="panel">
+        <div class="panel-hd">凭证信息 <span class="tag-new">冲销凭证日期调整</span></div>
+        <div class="panel-bd">
+            <div class="tabs">
+                <div class="tab active">凭证信息</div>
+                <div class="tab">会计信息</div>
+            </div>
+            <div class="table-wrap" style="max-height:200px;">
+                <table class="data-table">
+                    <thead>
+                        <tr><th>公司代码</th><th>公司名称</th><th>凭证类型</th><th>期间</th><th>过账日期<span class="tag-new">调整</span></th><th>凭证抬头文本</th><th>记账币种</th><th>本位币种</th><th>记账金额</th><th>附件张数</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>9001</td>
+                            <td>深圳闽星科技有限公司</td>
+                            <td>DR</td>
+                            <td>09</td>
+                            <td style="color:#ff4d4f;font-weight:600;">2024-09-30 <span class="tag-new">原逻辑</span></td>
+                            <td>计提202404保险费·闽星</td>
+                            <td>CNY</td>
+                            <td>CNY</td>
+                            <td>1,200.00</td>
+                            <td>0</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div style="margin-top:12px;padding:10px;background:#fff7e6;border:1px solid #ffd591;border-radius:2px;font-size:12px;color:#d46b08;">
+                📋 冲销凭证规则（需求8）：2026年6月冲销5月计提：<strong>凭证日期</strong>=2026.5.31（沿用上月计提过账日期），<strong>过账日期</strong>=2026.6.1（当月1号）
+            </div>
+        </div>
+    </div>
+
+    <div style="text-align:right;padding:16px 0;">
+        <button class="btn btn-org-fill" style="height:32px;padding:0 24px;" onclick="showToast('保存并导入核算系统','ok')">保存并导入核算系统</button>
+        <button class="btn btn-dft" style="height:32px;padding:0 24px;" onclick="showPage('bill-list')">关闭</button>
+    </div>
+</div>
+
+</div><!-- main -->
+</div><!-- wrap -->
+
+<!-- ========== 弹窗：添加报账单（复选框多选） ========== -->
+<div class="modal-bg" id="modal-bill">
+    <div class="modal-box" style="min-width:900px;">
+        <div class="modal-hd">
+            <h4>手动添加报账单 <span class="tag-new">复选框多选</span></h4>
+            <button class="x" onclick="closeModal('modal-bill')">&times;</button>
+        </div>
+        <div class="modal-bd" style="padding:16px 0 0;">
+            <div style="padding:0 20px 12px;">
+                <div style="display:flex;gap:12px;align-items:flex-end;">
+                    <div style="flex:1;"><label style="display:block;margin-bottom:4px;font-size:12px;color:#666;">报账单号</label><input type="text" placeholder="请输入" style="width:100%;height:32px;border:1px solid #d9d9d9;border-radius:2px;padding:4px 8px;"></div>
+                    <div style="width:140px;"><label style="display:block;margin-bottom:4px;font-size:12px;color:#666;">业务大类</label><select style="width:100%;height:32px;border:1px solid #d9d9d9;border-radius:2px;"><option>全部</option><option>仓储费</option></select></div>
+                    <div style="width:140px;"><label style="display:block;margin-bottom:4px;font-size:12px;color:#666;">业务小类</label><select style="width:100%;height:32px;border:1px solid #d9d9d9;border-radius:2px;"><option>全部</option><option>仓库租赁费</option></select></div>
+                    <button class="btn btn-qry">🔍 查询</button>
+                </div>
+            </div>
+            <div style="padding:0 20px 16px;">
+                <div class="table-wrap" style="max-height:280px;">
+                    <table class="data-table" style="font-size:11px;">
+                        <thead>
+                            <tr>
+                                <th><input type="checkbox" onchange="checkAll(this)"></th>
+                                <th>报账单号</th><th>业务大类</th><th>业务小类</th><th>费用承担部门</th><th>报账金额</th><th>币种</th><th>业务开始时间</th><th>业务结束时间</th><th>单据状态</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td><input type="checkbox" class="billcb" checked></td><td>BOE20240628001</td><td>仓储费</td><td>仓库租赁费</td><td>仓储部</td><td>30,000.00</td><td>CNY</td><td>2024-06-01</td><td>2024-06-30</td><td><span class="tag tag-green">已审批</span></td></tr>
+                            <tr><td><input type="checkbox" class="billcb" checked></td><td>BOE20240705003</td><td>仓储费</td><td>仓库租赁费</td><td>仓储部</td><td>20,000.00</td><td>CNY</td><td>2024-04-01</td><td>2024-06-30</td><td><span class="tag tag-green">已审批</span></td></tr>
+                            <tr><td><input type="checkbox" class="billcb"></td><td>BOE20240710005</td><td>仓储费</td><td>仓库维修费</td><td>仓储部</td><td>5,000.00</td><td>CNY</td><td>2024-07-01</td><td>2024-07-15</td><td><span class="tag tag-green">已审批</span></td></tr>
+                            <tr><td><input type="checkbox" class="billcb"></td><td>BOE20240720008</td><td>仓储费</td><td>仓库租赁费</td><td>仓储部</td><td>15,000.00</td><td>CNY</td><td>2024-06-15</td><td>2024-07-31</td><td><span class="tag tag-green">已审批</span></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div style="margin-top:12px;padding:10px;background:#e6f7ff;border:1px solid #91d5ff;border-radius:2px;font-size:12px;color:#096dd9;">
+                    ✅ 已勾选 <strong id="cbCount">2</strong> 条费用信息，可一次添加到匹配报账单列表中 <span class="tag-new">复选框多选优化</span>
+                </div>
+            </div>
+        </div>
+        <div class="modal-ft">
+            <button class="btn btn-dft" onclick="closeModal('modal-bill')">取消</button>
+            <button class="btn btn-org-fill" onclick="showToast('添加成功！共添加2条报账单','ok');closeModal('modal-bill')">添加选中项</button>
+        </div>
+    </div>
+</div>
+
+<!-- ========== 弹窗：计提单-计提明细修改 ========== -->
+<div class="modal-bg" id="modal-detail">
+    <div class="modal-box" style="min-width:720px;">
+        <div class="modal-hd">
+            <h4>计提单-计提明细修改</h4>
+            <button class="x" onclick="closeModal('modal-detail')">&times;</button>
+        </div>
+        <div class="modal-bd">
+            <div class="panel" style="margin-bottom:16px;">
+                <div class="panel-hd">基本信息</div>
+                <div class="panel-bd">
+                    <div class="detail-grid">
+                        <div class="detail-item"><div class="lb">计提项目编号</div><input type="text" value="300600223120057" disabled></div>
+                        <div class="detail-item"><div class="lb">数据来源</div><input type="text" value="当月新增计提" disabled></div>
+                        <div class="detail-item"><div class="lb">计提类型</div><select><option>金额浮动类</option></select></div>
+                        <div class="detail-item"><div class="lb">费用承担部门</div><input type="text" value="FBU欧洲大区/英国区" disabled></div>
+                        <div class="detail-item"><div class="lb">创建人</div><input type="text" value="王艳芳" disabled></div>
+                        <div class="detail-item"><div class="lb">创建时间</div><input type="text" value="2023-12-22 15:57:40" disabled></div>
+                    </div>
+                </div>
+            </div>
+            <div class="panel" style="margin-bottom:16px;">
+                <div class="panel-hd">匹配报账单信息 <span class="tag-new">复选框多选</span></div>
+                <div class="panel-bd">
+                    <div style="text-align:right;margin-bottom:10px;">
+                        <button class="btn btn-org" onclick="showModal('modal-bill')">新增 <span class="tag-new">复选框多选</span></button>
+                        <button class="btn btn-red">删除</button>
+                    </div>
+                    <div class="table-wrap" style="max-height:200px;">
+                        <table class="data-table">
+                            <thead>
+                                <tr><th><input type="checkbox"></th><th>序号</th><th><span style="color:#ff4d4f;">*</span> 报账单号</th><th>匹配类型</th><th>业务大类</th><th><span style="color:#ff4d4f;">*</span> 业务小类</th><th>业务开始时间</th><th>业务结束时间</th><th>报账金额</th><th>币种</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr><td colspan="10" style="text-align:center;color:#999;padding:40px;">暂无数据</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="panel">
+                <div class="panel-hd">计提计算结果</div>
+                <div class="panel-bd">
+                    <div class="detail-grid">
+                        <div class="detail-item"><div class="lb">初始计提金额</div><div class="val">308.00</div></div>
+                        <div class="detail-item"><div class="lb">本期计提金额</div><div class="val">308.00</div></div>
+                        <div class="detail-item"><div class="lb">报账状态</div><div class="val">未报账</div></div>
+                        <div class="detail-item"><div class="lb">已报账金额（实际）</div><div class="val">0</div></div>
+                        <div class="detail-item"><div class="lb">未报账金额</div><div class="val" style="color:#ff4d4f;">308.00</div></div>
+                        <div class="detail-item"><div class="lb">业务开始时间（新）</div><div class="val">—</div></div>
+                        <div class="detail-item"><div class="lb">业务结束时间（新）</div><div class="val">—</div></div>
+                        <div class="detail-item"><div class="lb">是否逾期</div><div class="val">是</div></div>
+                        <div class="detail-item"><div class="lb">逾期天数</div><div class="val" style="color:#ff4d4f;">61</div></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal-ft">
+            <button class="btn btn-dft" onclick="closeModal('modal-detail')">取消</button>
+            <button class="btn btn-org-fill" onclick="showToast('保存成功','ok');closeModal('modal-detail')">保存</button>
+        </div>
+    </div>
+</div>
+
+<script>
+function showPage(id){
+    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    document.querySelectorAll('.tabbar .tab-item').forEach(t=>t.classList.remove('active'));
+    const map={'project-list':'tab-p1','bill-list':'tab-p2','project-edit':'tab-p3','bill-edit':'tab-p4'};
+    if(map[id]){const t=document.getElementById(map[id]);if(t)t.classList.add('active');}
+}
+function showToast(msg,type){
+    const t=document.getElementById('toast');
+    t.className='toast toast-'+type;t.textContent=msg;t.classList.add('show');
+    setTimeout(()=>t.classList.remove('show'),2500);
+}
+function showModal(id){document.getElementById(id).classList.add('show');}
+function closeModal(id){document.getElementById(id).classList.remove('show');}
+function toggleMenu(el){
+    const sub=el.nextElementSibling;
+    if(sub&&sub.classList.contains('submenu')){
+        sub.classList.toggle('open');
+        const arrow=el.querySelector('span:last-child');
+        if(arrow)arrow.textContent=sub.classList.contains('open')?'▼':'▶';
+    }
+}
+function toggleValSum(hd){
+    hd.classList.toggle('expanded');
+    hd.nextElementSibling.classList.toggle('show');
+}
+function checkAll(cb){
+    document.querySelectorAll('.billcb').forEach(c=>c.checked=cb.checked);
+    updateCount();
+}
+function updateCount(){
+    const el=document.getElementById('cbCount');
+    if(el)el.textContent=document.querySelectorAll('.billcb:checked').length;
+}
+document.querySelectorAll('.billcb').forEach(cb=>cb.addEventListener('change',updateCount));
+function autoSF(sel){
+    const map={'1':'张敏','2':'周八','3':'吴十二'};
+    const inp=document.getElementById('sfField');
+    if(map[sel.value]){inp.value=map[sel.value];showToast('已自动带出共享财务：'+map[sel.value],'ok');}
+    else{inp.value='';}
+}
+document.querySelectorAll('.modal-bg').forEach(bg=>{
+    bg.addEventListener('click',function(e){if(e.target===this)this.classList.remove('show');});
+});
+</script>
+</body>
+</html>

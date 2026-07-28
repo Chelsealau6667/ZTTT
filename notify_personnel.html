@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>流水变动通知人员</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+            background-color: #f5f7fa;
+            font-size: 12px;
+            color: #333;
+        }
+
+        /* 顶部面包屑 */
+        .breadcrumb {
+            background: #fff;
+            padding: 8px 15px;
+            border-bottom: 1px solid #e8e8e8;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .breadcrumb-home {
+            color: #999;
+            font-size: 14px;
+        }
+        .breadcrumb-tag {
+            background: #409eff;
+            color: #fff;
+            padding: 4px 12px;
+            border-radius: 3px;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .breadcrumb-tag .close {
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        /* 查询条件 */
+        .query-section {
+            background: #fff;
+            margin: 10px;
+            padding: 15px;
+            border-radius: 4px;
+            border: 1px solid #e8e8e8;
+        }
+        .query-title {
+            font-size: 13px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #eee;
+        }
+        .query-form {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+        .query-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .query-item label {
+            font-size: 12px;
+            color: #666;
+            white-space: nowrap;
+        }
+        .query-item input {
+            width: 180px;
+            height: 28px;
+            border: 1px solid #dcdfe6;
+            border-radius: 3px;
+            padding: 0 8px;
+            font-size: 12px;
+        }
+        .query-item input:focus {
+            outline: none;
+            border-color: #409eff;
+        }
+
+        /* 表格区域 */
+        .table-section {
+            background: #fff;
+            margin: 10px;
+            border-radius: 4px;
+            border: 1px solid #e8e8e8;
+            overflow: hidden;
+        }
+        .table-header-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 15px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e8e8e8;
+        }
+        .table-title {
+            font-size: 13px;
+            font-weight: bold;
+            color: #333;
+        }
+        .btn-add {
+            background: #409eff;
+            color: #fff;
+            border: none;
+            padding: 6px 16px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .btn-add:hover {
+            background: #66b1ff;
+        }
+
+        /* 表格 */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        thead th {
+            background: #f0f2f5;
+            color: #666;
+            font-weight: normal;
+            padding: 10px 8px;
+            text-align: left;
+            border-bottom: 1px solid #e8e8e8;
+            font-size: 12px;
+            white-space: nowrap;
+        }
+        tbody td {
+            padding: 10px 8px;
+            border-bottom: 1px solid #eee;
+            font-size: 12px;
+            color: #333;
+        }
+        tbody tr:hover {
+            background: #e6f7ff;
+        }
+        tbody tr:nth-child(even) {
+            /* 移除斑马纹，统一白色背景 */
+        }
+        .seq-col {
+            width: 40px;
+            text-align: center;
+        }
+        .op-col {
+            width: 100px;
+            text-align: center;
+            white-space: nowrap;
+        }
+        .op-btn {
+            color: #409eff;
+            cursor: pointer;
+            margin: 0 8px;
+            text-decoration: none;
+        }
+        .op-btn.delete {
+            color: #409eff;
+        }
+        .op-btn:hover {
+            text-decoration: underline;
+        }
+
+        /* 弹窗 */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-overlay.active {
+            display: flex;
+        }
+        .modal-box {
+            background: #fff;
+            border-radius: 4px;
+            width: 520px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            border-bottom: 1px solid #e8e8e8;
+        }
+        .modal-title {
+            font-size: 16px;
+            font-weight: 500;
+            color: #333;
+        }
+        .modal-close {
+            font-size: 18px;
+            color: #999;
+            cursor: pointer;
+            background: none;
+            border: none;
+        }
+        .modal-close:hover {
+            color: #666;
+        }
+        .modal-body {
+            padding: 20px;
+        }
+        .form-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .form-row:last-child {
+            margin-bottom: 0;
+        }
+        .form-label {
+            width: 160px;
+            text-align: right;
+            padding-right: 10px;
+            font-size: 12px;
+            color: #666;
+            flex-shrink: 0;
+        }
+        .form-label .required {
+            color: #f56c6c;
+            margin-right: 3px;
+        }
+        .form-input-wrap {
+            flex: 1;
+        }
+        .form-input-wrap select,
+        .form-input-wrap input {
+            width: 100%;
+            height: 32px;
+            border: 1px solid #dcdfe6;
+            border-radius: 3px;
+            padding: 0 10px;
+            font-size: 12px;
+            color: #333;
+            background: #fff;
+            cursor: pointer;
+        }
+        .form-input-wrap select:disabled,
+        .form-input-wrap input:disabled {
+            background: #f5f7fa;
+            color: #999;
+            cursor: not-allowed;
+        }
+        .form-input-wrap select:focus,
+        .form-input-wrap input:focus {
+            outline: none;
+            border-color: #409eff;
+        }
+        .form-input-wrap .display-text {
+            height: 32px;
+            line-height: 32px;
+            padding: 0 10px;
+            border: 1px solid #dcdfe6;
+            border-radius: 3px;
+            background: #f5f7fa;
+            color: #666;
+            font-size: 12px;
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            padding: 15px 20px;
+            border-top: 1px solid #e8e8e8;
+        }
+        .btn-cancel {
+            padding: 6px 16px;
+            border: 1px solid #dcdfe6;
+            background: #fff;
+            color: #666;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .btn-cancel:hover {
+            border-color: #409eff;
+            color: #409eff;
+        }
+        .btn-save {
+            padding: 6px 16px;
+            border: 1px solid #409eff;
+            background: #409eff;
+            color: #fff;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .btn-save:hover {
+            background: #66b1ff;
+            border-color: #66b1ff;
+        }
+
+        /* 新增"计提共享财务"行样式高亮 */
+        .form-row.highlight-row {
+            background: #f0f9ff;
+            margin: 0 -20px;
+            padding: 10px 20px;
+            border-top: 1px dashed #b3d8ff;
+            border-bottom: 1px dashed #b3d8ff;
+        }
+        .form-row.highlight-row .form-label {
+            color: #409eff;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 面包屑 -->
+    <div class="breadcrumb">
+        <span class="breadcrumb-home">🏠</span>
+        <span class="breadcrumb-tag">
+            流水变动通知人员
+            <span class="close" onclick="alert('关闭标签')">✕</span>
+        </span>
+    </div>
+
+    <!-- 查询条件 -->
+    <div class="query-section">
+        <div class="query-title">查询条件</div>
+        <div class="query-form">
+            <div class="query-item">
+                <label>公司编码</label>
+                <input type="text" placeholder="">
+            </div>
+            <div class="query-item">
+                <label>公司名称</label>
+                <input type="text" placeholder="">
+            </div>
+        </div>
+    </div>
+
+    <!-- 表格区域 -->
+    <div class="table-section">
+        <div class="table-header-bar">
+            <span class="table-title">公司通知人员设置</span>
+            <button class="btn-add" onclick="openAddModal()">➕ 添加</button>
+        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th class="seq-col">序号</th>
+                    <th>公司主体编码</th>
+                    <th>公司主体名称</th>
+                    <th>共享业务大类-收入通知人员</th>
+                    <th>收入通知人员</th>
+                    <th>共享业务大类-支出通知人员</th>
+                    <th>支出通知人员</th>
+                    <th>计提共享财务</th>
+                    <th>更新人</th>
+                    <th>更新时间</th>
+                    <th class="op-col">操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="seq-col">1</td>
+                    <td>300800</td>
+                    <td>US ELOGISTICS SERVICE CORP</td>
+                    <td>zt21843-徐文平</td>
+                    <td>zt21843-徐文平</td>
+                    <td>zt21843-徐文平</td>
+                    <td>zt21843-徐文平</td>
+                    <td>zt21843-徐文平</td>
+                    <td>zt20130-张敏</td>
+                    <td>2026-03-25 10:48:02</td>
+                    <td class="op-col">
+                        <a class="op-btn" onclick="openEditModal(0)">修改</a>
+                        <a class="op-btn delete" onclick="deleteRow(this)">删除</a>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="seq-col">2</td>
+                    <td>900100</td>
+                    <td>深圳闽星科技有限公司</td>
+                    <td>zt21843-徐文平</td>
+                    <td>zt21843-徐文平</td>
+                    <td>zt21843-徐文平</td>
+                    <td>zt21843-徐文平</td>
+                    <td>zt21843-徐文平</td>
+                    <td>zt20130-张敏</td>
+                    <td>2024-06-14 16:13:07</td>
+                    <td class="op-col">
+                        <a class="op-btn" onclick="openEditModal(1)">修改</a>
+                        <a class="op-btn delete" onclick="deleteRow(this)">删除</a>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="seq-col">3</td>
+                    <td>200005</td>
+                    <td>深圳市前海云途物流有限公司义乌分公司</td>
+                    <td>zt21843-徐文平</td>
+                    <td>zt21843-徐文平</td>
+                    <td>zt21843-徐文平</td>
+                    <td>zt21843-徐文平</td>
+                    <td>zt21843-徐文平</td>
+                    <td>zt25056-黄铭</td>
+                    <td>2024-06-11 09:27:56</td>
+                    <td class="op-col">
+                        <a class="op-btn" onclick="openEditModal(2)">修改</a>
+                        <a class="op-btn delete" onclick="deleteRow(this)">删除</a>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="seq-col">4</td>
+                    <td>200000</td>
+                    <td>深圳市前海云途物流有限公司</td>
+                    <td>zt21843-徐文平</td>
+                    <td>zt21843-徐文平</td>
+                    <td>zt21843-徐文平</td>
+                    <td>zt21843-徐文平</td>
+                    <td>zt21843-徐文平</td>
+                    <td>zt25056-黄铭</td>
+                    <td>2024-06-11 09:27:06</td>
+                    <td class="op-col">
+                        <a class="op-btn" onclick="openEditModal(3)">修改</a>
+                        <a class="op-btn delete" onclick="deleteRow(this)">删除</a>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="seq-col">5</td>
+                    <td>200014</td>
+                    <td>测试新增</td>
+                    <td>zt15710-李丹</td>
+                    <td>zt18111-陈兴</td>
+                    <td>zt16115-谢文俊</td>
+                    <td>zt20130-张敏</td>
+                    <td>zt20130-张敏</td>
+                    <td>zt20130-张敏</td>
+                    <td>2024-06-07 13:48:54</td>
+                    <td class="op-col">
+                        <a class="op-btn" onclick="openEditModal(4)">修改</a>
+                        <a class="op-btn delete" onclick="deleteRow(this)">删除</a>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="seq-col">6</td>
+                    <td>300000</td>
+                    <td>深圳易可达科技有限公司</td>
+                    <td>zt21843-徐文平</td>
+                    <td>zt21843-徐文平</td>
+                    <td>zt21843-徐文平</td>
+                    <td>zt21843-徐文平</td>
+                    <td>zt21843-徐文平</td>
+                    <td>zt25056-黄铭</td>
+                    <td>2024-06-03 11:11:41</td>
+                    <td class="op-col">
+                        <a class="op-btn" onclick="openEditModal(5)">修改</a>
+                        <a class="op-btn delete" onclick="deleteRow(this)">删除</a>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="seq-col">7</td>
+                    <td>100000</td>
+                    <td>福建纵腾网络有限公司</td>
+                    <td>zt21664-陈宇玲</td>
+                    <td>zt21664-陈宇玲</td>
+                    <td>zt23634-刘萍萍</td>
+                    <td>zt21843-徐文平</td>
+                    <td>zt21843-徐文平</td>
+                    <td>zt22957-陈兴节</td>
+                    <td>2024-05-29 11:13:34</td>
+                    <td class="op-col">
+                        <a class="op-btn" onclick="openEditModal(6)">修改</a>
+                        <a class="op-btn delete" onclick="deleteRow(this)">删除</a>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- 新增弹窗 -->
+    <div class="modal-overlay" id="addModal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <span class="modal-title">添加</span>
+                <button class="modal-close" onclick="closeModal('addModal')">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-row">
+                    <div class="form-label"><span class="required">*</span>公司</div>
+                    <div class="form-input-wrap">
+                        <select id="addCompany">
+                            <option value="">请选择公司</option>
+                            <option value="300800">US ELOGISTICS SERVICE CORP (300800)</option>
+                            <option value="900100">深圳闽星科技有限公司 (900100)</option>
+                            <option value="200005">深圳市前海云途物流有限公司义乌分公司 (200005)</option>
+                            <option value="200000">深圳市前海云途物流有限公司 (200000)</option>
+                            <option value="200014">测试新增 (200014)</option>
+                            <option value="300000">深圳易可达科技有限公司 (300000)</option>
+                            <option value="100000">福建纵腾网络有限公司 (100000)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-label">共享业务大类-收入通知人员</div>
+                    <div class="form-input-wrap">
+                        <select>
+                            <option value="">请选择</option>
+                            <option value="zt21843">zt21843-徐文平</option>
+                            <option value="zt15710">zt15710-李丹</option>
+                            <option value="zt18111">zt18111-陈兴</option>
+                            <option value="zt16115">zt16115-谢文俊</option>
+                            <option value="zt21664">zt21664-陈宇玲</option>
+                            <option value="zt23634">zt23634-刘萍萍</option>
+                            <option value="zt20130">zt20130-张敏</option>
+                            <option value="zt25056">zt25056-黄铭</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-label">收入通知人员</div>
+                    <div class="form-input-wrap">
+                        <select>
+                            <option value="">请选择</option>
+                            <option value="zt21843">zt21843-徐文平</option>
+                            <option value="zt15710">zt15710-李丹</option>
+                            <option value="zt18111">zt18111-陈兴</option>
+                            <option value="zt16115">zt16115-谢文俊</option>
+                            <option value="zt21664">zt21664-陈宇玲</option>
+                            <option value="zt23634">zt23634-刘萍萍</option>
+                            <option value="zt20130">zt20130-张敏</option>
+                            <option value="zt25056">zt25056-黄铭</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-label">共享业务大类-支出通知人员</div>
+                    <div class="form-input-wrap">
+                        <select>
+                            <option value="">请选择</option>
+                            <option value="zt21843">zt21843-徐文平</option>
+                            <option value="zt15710">zt15710-李丹</option>
+                            <option value="zt18111">zt18111-陈兴</option>
+                            <option value="zt16115">zt16115-谢文俊</option>
+                            <option value="zt21664">zt21664-陈宇玲</option>
+                            <option value="zt23634">zt23634-刘萍萍</option>
+                            <option value="zt20130">zt20130-张敏</option>
+                            <option value="zt25056">zt25056-黄铭</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-label">支出通知人员</div>
+                    <div class="form-input-wrap">
+                        <select>
+                            <option value="">请选择</option>
+                            <option value="zt21843">zt21843-徐文平</option>
+                            <option value="zt15710">zt15710-李丹</option>
+                            <option value="zt18111">zt18111-陈兴</option>
+                            <option value="zt16115">zt16115-谢文俊</option>
+                            <option value="zt21664">zt21664-陈宇玲</option>
+                            <option value="zt23634">zt23634-刘萍萍</option>
+                            <option value="zt20130">zt20130-张敏</option>
+                            <option value="zt25056">zt25056-黄铭</option>
+                        </select>
+                    </div>
+                </div>
+                <!-- 新增：计提共享财务 -->
+                <div class="form-row highlight-row">
+                    <div class="form-label">计提共享财务</div>
+                    <div class="form-input-wrap">
+                        <select>
+                            <option value="">请选择</option>
+                            <option value="zt21843">zt21843-徐文平</option>
+                            <option value="zt15710">zt15710-李丹</option>
+                            <option value="zt18111">zt18111-陈兴</option>
+                            <option value="zt16115">zt16115-谢文俊</option>
+                            <option value="zt21664">zt21664-陈宇玲</option>
+                            <option value="zt23634">zt23634-刘萍萍</option>
+                            <option value="zt20130">zt20130-张敏</option>
+                            <option value="zt25056">zt25056-黄铭</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-cancel" onclick="closeModal('addModal')">取消</button>
+                <button class="btn-save" onclick="saveAdd()">添加</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 修改弹窗 -->
+    <div class="modal-overlay" id="editModal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <span class="modal-title">修改</span>
+                <button class="modal-close" onclick="closeModal('editModal')">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-row">
+                    <div class="form-label"><span class="required">*</span>公司</div>
+                    <div class="form-input-wrap">
+                        <input type="text" id="editCompany" disabled>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-label">共享业务大类-收入通知人员</div>
+                    <div class="form-input-wrap">
+                        <select id="editIncomeShared">
+                            <option value="">请选择</option>
+                            <option value="zt21843">zt21843-徐文平</option>
+                            <option value="zt15710">zt15710-李丹</option>
+                            <option value="zt18111">zt18111-陈兴</option>
+                            <option value="zt16115">zt16115-谢文俊</option>
+                            <option value="zt21664">zt21664-陈宇玲</option>
+                            <option value="zt23634">zt23634-刘萍萍</option>
+                            <option value="zt20130">zt20130-张敏</option>
+                            <option value="zt25056">zt25056-黄铭</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-label">收入通知人员</div>
+                    <div class="form-input-wrap">
+                        <select id="editIncome">
+                            <option value="">请选择</option>
+                            <option value="zt21843">zt21843-徐文平</option>
+                            <option value="zt15710">zt15710-李丹</option>
+                            <option value="zt18111">zt18111-陈兴</option>
+                            <option value="zt16115">zt16115-谢文俊</option>
+                            <option value="zt21664">zt21664-陈宇玲</option>
+                            <option value="zt23634">zt23634-刘萍萍</option>
+                            <option value="zt20130">zt20130-张敏</option>
+                            <option value="zt25056">zt25056-黄铭</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-label">共享业务大类-支出通知人员</div>
+                    <div class="form-input-wrap">
+                        <select id="editExpenseShared">
+                            <option value="">请选择</option>
+                            <option value="zt21843">zt21843-徐文平</option>
+                            <option value="zt15710">zt15710-李丹</option>
+                            <option value="zt18111">zt18111-陈兴</option>
+                            <option value="zt16115">zt16115-谢文俊</option>
+                            <option value="zt21664">zt21664-陈宇玲</option>
+                            <option value="zt23634">zt23634-刘萍萍</option>
+                            <option value="zt20130">zt20130-张敏</option>
+                            <option value="zt25056">zt25056-黄铭</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-label">支出通知人员</div>
+                    <div class="form-input-wrap">
+                        <select id="editExpense">
+                            <option value="">请选择</option>
+                            <option value="zt21843">zt21843-徐文平</option>
+                            <option value="zt15710">zt15710-李丹</option>
+                            <option value="zt18111">zt18111-陈兴</option>
+                            <option value="zt16115">zt16115-谢文俊</option>
+                            <option value="zt21664">zt21664-陈宇玲</option>
+                            <option value="zt23634">zt23634-刘萍萍</option>
+                            <option value="zt20130">zt20130-张敏</option>
+                            <option value="zt25056">zt25056-黄铭</option>
+                        </select>
+                    </div>
+                </div>
+                <!-- 新增：计提共享财务 -->
+                <div class="form-row highlight-row">
+                    <div class="form-label">计提共享财务</div>
+                    <div class="form-input-wrap">
+                        <select id="editProvision">
+                            <option value="">请选择</option>
+                            <option value="zt21843">zt21843-徐文平</option>
+                            <option value="zt15710">zt15710-李丹</option>
+                            <option value="zt18111">zt18111-陈兴</option>
+                            <option value="zt16115">zt16115-谢文俊</option>
+                            <option value="zt21664">zt21664-陈宇玲</option>
+                            <option value="zt23634">zt23634-刘萍萍</option>
+                            <option value="zt20130">zt20130-张敏</option>
+                            <option value="zt25056">zt25056-黄铭</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-cancel" onclick="closeModal('editModal')">取消</button>
+                <button class="btn-save" onclick="saveEdit()">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 表格数据
+        const tableData = [
+            { code: '300800', name: 'US ELOGISTICS SERVICE CORP', incomeShared: 'zt21843', income: 'zt21843', expenseShared: 'zt21843', expense: 'zt21843', provision: 'zt21843', updater: 'zt20130-张敏', time: '2026-03-25 10:48:02' },
+            { code: '900100', name: '深圳闽星科技有限公司', incomeShared: 'zt21843', income: 'zt21843', expenseShared: 'zt21843', expense: 'zt21843', provision: 'zt21843', updater: 'zt20130-张敏', time: '2024-06-14 16:13:07' },
+            { code: '200005', name: '深圳市前海云途物流有限公司义乌分公司', incomeShared: 'zt21843', income: 'zt21843', expenseShared: 'zt21843', expense: 'zt21843', provision: 'zt21843', updater: 'zt25056-黄铭', time: '2024-06-11 09:27:56' },
+            { code: '200000', name: '深圳市前海云途物流有限公司', incomeShared: 'zt21843', income: 'zt21843', expenseShared: 'zt21843', expense: 'zt21843', provision: 'zt21843', updater: 'zt25056-黄铭', time: '2024-06-11 09:27:06' },
+            { code: '200014', name: '测试新增', incomeShared: 'zt15710', income: 'zt18111', expenseShared: 'zt16115', expense: 'zt20130', provision: 'zt20130', updater: 'zt20130-张敏', time: '2024-06-07 13:48:54' },
+            { code: '300000', name: '深圳易可达科技有限公司', incomeShared: 'zt21843', income: 'zt21843', expenseShared: 'zt21843', expense: 'zt21843', provision: 'zt21843', updater: 'zt25056-黄铭', time: '2024-06-03 11:11:41' },
+            { code: '100000', name: '福建纵腾网络有限公司', incomeShared: 'zt21664', income: 'zt21664', expenseShared: 'zt23634', expense: 'zt21843', provision: 'zt21843', updater: 'zt22957-陈兴节', time: '2024-05-29 11:13:34' },
+        ];
+
+        const userMap = {
+            'zt21843': 'zt21843-徐文平',
+            'zt15710': 'zt15710-李丹',
+            'zt18111': 'zt18111-陈兴',
+            'zt16115': 'zt16115-谢文俊',
+            'zt21664': 'zt21664-陈宇玲',
+            'zt23634': 'zt23634-刘萍萍',
+            'zt20130': 'zt20130-张敏',
+            'zt25056': 'zt25056-黄铭'
+        };
+
+        let currentEditIndex = -1;
+
+        function openAddModal() {
+            document.getElementById('addModal').classList.add('active');
+            document.getElementById('addCompany').value = '';
+        }
+
+        function openEditModal(index) {
+            currentEditIndex = index;
+            const row = tableData[index];
+            document.getElementById('editCompany').value = row.name + ' (' + row.code + ')';
+            document.getElementById('editIncomeShared').value = row.incomeShared;
+            document.getElementById('editIncome').value = row.income;
+            document.getElementById('editExpenseShared').value = row.expenseShared;
+            document.getElementById('editExpense').value = row.expense;
+            document.getElementById('editProvision').value = row.provision;
+            document.getElementById('editModal').classList.add('active');
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('active');
+        }
+
+        function saveAdd() {
+            const company = document.getElementById('addCompany').value;
+            if (!company) {
+                alert('请选择公司！');
+                return;
+            }
+            alert('添加成功！');
+            closeModal('addModal');
+        }
+
+        function saveEdit() {
+            alert('保存成功！');
+            closeModal('editModal');
+        }
+
+        function deleteRow(btn) {
+            if (confirm('确定要删除这条记录吗？')) {
+                const row = btn.closest('tr');
+                row.remove();
+            }
+        }
+
+        // 点击遮罩层关闭弹窗
+        document.querySelectorAll('.modal-overlay').forEach(overlay => {
+            overlay.addEventListener('click', function(e) {
+                if (e.target === this) {
+                    this.classList.remove('active');
+                }
+            });
+        });
+    </script>
+
+</body>
+</html>

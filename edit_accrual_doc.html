@@ -1,0 +1,1655 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>计提单据编辑 - 纵腾集团财务共享中心</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-size: 13px;
+    color: #333;
+    background: #f0f2f5;
+    overflow-x: auto;
+  }
+  .layout { display: flex; height: 100vh; }
+
+  /* sidebar */
+  .sidebar {
+    width: 64px;
+    background: #1a5bb5;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-top: 8px;
+    flex-shrink: 0;
+  }
+  .sidebar-logo {
+    width: 40px; height: 40px;
+    margin-bottom: 16px;
+    background: #fff;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: bold; color: #1a5bb5;
+  }
+  .nav-item {
+    width: 100%;
+    display: flex; flex-direction: column; align-items: center;
+    padding: 10px 0;
+    color: rgba(255,255,255,0.7);
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 11px;
+  }
+  .nav-item:hover, .nav-item.active {
+    color: #fff;
+    background: rgba(255,255,255,0.1);
+  }
+  .nav-icon { width: 20px; height: 20px; margin-bottom: 4px; }
+
+  /* header */
+  .header {
+    height: 48px;
+    background: #fff;
+    border-bottom: 1px solid #e8e8e8;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 16px;
+    flex-shrink: 0;
+  }
+  .header-left { display: flex; align-items: center; gap: 8px; }
+  .header-logo { display: flex; align-items: center; gap: 6px; }
+  .header-logo-icon {
+    width: 24px; height: 24px;
+    background: #1a5bb5;
+    border-radius: 4px;
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 12px; font-weight: bold;
+  }
+  .header-logo-text { font-size: 14px; font-weight: 600; color: #333; line-height: 1.2; }
+  .header-logo-sub { font-size: 10px; color: #999; line-height: 1; }
+  .header-right { display: flex; align-items: center; gap: 12px; font-size: 12px; color: #666; }
+  .header-user { display: flex; align-items: center; gap: 4px; }
+  .header-lang { cursor: pointer; }
+  .header-logout { color: #999; cursor: pointer; }
+
+  /* main */
+  .main { flex: 1; min-width: 0; display: flex; flex-direction: column; overflow: hidden; }
+  .content { flex: 1; padding: 12px 16px; display: flex; flex-direction: column; overflow: auto; }
+
+  /* tabs */
+  .tabs { display: flex; align-items: center; gap: 4px; margin-bottom: 12px; flex-shrink: 0; }
+  .tab-item {
+    display: flex; align-items: center; gap: 6px;
+    padding: 6px 12px;
+    background: #fff;
+    border: 1px solid #d9d9d9;
+    border-radius: 4px 4px 0 0;
+    font-size: 12px; color: #666;
+    cursor: pointer;
+  }
+  .tab-item.active {
+    background: #41B7F6;
+    border-color: #41B7F6;
+    color: #fff;
+    font-weight: 500;
+    position: relative;
+  }
+  .tab-close {
+    font-size: 10px; color: #999; cursor: pointer;
+    width: 14px; height: 14px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 50%;
+  }
+  .tab-close:hover { background: rgba(255,255,255,0.2); }
+  .tab-item.active .tab-close { color: #fff; }
+
+  /* ====== 基本信息 ====== */
+  .info-card {
+    background: #fff;
+    border: 1px solid #e8e8e8;
+    border-radius: 4px;
+    margin-bottom: 12px;
+    flex-shrink: 0;
+  }
+  .info-title {
+    font-size: 12px; font-weight: 600; color: #333;
+    padding: 10px 16px;
+    display: flex; align-items: center; gap: 4px;
+  }
+  .info-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    table-layout: fixed;
+  }
+  .info-table td {
+    border: 1px solid #e8e8e8;
+    vertical-align: middle;
+    height: 34px;
+  }
+  .info-table .info-label {
+    background: #f5f5f5;
+    color: #333;
+    padding: 0 12px;
+    text-align: right;
+    white-space: nowrap;
+    width: 120px;
+    font-weight: 500;
+  }
+  .info-table .info-value {
+    background: #fff;
+    padding: 0 12px;
+    color: #333;
+  }
+  .info-table .info-value.readonly {
+    background: #f5f5f5;
+    color: #666;
+  }
+
+  /* ====== 按钮栏 ====== */
+  .btn-bar {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    padding: 10px 16px;
+    flex-shrink: 0;
+  }
+  .btn {
+    height: 28px; padding: 0 16px;
+    border-radius: 3px;
+    font-size: 12px; cursor: pointer;
+    border: 1px solid transparent;
+    display: inline-flex; align-items: center; justify-content: center;
+    gap: 4px;
+  }
+  .btn-primary {
+    background: #41B7F6; color: #fff;
+    border-color: #41B7F6;
+  }
+  .btn-primary:hover { background: #2ea3e0; }
+  .btn-default {
+    background: #fff; color: #41B7F6;
+    border-color: #41B7F6;
+  }
+  .btn-default:hover { border-color: #2ea3e0; color: #2ea3e0; }
+
+  /* ====== 计提明细 ====== */
+  .detail-card {
+    background: #fff;
+    border: 1px solid #e8e8e8;
+    border-radius: 4px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+  }
+  .detail-header {
+    padding: 10px 16px;
+    border-bottom: 1px solid #e8e8e8;
+    font-size: 12px;
+    font-weight: 600;
+    color: #333;
+  }
+  .detail-table-wrap {
+    flex: 1;
+    overflow: auto;
+    min-height: 0;
+  }
+  .detail-table {
+    width: auto;
+    min-width: 100%;
+    table-layout: fixed;
+    border-collapse: collapse;
+    font-size: 12px;
+  }
+  .detail-table thead th {
+    background: #f5f5f5;
+    color: #333;
+    font-weight: 500;
+    padding: 8px 10px;
+    text-align: left;
+    border-right: 1px solid #e8e8e8;
+    border-bottom: 1px solid #e8e8e8;
+    white-space: nowrap;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  .detail-table thead th:last-child { border-right: none; }
+  .detail-table tbody td {
+    padding: 8px 10px;
+    text-align: left;
+    border-bottom: 1px solid #f0f0f0;
+    border-right: 1px solid #f0f0f0;
+    white-space: nowrap;
+    color: #333;
+  }
+  .detail-table tbody td:last-child { border-right: none; }
+  .detail-table tbody tr:nth-child(even) { background: #fafbfc; }
+  .detail-table tbody tr:hover { background: #f6faff; }
+  .op-link { color: #1a5bb5; cursor: pointer; text-decoration: none; font-size: 12px; margin: 0 4px; }
+  .op-link:hover { color: #2ea3e0; text-decoration: underline; }
+  .op-link.delete { color: #ff4d4f; }
+  .op-link.delete:hover { color: #d9363e; }
+
+  /* tag */
+  .tag { display: inline-block; padding: 1px 6px; border-radius: 2px; font-size: 11px; font-weight: 500; line-height: 1.4; }
+  .tag-green { background: #f6ffed; color: #389e0d; border: 1px solid #b7eb8f; }
+
+  /* scrollbar */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: #f1f1f1; }
+  ::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
+
+  /* ====== 弹窗 ====== */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.5);
+    display: none; align-items: center; justify-content: center;
+    z-index: 1000;
+  }
+  .modal-overlay.show { display: flex; }
+  .edit-modal {
+    background: #fff;
+    border-radius: 4px;
+    width: 880px;
+    max-height: 90vh;
+    display: flex; flex-direction: column;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+  }
+  .modal-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 20px;
+    border-bottom: 1px solid #e8e8e8;
+  }
+  .modal-title { font-size: 15px; font-weight: 600; color: #333; }
+  .modal-close {
+    font-size: 18px; color: #999; cursor: pointer;
+    width: 24px; height: 24px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 3px;
+  }
+  .modal-close:hover { color: #666; background: #f5f5f5; }
+  .modal-body {
+    flex: 1; overflow: auto; padding: 16px 20px;
+  }
+  .modal-footer {
+    display: flex; justify-content: flex-end; gap: 8px;
+    padding: 12px 20px;
+    border-top: 1px solid #e8e8e8;
+  }
+
+  /* 弹窗内标题栏 */
+  .modal-section-title {
+    font-size: 12px; font-weight: 600; color: #333;
+    padding: 8px 10px;
+    background: #f5f7fa;
+    border: 1px solid #e8e8e8;
+    border-bottom: none;
+  }
+
+  /* 弹窗内表单表格 */
+  .modal-form-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    border: 1px solid #e8e8e8;
+    margin-bottom: 12px;
+  }
+  .modal-form-table td {
+    border: 1px solid #e8e8e8;
+    vertical-align: middle;
+    height: 36px;
+  }
+  .modal-form-table .form-label {
+    background: #f5f7fa;
+    color: #333;
+    padding: 0 12px;
+    text-align: right;
+    white-space: nowrap;
+    width: 130px;
+    font-weight: 500;
+  }
+  .modal-form-table .form-value {
+    padding: 0 10px;
+    color: #333;
+  }
+  .modal-form-table .form-input {
+    width: 100%;
+    height: 28px;
+    border: 1px solid #d9d9d9;
+    border-radius: 3px;
+    padding: 0 8px;
+    font-size: 12px;
+    outline: none;
+  }
+  .modal-form-table .form-input:focus { border-color: #41B7F6; }
+  .modal-form-table .form-input:disabled,
+  .modal-form-table .form-input.readonly {
+    background: #f5f5f5; color: #666; border-color: #d9d9d9;
+  }
+  .modal-form-table .form-select {
+    width: 100%;
+    height: 28px;
+    border: 1px solid #d9d9d9;
+    border-radius: 3px;
+    padding: 0 8px;
+    font-size: 12px;
+    outline: none;
+    background: #fff;
+    cursor: pointer;
+  }
+  .modal-form-table .required-mark { color: #ff4d4f; margin-right: 3px; }
+
+  /* 子表格 */
+  .sub-table-wrap {
+    border: 1px solid #e8e8e8;
+    border-top: none;
+    margin-bottom: 12px;
+    background: #fff;
+    overflow: auto;
+    max-height: 200px;
+  }
+  .sub-table-toolbar {
+    display: flex; justify-content: flex-end; gap: 12px;
+    padding: 8px 10px;
+    border-bottom: 1px solid #e8e8e8;
+  }
+  .toolbar-link {
+    font-size: 12px; color: #1a5bb5; cursor: pointer;
+    display: inline-flex; align-items: center; gap: 4px;
+  }
+  .toolbar-link:hover { color: #2ea3e0; text-decoration: underline; }
+  .toolbar-link .icon { font-size: 13px; }
+
+  .sub-table {
+    width: max-content;
+    min-width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    table-layout: fixed;
+  }
+  .sub-table thead th {
+    background: #f5f7fa;
+    color: #333;
+    font-weight: 500;
+    padding: 8px 10px;
+    text-align: left;
+    border-right: 1px solid #e8e8e8;
+    border-bottom: 1px solid #e8e8e8;
+    white-space: nowrap;
+  }
+  .sub-table thead th:last-child { border-right: none; }
+  .sub-table tbody td {
+    padding: 8px 10px;
+    text-align: left;
+    border-bottom: 1px solid #f0f0f0;
+    border-right: 1px solid #f0f0f0;
+    white-space: nowrap;
+    color: #333;
+    height: 36px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .sub-table tbody td:last-child { border-right: none; }
+  .sub-table tbody tr:nth-child(even) { background: #fafbfc; }
+  .sub-table .col-chk { width: 40px; min-width: 40px; text-align: center; }
+  .sub-table .col-seq { width: 50px; min-width: 50px; }
+  .sub-table .col-bill { width: 170px; min-width: 170px; }
+  .sub-table .col-match { width: 80px; min-width: 80px; }
+  .sub-table .col-biz-type { width: 150px; min-width: 150px; }
+  .sub-table .col-sub { width: 180px; min-width: 180px; }
+  .sub-table .col-time { width: 120px; min-width: 120px; }
+  .sub-table .col-dept { width: 200px; min-width: 200px; }
+  .sub-table .col-amt { width: 140px; min-width: 140px; }
+  .sub-table .col-currency { width: 70px; min-width: 70px; }
+  .sub-table .empty-row td {
+    text-align: center; color: #999; height: 80px;
+  }
+
+  .sub-chk {
+    width: 14px; height: 14px; cursor: pointer;
+  }
+
+  /* 固定列 */
+  .detail-table th.fix-seq,
+  .detail-table td.fix-seq {
+    position: sticky;
+    left: 0;
+    z-index: 20;
+    width: 50px; min-width: 50px;
+    background: #f5f5f5;
+  }
+  .detail-table thead th.fix-seq { top: 0; z-index: 22; }
+  .detail-table tbody tr td.fix-seq { background: #fff; }
+  .detail-table tbody tr:hover td.fix-seq { background: #f6faff; }
+  .detail-table tbody tr:nth-child(even) td.fix-seq { background: #fafbfc; }
+
+  .detail-table th.fix-op,
+  .detail-table td.fix-op {
+    position: sticky;
+    left: 50px;
+    z-index: 19;
+    width: 100px; min-width: 100px;
+    background: #f5f5f5;
+  }
+  .detail-table thead th.fix-op { top: 0; z-index: 21; }
+  .detail-table tbody tr td.fix-op { background: #fff; }
+  .detail-table tbody tr:hover td.fix-op { background: #f6faff; }
+  .detail-table tbody tr:nth-child(even) td.fix-op { background: #fafbfc; }
+  /* 报账单号超链接 */
+  .bill-link {
+    color: #1a5bb5;
+    text-decoration: none;
+    font-size: 12px;
+    cursor: pointer;
+  }
+  .bill-link:hover {
+    color: #2ea3e0;
+    text-decoration: underline;
+  }
+
+  /* ====== 新增匹配报账单弹窗 ====== */
+  .add-bill-modal {
+    background: #fff;
+    border-radius: 4px;
+    width: 1100px;
+    height: 65vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+  }
+  .add-bill-modal .modal-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 20px;
+    border-bottom: 1px solid #e8e8e8;
+  }
+  .add-bill-modal .modal-title { font-size: 15px; font-weight: 600; color: #333; }
+  .add-bill-modal .modal-close {
+    font-size: 18px; color: #999; cursor: pointer;
+    width: 24px; height: 24px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 3px;
+  }
+  .add-bill-modal .modal-close:hover { color: #666; background: #f5f5f5; }
+  .add-bill-modal .modal-body {
+    flex: 1; overflow: auto; padding: 16px 20px;
+  }
+  .add-bill-modal .modal-footer {
+    padding: 12px 20px;
+    border-top: 1px solid #e8e8e8;
+    text-align: right;
+    background: #fafafa;
+  }
+  .add-bill-modal .btn { display: inline-block; padding: 4px 16px; font-size: 13px; border: 1px solid #d9d9d9; border-radius: 3px; cursor: pointer; line-height: 1.5; transition: all .2s; }
+  .add-bill-modal .btn + .btn { margin-left: 8px; }
+  .add-bill-modal .btn-primary { background: #41B7F6; color: #fff; border-color: #41B7F6; }
+  .add-bill-modal .btn-primary:hover { background: #35a8e8; border-color: #35a8e8; }
+  .add-bill-modal .btn-default { background: #fff; color: #666; }
+  .add-bill-modal .btn-default:hover { color: #41B7F6; border-color: #41B7F6; }
+  .add-bill-modal .modal-search-row {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 12px; flex-wrap: wrap;
+  }
+  .add-bill-modal .modal-search-row label {
+    font-size: 12px; color: #666; flex-shrink: 0;
+  }
+  .add-bill-modal .modal-result-area {
+    flex: 1; overflow: auto; border: 1px solid #e8e8e8; border-radius: 3px;
+    min-height: 200px;
+    overflow-x: auto; overflow-y: hidden;
+  }
+  .add-bill-modal .modal-table-title {
+    padding: 8px 12px; font-size: 12px; font-weight: 600; color: #333;
+    background: #fafafa; border-bottom: 1px solid #e8e8e8;
+  }
+
+  /* section-table */
+  .add-bill-modal .section-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    table-layout: fixed;
+  }
+  .add-bill-modal .section-table thead th {
+    background: #f5f5f5; color: #333; font-weight: 500;
+    padding: 6px 8px; text-align: left;
+    border-right: 1px solid #e8e8e8;
+    border-bottom: 1px solid #e8e8e8;
+    white-space: nowrap; font-size: 12px;
+  }
+  .add-bill-modal .section-table thead th:last-child { border-right: none; }
+  .add-bill-modal .section-table tbody td {
+    padding: 6px 8px; text-align: left;
+    border-bottom: 1px solid #f0f0f0;
+    border-right: 1px solid #f0f0f0;
+    white-space: nowrap; color: #333; font-size: 12px;
+  }
+  .add-bill-modal .section-table tbody td:last-child { border-right: none; }
+  .add-bill-modal .section-table tbody tr:hover { background: #f6faff; }
+
+  /* column resize handle */
+  .add-bill-modal th .resize-handle {
+    position: absolute; right: 0; top: 0; bottom: 0; width: 5px;
+    cursor: col-resize; z-index: 10;
+  }
+
+  /* ellipsis + tooltip */
+  .add-bill-modal .tip-wrap {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    position: relative;
+  }
+  .add-bill-modal .tip-popup {
+    display: none;
+    position: absolute;
+    bottom: calc(100% + 4px);
+    left: 50%; transform: translateX(-50%);
+    background: rgba(0,0,0,0.75);
+    color: #fff; font-size: 11px;
+    padding: 4px 8px; border-radius: 3px;
+    z-index: 20; pointer-events: none; line-height: 1.4;
+    max-width: 240px; word-break: break-all; white-space: normal;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+  }
+  .add-bill-modal .tip-popup::after {
+    content: ''; position: absolute; top: 100%; left: 50%; transform: translateX(-50%);
+    border: 5px solid transparent; border-top-color: rgba(0,0,0,0.75);
+  }
+
+  /* autocomplete */
+  .add-bill-modal .autocomplete-wrap { position: relative; display: flex; align-items: center; gap: 8px; }
+  .add-bill-modal .autocomplete-wrap input { width: 200px; height: 28px; border: 1px solid #d9d9d9;
+    border-radius: 3px; padding: 0 8px; font-size: 12px; color: #333; outline: none; flex: none; }
+  .add-bill-modal .autocomplete-wrap input:focus { border-color: #41B7F6; }
+  .add-bill-modal .bill-category-tag {
+    display: inline-flex; align-items: center; padding: 0 10px; height: 28px;
+    background: #f5f5f5; border: 1px solid #e8e8e8; border-radius: 3px;
+    font-size: 12px; color: #999; white-space: nowrap; line-height: 1;
+    width: 200px; overflow: hidden; text-overflow: ellipsis; flex: none;
+  }
+  .add-bill-modal .autocomplete-dropdown {
+    display: none; position: absolute; left: 0; top: calc(100% + 4px); background: #fff; border: 1px solid #d9d9d9;
+    border-radius: 3px; max-height: 340px; overflow-y: auto; z-index: 2000;
+    width: 200px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  }
+  .add-bill-modal .autocomplete-dropdown.active { display: block; }
+  .add-bill-modal .autocomplete-item { padding: 6px 10px; font-size: 12px; color: #333; cursor: pointer;
+    border-bottom: 1px solid #f0f0f0; }
+  .add-bill-modal .autocomplete-item:last-child { border-bottom: none; }
+  .add-bill-modal .autocomplete-item:hover, .add-bill-modal .autocomplete-item.active { background: #e6f7ff; color: #096dd9; border: 1px solid #41B7F6; box-sizing: border-box; margin: 0 -1px; }
+  .add-bill-modal .autocomplete-empty { padding: 10px; font-size: 12px; color: #999; text-align: center; }
+
+  /* row click select */
+  .add-bill-modal .row-selectable { cursor: pointer; }
+  .add-bill-modal .row-selectable:hover { background: #f0f7ff !important; }
+
+  /* disabled checkbox tooltip */
+  .add-bill-modal .disabled-check-cell {
+    position: relative; cursor: not-allowed;
+  }
+  .add-bill-modal .disabled-check-cell[data-tip]:hover::after {
+    content: attr(data-tip);
+    position: absolute; bottom: calc(100% + 4px); left: 50%; transform: translateX(-50%);
+    background: rgba(0,0,0,0.75); color: #fff; font-size: 11px;
+    padding: 3px 8px; border-radius: 3px; white-space: nowrap;
+    z-index: 20; pointer-events: none;
+  }
+  .add-bill-modal .disabled-check-cell[data-tip]:hover::before {
+    content: ''; position: absolute; bottom: calc(100% - 1px); left: 50%; transform: translateX(-50%);
+    border: 4px solid transparent; border-top-color: rgba(0,0,0,0.75);
+    z-index: 20; pointer-events: none;
+  }
+  .add-bill-modal .modal-checkbox:disabled { cursor: not-allowed; opacity: 0.5; }
+</style>
+</head>
+<body>
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-logo">Z</div>
+    <div class="nav-item">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      <span>与我有关</span>
+    </div>
+    <div class="nav-item">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>
+      <span>发票管理</span>
+    </div>
+    <div class="nav-item">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+      <span>应付管理</span>
+    </div>
+    <div class="nav-item">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>
+      <span>应收管理</span>
+    </div>
+    <div class="nav-item">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+      <span>总账管理</span>
+    </div>
+    <div class="nav-item active">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>
+      <span>共享中心</span>
+    </div>
+    <div class="nav-item">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20V10M18 20V4M6 20v-4"/></svg>
+      <span>报表管理</span>
+    </div>
+    <div class="nav-item">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 14.5a2.5 2.5 0 0 0 0-5 2.5 2.5 0 0 0 0 5z"/><path d="M20 12a8 8 0 1 0-16 0 8 8 0 0 0 16 0z"/></svg>
+      <span>资金管理</span>
+    </div>
+    <div class="nav-item">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+      <span>预算管理</span>
+    </div>
+    <div class="nav-item">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>
+      <span>税务管理</span>
+    </div>
+    <div class="nav-item">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      <span>系统管理</span>
+    </div>
+  </aside>
+
+  <div class="main">
+    <header class="header">
+      <div class="header-left">
+        <div class="header-logo">
+          <div class="header-logo-icon">Z</div>
+          <div>
+            <div class="header-logo-text">纵腾集团</div>
+            <div class="header-logo-sub">财务共享中心</div>
+          </div>
+        </div>
+      </div>
+      <div class="header-right">
+        <span class="header-user">您好！李娜</span>
+        <span class="header-lang">中文 ▼</span>
+        <span class="header-logout">注销</span>
+      </div>
+    </header>
+
+    <div class="content">
+      <!-- Tabs -->
+      <div class="tabs">
+        <div class="tab-item">首页</div>
+        <div class="tab-item">计提项目处理<span class="tab-close">×</span></div>
+        <div class="tab-item">计提单据处理<span class="tab-close">×</span></div>
+        <div class="tab-item">编辑计提项目<span class="tab-close">×</span></div>
+        <div class="tab-item">计提单据处理<span class="tab-close">×</span></div>
+        <div class="tab-item">
+          计提单据编辑<span class="tab-close">×</span>
+        </div>
+        <div class="tab-item active">
+          计提单据编辑<span class="tab-close">×</span>
+        </div>
+      </div>
+
+      <!-- 基本信息 -->
+      <div class="info-card">
+        <div class="info-title">基本信息</div>
+        <table class="info-table">
+          <colgroup>
+            <col style="width: 120px;" />
+            <col />
+            <col style="width: 120px;" />
+            <col />
+            <col style="width: 120px;" />
+            <col />
+          </colgroup>
+          <tr>
+            <td class="info-label">计提单据编号</td>
+            <td class="info-value readonly">JT30060024010016</td>
+            <td class="info-label">费用期间</td>
+            <td class="info-value readonly">202310</td>
+            <td class="info-label">公司主体</td>
+            <td class="info-value readonly">Super Smart Service ltd</td>
+          </tr>
+          <tr>
+            <td class="info-label">供应商</td>
+            <td class="info-value readonly">深圳市前海云途物流有限公司上海分公司</td>
+            <td class="info-label">业务大类</td>
+            <td class="info-value readonly">租金、物业管理费、水电费（有合同）（可抵扣） Rental Exper</td>
+            <td class="info-label">业务小类111</td>
+            <td class="info-value readonly">宿舍清洁费（有合同） Dormitory Janitorial Expenses</td>
+          </tr>
+          <tr>
+            <td class="info-label">业务人员</td>
+            <td class="info-value readonly">王艳芳</td>
+            <td class="info-label">BP财务</td>
+            <td class="info-value readonly">吴梓欣</td>
+            <td class="info-label">共享财务</td>
+            <td class="info-value readonly">王艳芳</td>
+          </tr>
+          <tr>
+            <td class="info-label">记账期间</td>
+            <td class="info-value readonly">📅 202312</td>
+            <td class="info-label">币种</td>
+            <td class="info-value readonly">GBP</td>
+            <td class="info-label">计提单未报账金额</td>
+            <td class="info-value readonly">2,772.00</td>
+          </tr>
+        </table>
+      </div>
+
+      <!-- 操作按钮 -->
+      <div class="btn-bar">
+        <button class="btn btn-primary">保存</button>
+        <button class="btn btn-default" onclick="window.location.href='计提单据处理.html'">关闭</button>
+      </div>
+
+      <!-- 计提明细 -->
+      <div class="detail-card">
+        <div class="detail-header">计提明细</div>
+        <div class="detail-table-wrap">
+          <table class="detail-table">
+            <colgroup>
+              <col style="width: 50px;" />
+              <col style="width: 100px;" />
+              <col style="width: 80px;" />
+              <col style="width: 120px;" />
+              <col style="width: 100px;" />
+              <col style="width: 160px;" />
+              <col style="width: 80px;" />
+              <col style="width: 150px;" />
+              <col style="width: 300px;" />
+              <col style="width: 80px;" />
+              <col style="width: 160px;" />
+              <col style="width: 80px;" />
+              <col style="width: 100px;" />
+              <col style="width: 100px;" />
+              <col style="width: 120px;" />
+              <col style="width: 120px;" />
+              <col style="width: 120px;" />
+              <col style="width: 120px;" />
+              <col style="width: 100px;" />
+              <col style="width: 80px;" />
+              <col style="width: 80px;" />
+              <col style="width: 80px;" />
+              <col style="width: 100px;" />
+            </colgroup>
+            <thead>
+              <tr>
+                <th class="fix-seq">序号</th>
+                <th class="fix-op">操作</th>
+                <th>是否计提</th>
+                <th>数据来源</th>
+                <th>计提类型</th>
+                <th>计提项目编号</th>
+                <th>创建人</th>
+                <th>创建时间</th>
+                <th>费用承担部门</th>
+                <th>成本中心状态</th>
+                <th>公司主体</th>
+                <th>计提内容</th>
+                <th>初始计提金额</th>
+                <th>本期计提金额</th>
+                <th>匹配报账单数量</th>
+                <th>业务开始时间（新）</th>
+                <th>业务结束时间（新）</th>
+                <th>已报账金额（实际）</th>
+                <th>未报账金额</th>
+                <th>报账状态</th>
+                <th>逾期天数</th>
+                <th>是否逾期</th>
+                <th>逾期说明</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="fix-seq">1</td>
+                <td class="fix-op"><a class="op-link" onclick="openEditModal(1)">修改</a><a class="op-link delete">删除</a></td>
+                <td>是</td>
+                <td>当月新增计提</td>
+                <td>金额固定类</td>
+                <td>300900125040003</td>
+                <td>张敏</td>
+                <td>2025-04-03 15:10:24</td>
+                <td>FBU/美洲大区/美中区/美中区1号仓(EL…</td>
+                <td><span class="tag tag-green">启用</span></td>
+                <td>ELOGISTICS (GA) SERVICE CORP</td>
+                <td>测试</td>
+                <td>800.00</td>
+                <td>800.00</td>
+                <td>0</td>
+                <td></td>
+                <td></td>
+                <td>0.00</td>
+                <td>800.00</td>
+                <td>未报账</td>
+                <td>90</td>
+                <td>是</td>
+                <td>测试</td>
+              </tr>
+              <tr>
+                <td class="fix-seq">2</td>
+                <td class="fix-op"><a class="op-link" onclick="openEditModal(2)">修改</a><a class="op-link delete">删除</a></td>
+                <td>是</td>
+                <td>当月新增计提</td>
+                <td>金额浮动类</td>
+                <td>3006000223120055</td>
+                <td>王艳芳</td>
+                <td>2023-12-22 15:57:40</td>
+                <td>FBU/欧洲大区/英国区/英国10号仓(英国…</td>
+                <td><span class="tag tag-green">启用</span></td>
+                <td>Super Smart Service ltd</td>
+                <td>垃圾费</td>
+                <td>800.00</td>
+                <td>800.00</td>
+                <td>0</td>
+                <td></td>
+                <td></td>
+                <td>0.00</td>
+                <td>800.00</td>
+                <td>未报账</td>
+                <td>90</td>
+                <td>是</td>
+                <td>垃圾费长期未报账</td>
+              </tr>
+              <tr>
+                <td class="fix-seq">3</td>
+                <td class="fix-op"><a class="op-link" onclick="openEditModal(3)">修改</a><a class="op-link delete">删除</a></td>
+                <td>是</td>
+                <td>历史滚动计提</td>
+                <td>金额浮动类</td>
+                <td>3006000223110399</td>
+                <td>王艳芳</td>
+                <td>2023-11-30 18:09:07</td>
+                <td>FBU/欧洲大区/英国区/英国11号仓(英国…</td>
+                <td><span class="tag tag-green">启用</span></td>
+                <td>Super Smart Service ltd</td>
+                <td>垃圾费</td>
+                <td>800.00</td>
+                <td>800.00</td>
+                <td>0</td>
+                <td></td>
+                <td></td>
+                <td>0.00</td>
+                <td>800.00</td>
+                <td>未报账</td>
+                <td>120</td>
+                <td>是</td>
+                <td>历史滚动</td>
+              </tr>
+              <tr>
+                <td class="fix-seq">4</td>
+                <td class="fix-op"><a class="op-link" onclick="openEditModal(4)">修改</a><a class="op-link delete">删除</a></td>
+                <td>是</td>
+                <td>当月新增计提</td>
+                <td>金额浮动类</td>
+                <td>3006000223120056</td>
+                <td>王艳芳</td>
+                <td>2023-12-22 15:57:40</td>
+                <td>FBU/欧洲大区/英国区/英国11号仓(英国…</td>
+                <td><span class="tag tag-green">启用</span></td>
+                <td>Super Smart Service ltd</td>
+                <td>垃圾费</td>
+                <td>800.00</td>
+                <td>800.00</td>
+                <td>0</td>
+                <td></td>
+                <td></td>
+                <td>0.00</td>
+                <td>800.00</td>
+                <td>未报账</td>
+                <td>90</td>
+                <td>是</td>
+                <td></td>
+              </tr>
+              <tr>
+                <td class="fix-seq">5</td>
+                <td class="fix-op"><a class="op-link" onclick="openEditModal(5)">修改</a><a class="op-link delete">删除</a></td>
+                <td>是</td>
+                <td>历史滚动计提</td>
+                <td>金额浮动类</td>
+                <td>3006000223110397</td>
+                <td>王艳芳</td>
+                <td>2023-11-30 18:09:07</td>
+                <td>FBU/欧洲大区/英国区/英国8号仓(英国谷…</td>
+                <td><span class="tag tag-green">启用</span></td>
+                <td>Super Smart Service ltd</td>
+                <td>垃圾费</td>
+                <td>800.00</td>
+                <td>800.00</td>
+                <td>0</td>
+                <td></td>
+                <td></td>
+                <td>0.00</td>
+                <td>800.00</td>
+                <td>未报账</td>
+                <td>120</td>
+                <td>是</td>
+                <td>历史滚动</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ====== 弹窗：计提明细修改 ====== -->
+<div class="modal-overlay" id="editModal">
+  <div class="edit-modal">
+    <div class="modal-header">
+      <div class="modal-title">计提单-计提明细修改</div>
+      <div class="modal-close" onclick="closeModal()">×</div>
+    </div>
+    <div class="modal-body">
+      <!-- 基本信息 -->
+      <div class="modal-section-title">基本信息</div>
+      <table class="modal-form-table">
+        <colgroup>
+          <col style="width: 130px;" />
+          <col />
+          <col style="width: 130px;" />
+          <col />
+          <col style="width: 130px;" />
+          <col />
+        </colgroup>
+        <tr>
+          <td class="form-label">计提项目编号</td>
+          <td class="form-value"><input class="form-input readonly" id="m_projectNo" readonly /></td>
+          <td class="form-label">数据来源</td>
+          <td class="form-value"><input class="form-input readonly" id="m_source" readonly /></td>
+          <td class="form-label"><span class="required-mark">*</span>计提类型</td>
+          <td class="form-value">
+            <select class="form-select" id="m_type">
+              <option>金额固定类</option>
+              <option>数量固定类</option>
+              <option>金额浮动类</option>
+              <option>数量浮动类</option>
+            </select>
+          </td>
+        </tr>
+        <tr>
+          <td class="form-label">费用承担部门</td>
+          <td class="form-value"><input class="form-input readonly" id="m_dept" readonly /></td>
+          <td class="form-label">创建人</td>
+          <td class="form-value"><input class="form-input readonly" id="m_creator" readonly /></td>
+          <td class="form-label">创建时间</td>
+          <td class="form-value"><input class="form-input readonly" id="m_createTime" readonly /></td>
+        </tr>
+      </table>
+
+      <!-- 匹配报账单信息 -->
+      <div class="modal-section-title">匹配报账单信息
+        <div class="sub-table-toolbar" style="float:right; padding:0;">
+          <span class="toolbar-link" onclick="openAddBillModal()"><span class="icon">+</span> 新增</span>
+          <span class="toolbar-link" onclick="delBillRow()"><span class="icon">-</span> 删除</span>
+        </div>
+        <div style="clear:both;"></div>
+      </div>
+      <div class="sub-table-wrap">
+        <table class="sub-table">
+          <thead>
+            <tr>
+              <th class="col-chk"><input type="checkbox" class="sub-chk" id="chkAll"></th>
+              <th class="col-seq">序号</th>
+              <th class="col-bill"><span class="required-mark">*</span> 报账单号</th>
+              <th class="col-match">匹配类型</th>
+              <th class="col-biz-type">业务大类</th>
+              <th class="col-sub"><span class="required-mark">*</span> 业务小类</th>
+              <th class="col-time">业务开始时间</th>
+              <th class="col-time">业务结束时间</th>
+              <th class="col-dept">费用承担部门</th>
+              <th class="col-amt">报账金额（系统）</th>
+              <th class="col-currency">币种</th>
+              <th class="col-amt"><span class="required-mark">*</span> 报账金额（实际）</th>
+            </tr>
+          </thead>
+          <tbody id="billBody">
+            <tr class="empty-row" id="billEmpty"><td colspan="12">暂无数据</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- 计提计算结果 -->
+      <div class="modal-section-title">计提计算结果</div>
+      <table class="modal-form-table" style="margin-bottom:0;">
+        <colgroup>
+          <col style="width: 130px;" />
+          <col />
+          <col style="width: 130px;" />
+          <col />
+          <col style="width: 130px;" />
+          <col />
+        </colgroup>
+        <tr>
+          <td class="form-label">初始计提金额</td>
+          <td class="form-value"><input class="form-input" id="m_initAmt" /></td>
+          <td class="form-label">本期计提金额</td>
+          <td class="form-value"><input class="form-input" id="m_currentAmt" /></td>
+          <td class="form-label">报账状态</td>
+          <td class="form-value"><input class="form-input readonly" id="m_status" value="未报账" readonly /></td>
+        </tr>
+        <tr>
+          <td class="form-label">已报账金额（实际）</td>
+          <td class="form-value"><input class="form-input readonly" id="m_paidAmt" value="0" readonly /></td>
+          <td class="form-label">未报账金额</td>
+          <td class="form-value"><input class="form-input readonly" id="m_unpaidAmt" readonly /></td>
+          <td class="form-label">业务开始时间（新）</td>
+          <td class="form-value"><input class="form-input" id="m_startTime" /></td>
+        </tr>
+        <tr>
+          <td class="form-label">是否逾期</td>
+          <td class="form-value"><input class="form-input readonly" id="m_overdue" value="是" readonly /></td>
+          <td class="form-label">逾期天数</td>
+          <td class="form-value"><input class="form-input readonly" id="m_overdueDays" value="90" readonly /></td>
+          <td class="form-label">业务结束时间（新）</td>
+          <td class="form-value"><input class="form-input" id="m_endTime" /></td>
+        </tr>
+      </table>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-default" onclick="closeModal()">取消</button>
+      <button class="btn btn-primary" onclick="saveModal()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- ====== 弹窗：新增匹配报账单 ====== -->
+<div class="modal-overlay" id="addBillModal" style="z-index:1100;">
+  <div class="add-bill-modal">
+    <div class="modal-header">
+      <span class="modal-title">新增匹配报账单</span>
+      <span class="modal-close" onclick="closeAddBillModal()">✕</span>
+    </div>
+    <div class="modal-body">
+      <div class="modal-search-row">
+        <label>报账单号</label>
+        <div class="autocomplete-wrap">
+          <input type="text" id="addBillInput" placeholder="请输入报账单号" autocomplete="off" />
+          <div class="autocomplete-dropdown" id="addBillDropdown"></div>
+        </div>
+        <label>业务大类</label>
+        <span class="bill-category-tag" id="addBillCategory"></span>
+      </div>
+      <div id="addBillResult" class="modal-result-area" style="display:none;">
+        <div class="modal-table-title">费用信息行</div>
+        <table class="section-table" id="addBillTable">
+          <colgroup>
+            <col style="width: 40px;">
+            <col style="width: 45px;">
+            <col style="width: 130px;">
+            <col style="width: 100px;">
+            <col style="width: 100px;">
+            <col style="width: 120px;">
+            <col style="width: 90px;">
+            <col style="width: 90px;">
+            <col style="width: 80px;">
+            <col style="width: 160px;">
+          </colgroup>
+          <thead>
+            <tr>
+              <th style="text-align:center;"><input type="checkbox" id="addBillAllCheckbox"/></th>
+              <th style="text-align:center;">序号</th>
+              <th>业务小类</th>
+              <th>业务开始时间</th>
+              <th>业务结束时间</th>
+              <th>费用承担部门</th>
+              <th>报账金额</th>
+              <th>不含税金额</th>
+              <th>税额</th>
+              <th>开支说明</th>
+            </tr>
+          </thead>
+          <tbody id="addBillTbody"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-primary" onclick="confirmAddBill()">确定</button>
+      <button class="btn btn-default" onclick="closeAddBillModal()">取消</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  // 模拟数据：每条明细对应的信息
+  const detailData = {
+    1: { projectNo:'300900125040003', source:'当月新增计提', type:'金额固定类', dept:'FBU/美洲大区/美中区/美中区1号仓(EL…', creator:'张敏', createTime:'2025-04-03 15:10:24', initAmt:'800.00', currentAmt:'800.00', unpaidAmt:'800.00', overdue:'是', overdueDays:'90', status:'未报账', paidAmt:'0' },
+    2: { projectNo:'3006000223120055', source:'当月新增计提', type:'金额浮动类', dept:'FBU/欧洲大区/英国区/英国10号仓(英国…', creator:'王艳芳', createTime:'2023-12-22 15:57:40', initAmt:'800.00', currentAmt:'800.00', unpaidAmt:'800.00', overdue:'是', overdueDays:'90', status:'未报账', paidAmt:'0' },
+    3: { projectNo:'3006000223110399', source:'历史滚动计提', type:'金额浮动类', dept:'FBU/欧洲大区/英国区/英国11号仓(英国…', creator:'王艳芳', createTime:'2023-11-30 18:09:07', initAmt:'800.00', currentAmt:'800.00', unpaidAmt:'800.00', overdue:'是', overdueDays:'90', status:'未报账', paidAmt:'0' },
+    4: { projectNo:'3006000223120056', source:'当月新增计提', type:'金额浮动类', dept:'FBU/欧洲大区/英国区/英国11号仓(英国…', creator:'王艳芳', createTime:'2023-12-22 15:57:40', initAmt:'800.00', currentAmt:'800.00', unpaidAmt:'800.00', overdue:'是', overdueDays:'90', status:'未报账', paidAmt:'0' },
+    5: { projectNo:'3006000223110397', source:'历史滚动计提', type:'金额浮动类', dept:'FBU/欧洲大区/英国区/英国8号仓(英国谷…', creator:'王艳芳', createTime:'2023-11-30 18:09:07', initAmt:'800.00', currentAmt:'800.00', unpaidAmt:'800.00', overdue:'是', overdueDays:'90', status:'未报账', paidAmt:'0' },
+  };
+
+  // 打开弹窗
+  window.openEditModal = function(seq) {
+    const d = detailData[seq] || {};
+    document.getElementById('m_projectNo').value = d.projectNo || '';
+    document.getElementById('m_source').value = d.source || '';
+    document.getElementById('m_type').value = d.type || '金额浮动类';
+    document.getElementById('m_dept').value = d.dept || '';
+    document.getElementById('m_creator').value = d.creator || '';
+    document.getElementById('m_createTime').value = d.createTime || '';
+    document.getElementById('m_initAmt').value = d.initAmt || '';
+    document.getElementById('m_currentAmt').value = d.currentAmt || '';
+    document.getElementById('m_status').value = d.status || '未报账';
+    document.getElementById('m_paidAmt').value = d.paidAmt || '0';
+    document.getElementById('m_unpaidAmt').value = d.unpaidAmt || '';
+    document.getElementById('m_overdue').value = d.overdue || '';
+    document.getElementById('m_overdueDays').value = d.overdueDays || '';
+
+    // 重置报账单表格
+    document.getElementById('billBody').innerHTML = '<tr class="empty-row"><td colspan="12">暂无数据</td></tr>';
+    document.getElementById('editModal').classList.add('show');
+  };
+
+  window.closeModal = function() {
+    document.getElementById('editModal').classList.remove('show');
+  };
+
+  window.saveModal = function() {
+    alert('保存成功');
+    closeModal();
+  };
+
+  // 新增报账单行
+  window.addBillRow = function() {
+    const tbody = document.getElementById('billBody');
+    const empty = document.getElementById('billEmpty');
+    if (empty) empty.remove();
+
+    const rows = tbody.querySelectorAll('tr:not(.empty-row)');
+    const seq = rows.length + 1;
+    const tr = document.createElement('tr');
+    tr.innerHTML = '<td class="col-chk"><input type="checkbox" class="sub-chk" name="billChk"></td>' +
+      '<td class="col-seq">' + seq + '</td>' +
+      '<td><a class="bill-link" href="javascript:void(0)" onclick="alert(\'跳转至报账单详情页\')">报账单号</a></td>' +
+      '<td><input class="form-input" placeholder="" style="width:100%;"></td>' +
+      '<td><input class="form-input" placeholder="" style="width:100%;"></td>' +
+      '<td><input class="form-input" placeholder="请输入" style="width:100%;"></td>' +
+      '<td><input class="form-input" placeholder="" style="width:100%;"></td>' +
+      '<td><input class="form-input" placeholder="" style="width:100%;"></td>' +
+      '<td><input class="form-input" placeholder="" style="width:100%;"></td>' +
+      '<td><input class="form-input" placeholder="" style="width:100%;"></td>' +
+      '<td><input class="form-input" placeholder="" style="width:100%;"></td>' +
+      '<td><input class="form-input" placeholder="请输入" style="width:100%;"></td>';
+    tbody.appendChild(tr);
+  };
+
+  // 删除选中的报账单行
+  window.delBillRow = function() {
+    const tbody = document.getElementById('billBody');
+    const chks = tbody.querySelectorAll('input[name="billChk"]:checked');
+    chks.forEach(c => c.closest('tr').remove());
+
+    // 重排序号
+    const rows = tbody.querySelectorAll('tr:not(.empty-row)');
+    if (rows.length === 0) {
+      tbody.innerHTML = '<tr class="empty-row"><td colspan="12">暂无数据</td></tr>';
+    } else {
+      rows.forEach((tr, i) => {
+        tr.querySelector('.col-seq').textContent = i + 1;
+      });
+    }
+  };
+
+  // 全选
+  document.getElementById('chkAll').addEventListener('change', function() {
+    const chks = document.querySelectorAll('input[name="billChk"]');
+    chks.forEach(c => c.checked = this.checked);
+  });
+
+  // 点击遮罩关闭
+  document.getElementById('editModal').addEventListener('click', function(e) {
+    if (e.target === this) closeModal();
+  });
+})();
+
+// ====== 新增匹配报账单弹窗 ======
+(function() {
+  // Mock data
+  const mockBills = [
+    { id: '2000002605190319', categoryName: '培训费Training Fees', lines: [
+      { category: '新员工培训', start: '2026-04-01', end: '2026-04-30', dept: '纵腾网络/FES财经条线/财务共享中心', amount: 5000.00, pretax: 4716.98, tax: 283.02, desc: 'Q1季度新员工入职培训' },
+      { category: '管理技能培训', start: '2026-04-15', end: '2026-04-20', dept: '纵腾网络/FES财经条线/财务共享中心', amount: 3000.00, pretax: 2830.19, tax: 169.81, desc: '中层管理者领导力培训' },
+      { category: '专业技术培训', start: '2026-04-10', end: '2026-04-12', dept: '纵腾网络/IT部/研发组', amount: 4500.00, pretax: 4245.28, tax: 254.72, desc: 'Java高级开发技术培训' }
+    ]},
+    { id: '2000002605190320', categoryName: '培训费Training Fees', lines: [
+      { category: '外语培训', start: '2026-04-01', end: '2026-04-15', dept: '纵腾网络/人力部/招聘组', amount: 2800.00, pretax: 2641.51, tax: 158.49, desc: '商务英语口语培训' },
+      { category: '安全合规培训', start: '2026-04-20', end: '2026-04-25', dept: '纵腾网络/合规部', amount: 3200.00, pretax: 3018.87, tax: 181.13, desc: '数据安全与合规培训' }
+    ]},
+    { id: '2000002605190321', categoryName: '办公费用', lines: [
+      { category: '办公用品-文具', start: '2026-04-01', end: '2026-04-30', dept: '纵腾网络/行政部', amount: 1500.00, pretax: 1415.09, tax: 84.91, desc: '文具用品 A4纸/中性笔' },
+      { category: '办公用品-耗材', start: '2026-04-01', end: '2026-04-30', dept: '纵腾网络/行政部', amount: 800.00, pretax: 754.72, tax: 45.28, desc: '打印耗材 墨盒/硒鼓' },
+      { category: '办公设备-维修', start: '2026-04-01', end: '2026-04-30', dept: '纵腾网络/IT部', amount: 2200.00, pretax: 2075.47, tax: 124.53, desc: '打印机维修服务' }
+    ]},
+    { id: '2000002605190322', categoryName: '差旅费用', lines: [
+      { category: '国内差旅-机票', start: '2026-04-10', end: '2026-04-15', dept: '纵腾网络/销售部', amount: 3500.00, pretax: 3301.89, tax: 198.11, desc: '上海往返北京机票' },
+      { category: '国内差旅-酒店', start: '2026-04-10', end: '2026-04-15', dept: '纵腾网络/销售部', amount: 2400.00, pretax: 2264.15, tax: 135.85, desc: '北京住宿费用' }
+    ]},
+    { id: '2000002605190323', categoryName: '通讯费用', lines: [
+      { category: '固定电话费', start: '2026-04-01', end: '2026-04-30', dept: '纵腾网络/总经办', amount: 680.00, pretax: 641.51, tax: 38.49, desc: '4月固话费' },
+      { category: '移动通讯费', start: '2026-04-01', end: '2026-04-30', dept: '纵腾网络/总经办', amount: 1200.00, pretax: 1132.08, tax: 67.92, desc: '4月手机话费' }
+    ]},
+    { id: '2000002605190324', categoryName: '招待费用', lines: [
+      { category: '客户招待-餐饮', start: '2026-04-05', end: '2026-04-05', dept: '纵腾网络/市场部', amount: 1500.00, pretax: 1415.09, tax: 84.91, desc: '客户接待餐饮' },
+      { category: '客户招待-礼品', start: '2026-04-10', end: '2026-04-10', dept: '纵腾网络/市场部', amount: 800.00, pretax: 707.96, tax: 92.04, desc: '商务礼品' }
+    ]},
+    { id: '2000002605190325', categoryName: '租赁费用', lines: [
+      { category: '办公场地租赁', start: '2026-04-01', end: '2026-04-30', dept: '纵腾网络/行政部', amount: 25000.00, pretax: 22935.78, tax: 2064.22, desc: '4月写字楼租金' },
+      { category: '仓库租赁费', start: '2026-04-01', end: '2026-04-30', dept: '纵腾网络/物流部', amount: 12000.00, pretax: 11009.17, tax: 990.83, desc: '4月仓库租金' }
+    ]},
+    { id: '2000002605190326', categoryName: '水电费用', lines: [
+      { category: '办公电费', start: '2026-04-01', end: '2026-04-30', dept: '纵腾网络/行政部', amount: 3500.00, pretax: 3207.34, tax: 292.66, desc: '4月办公用电' },
+      { category: '办公水费', start: '2026-04-01', end: '2026-04-30', dept: '纵腾网络/行政部', amount: 800.00, pretax: 733.94, tax: 66.06, desc: '4月办公用水' }
+    ]},
+    { id: '2000002605190327', categoryName: '运输费用', lines: [
+      { category: '国内运输-陆运', start: '2026-04-01', end: '2026-04-15', dept: '纵腾网络/物流部/运输组', amount: 15000.00, pretax: 13761.47, tax: 1238.53, desc: '华东区域干线运输' },
+      { category: '国内运输-空运', start: '2026-04-10', end: '2026-04-20', dept: '纵腾网络/物流部/运输组', amount: 28000.00, pretax: 25688.07, tax: 2311.93, desc: '紧急货物运输' }
+    ]},
+    { id: '2000002605190328', categoryName: '维修费用', lines: [
+      { category: '设备维修-仓储设备', start: '2026-04-05', end: '2026-04-08', dept: '纵腾网络/物流部/设备组', amount: 5000.00, pretax: 4587.16, tax: 412.84, desc: '叉车定期保养维修' },
+      { category: '设备维修-IT设备', start: '2026-04-12', end: '2026-04-14', dept: '纵腾网络/IT部', amount: 3200.00, pretax: 2935.78, tax: 264.22, desc: '服务器硬盘更换' }
+    ]},
+    { id: '2000002605190329', categoryName: '咨询服务费', lines: [
+      { category: '法务咨询', start: '2026-04-01', end: '2026-04-30', dept: '纵腾网络/法务部', amount: 8000.00, pretax: 7547.17, tax: 452.83, desc: '4月法律顾问服务' },
+      { category: '税务咨询', start: '2026-04-15', end: '2026-04-15', dept: '纵腾网络/财务部', amount: 3500.00, pretax: 3301.89, tax: 198.11, desc: '季度税务筹划咨询' }
+    ]},
+    { id: '2000002605190330', categoryName: '招聘费用', lines: [
+      { category: '猎头服务费', start: '2026-04-01', end: '2026-04-30', dept: '纵腾网络/人力部', amount: 20000.00, pretax: 18867.92, tax: 1132.08, desc: '高级人才猎头推荐费' },
+      { category: '招聘平台费', start: '2026-04-01', end: '2026-04-30', dept: '纵腾网络/人力部', amount: 5000.00, pretax: 4716.98, tax: 283.02, desc: '智联/BOSS等招聘平台年费' }
+    ]}
+  ];
+
+  // Utility: debounce
+  function debounce(fn, wait) {
+    var t;
+    return function() {
+      var args = arguments, self = this;
+      clearTimeout(t);
+      t = setTimeout(function() { fn.apply(self, args); }, wait);
+    };
+  }
+
+  // Utility: money format
+  function fmtMoney(v) {
+    if (v === undefined || v === null || v === '') return '--';
+    return Number(v).toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  // Store currently matched bill
+  var _currentMatchedBill = null;
+
+  // ========== Autocomplete ==========
+  var addBillInput = document.getElementById('addBillInput');
+  var addBillDropdown = document.getElementById('addBillDropdown');
+  var activeIndex = -1;
+
+  function showDropdown() {
+    addBillDropdown.classList.add('active');
+  }
+  function hideDropdown() {
+    addBillDropdown.classList.remove('active');
+    activeIndex = -1;
+  }
+
+  function renderDropdown(list) {
+    if (!list || list.length === 0) {
+      addBillDropdown.innerHTML = '<div class="autocomplete-empty">无匹配结果</div>';
+      showDropdown();
+      return;
+    }
+    var html = list.map(function(item, i) {
+      return '<div class="autocomplete-item" data-index="' + i + '" data-id="' + item.id + '">' + item.id + '</div>';
+    }).join('');
+    addBillDropdown.innerHTML = html;
+    showDropdown();
+    updateActiveItem();
+  }
+
+  function updateActiveItem() {
+    var items = addBillDropdown.querySelectorAll('.autocomplete-item');
+    items.forEach(function(el, i) {
+      if (i === activeIndex) el.classList.add('active');
+      else el.classList.remove('active');
+    });
+  }
+
+  function filterBills(keyword) {
+    if (!keyword) return [];
+    var k = keyword.trim().toLowerCase();
+    return mockBills.filter(function(b) { return b.id.toLowerCase().indexOf(k) !== -1; });
+  }
+
+  var debouncedFilter = debounce(function() {
+    var val = addBillInput.value;
+    var list = filterBills(val);
+    renderDropdown(list);
+    // 不再自动选中唯一匹配项，需用户手动选择
+  }, 200);
+
+  if (addBillInput) {
+    addBillInput.addEventListener('input', debouncedFilter);
+
+    addBillInput.addEventListener('keydown', function(e) {
+      var items = addBillDropdown.querySelectorAll('.autocomplete-item');
+      if (!items.length) return;
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        activeIndex = (activeIndex + 1) % items.length;
+        updateActiveItem();
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        activeIndex = (activeIndex - 1 + items.length) % items.length;
+        updateActiveItem();
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        if (activeIndex >= 0 && items[activeIndex]) {
+          var id = items[activeIndex].getAttribute('data-id');
+          addBillInput.value = id;
+          hideDropdown();
+          searchBill(id);
+        } else if (addBillInput.value.trim()) {
+          var exact = mockBills.find(function(b) { return b.id === addBillInput.value.trim(); });
+          if (exact) {
+            hideDropdown();
+            searchBill(exact.id);
+          }
+        }
+      } else if (e.key === 'Escape') {
+        hideDropdown();
+      }
+    });
+
+    addBillInput.addEventListener('focus', function() {
+      if (this.value.trim()) {
+        var list = filterBills(this.value);
+        renderDropdown(list);
+      }
+    });
+  }
+
+  if (addBillDropdown) {
+    addBillDropdown.addEventListener('click', function(e) {
+      var item = e.target.closest('.autocomplete-item');
+      if (!item) return;
+      var id = item.getAttribute('data-id');
+      addBillInput.value = id;
+      hideDropdown();
+      searchBill(id);
+    });
+  }
+
+  document.addEventListener('click', function(e) {
+    if (!e.target.closest('#addBillInput') && !e.target.closest('#addBillDropdown')) {
+      hideDropdown();
+    }
+  });
+
+  // ========== Search & Result Table ==========
+  window.searchBill = function(val) {
+    var matched = mockBills.find(function(b) { return b.id === val; });
+    _currentMatchedBill = matched;
+    var categoryEl = document.getElementById('addBillCategory');
+    var resultArea = document.getElementById('addBillResult');
+    var tbody = document.getElementById('addBillTbody');
+    var allChk = document.getElementById('addBillAllCheckbox');
+
+    if (!matched) {
+      if (categoryEl) categoryEl.textContent = '';
+      if (resultArea) resultArea.style.display = 'none';
+      return;
+    }
+
+    if (categoryEl) {
+      categoryEl.textContent = matched.categoryName || '';
+      categoryEl.style.color = '#333';
+      categoryEl.style.background = '#f5f5f5';
+      categoryEl.style.borderColor = '#d9d9d9';
+    }
+
+    if (!resultArea || !tbody) return;
+    resultArea.style.display = 'block';
+
+    // Get existing line keys from sub-table to mark as disabled
+    var existingKeys = new Set();
+    var billBody = document.getElementById('billBody');
+    if (billBody) {
+      billBody.querySelectorAll('tr').forEach(function(tr) {
+        var lid = tr.getAttribute('data-line-id');
+        var bid = tr.getAttribute('data-bill-id');
+        if (lid && bid) existingKeys.add(bid + '|' + lid);
+      });
+    }
+
+    var billId = matched.id;
+    tbody.innerHTML = matched.lines.map(function(row, i) {
+      var lineId = row.category + '|' + row.start + '|' + row.end;
+      var isAlreadyAdded = existingKeys.has(billId + '|' + lineId);
+      return '<tr class="row-selectable" data-line-id="' + lineId + '" onclick="toggleAddBillRow(this)">' +
+        '<td style="text-align:center;" class="' + (isAlreadyAdded ? 'disabled-check-cell' : '') + '"' + (isAlreadyAdded ? ' data-tip="已勾选"' : '') + '>' +
+          '<input type="checkbox" class="modal-checkbox"' + (isAlreadyAdded ? ' disabled checked' : '') + ' onclick="event.stopPropagation(); updateAddBillCheckState()">' +
+        '</td>' +
+        '<td style="text-align:center;">' + (i + 1) + '</td>' +
+        '<td><span class="tip-wrap">' + row.category + '<span class="tip-popup">' + row.category + '</span></span></td>' +
+        '<td>' + row.start + '</td>' +
+        '<td>' + row.end + '</td>' +
+        '<td><span class="tip-wrap">' + row.dept + '<span class="tip-popup">' + row.dept + '</span></span></td>' +
+        '<td>' + fmtMoney(row.amount) + '</td>' +
+        '<td>' + fmtMoney(row.pretax) + '</td>' +
+        '<td>' + fmtMoney(row.tax) + '</td>' +
+        '<td><span class="tip-wrap">' + (row.desc || '') + '<span class="tip-popup">' + (row.desc || '') + '</span></span></td>' +
+      '</tr>';
+    }).join('');
+
+    if (allChk) {
+      allChk.checked = false;
+      allChk.indeterminate = false;
+    }
+
+    setTimeout(checkOverflowTooltips, 0);
+  };
+
+  // ========== Modal Open/Close ==========
+  window.openAddBillModal = function() {
+    var modal = document.getElementById('addBillModal');
+    if (modal) modal.classList.add('show');
+    if (addBillInput) addBillInput.value = '';
+    var categoryEl = document.getElementById('addBillCategory');
+    if (categoryEl) {
+      categoryEl.textContent = '';
+      categoryEl.style.color = '#999';
+      categoryEl.style.background = '#f5f5f5';
+      categoryEl.style.borderColor = '#e8e8e8';
+    }
+    var resultArea = document.getElementById('addBillResult');
+    if (resultArea) resultArea.style.display = 'none';
+    var tbody = document.getElementById('addBillTbody');
+    if (tbody) tbody.innerHTML = '';
+    var allChk = document.getElementById('addBillAllCheckbox');
+    if (allChk) {
+      allChk.checked = false;
+      allChk.indeterminate = false;
+    }
+    setTimeout(function() { if (addBillInput) addBillInput.focus(); }, 100);
+  };
+
+  window.closeAddBillModal = function() {
+    var modal = document.getElementById('addBillModal');
+    if (modal) modal.classList.remove('show');
+  };
+
+  // ========== Checkbox & Row Selection ==========
+  window.toggleAddBillRow = function(tr) {
+    var chk = tr.querySelector('.modal-checkbox');
+    if (!chk || chk.disabled) return;
+    chk.checked = !chk.checked;
+    updateAddBillCheckState();
+  };
+
+  window.updateAddBillCheckState = function() {
+    var tbody = document.getElementById('addBillTbody');
+    var allChk = document.getElementById('addBillAllCheckbox');
+    if (!tbody || !allChk) return;
+    var enabled = Array.from(tbody.querySelectorAll('.modal-checkbox:not(:disabled)'));
+    var checked = enabled.filter(function(c) { return c.checked; });
+    if (enabled.length === 0) {
+      allChk.checked = false;
+      allChk.indeterminate = false;
+    } else if (checked.length === enabled.length) {
+      allChk.checked = true;
+      allChk.indeterminate = false;
+    } else if (checked.length > 0) {
+      allChk.checked = false;
+      allChk.indeterminate = true;
+    } else {
+      allChk.checked = false;
+      allChk.indeterminate = false;
+    }
+  };
+
+  var addBillAllCheckbox = document.getElementById('addBillAllCheckbox');
+  if (addBillAllCheckbox) {
+    addBillAllCheckbox.addEventListener('change', function() {
+      var tbody = document.getElementById('addBillTbody');
+      if (!tbody) return;
+      var enabled = Array.from(tbody.querySelectorAll('.modal-checkbox:not(:disabled)'));
+      enabled.forEach(function(c) { c.checked = this.checked; }.bind(this));
+    });
+  }
+
+  // ========== Confirm Add ==========
+  window.confirmAddBill = function() {
+    var tbody = document.getElementById('addBillTbody');
+    var billBody = document.getElementById('billBody');
+    if (!tbody || !billBody) return;
+
+    var checkedRows = tbody.querySelectorAll('tr .modal-checkbox:checked:not(:disabled)');
+    if (checkedRows.length === 0) {
+      alert('请选择至少一条费用信息行');
+      return;
+    }
+
+    var bill = _currentMatchedBill;
+    var billId = bill ? bill.id : '';
+    var categoryName = bill ? bill.categoryName : '';
+
+    // Remove empty row if present
+    var emptyRow = document.getElementById('billEmpty');
+    if (emptyRow) emptyRow.remove();
+
+    checkedRows.forEach(function(chk) {
+      var tr = chk.closest('tr');
+      var lineId = tr.getAttribute('data-line-id');
+      var cells = tr.querySelectorAll('td');
+
+      var lineData = {
+        category: cells[2] ? cells[2].textContent.trim() : '',
+        start: cells[3] ? cells[3].textContent.trim() : '',
+        end: cells[4] ? cells[4].textContent.trim() : '',
+        dept: cells[5] ? cells[5].textContent.trim() : '',
+        amount: cells[6] ? cells[6].textContent.trim().replace(/,/g, '') : ''
+      };
+
+      var rows = billBody.querySelectorAll('tr:not(.empty-row)');
+      var seq = rows.length + 1;
+
+      var newTr = document.createElement('tr');
+      newTr.setAttribute('data-bill-id', billId);
+      newTr.setAttribute('data-line-id', lineId);
+      newTr.innerHTML =
+        '<td class="col-chk"><input type="checkbox" class="sub-chk" name="billChk"></td>' +
+        '<td class="col-seq">' + seq + '</td>' +
+        '<td><a class="bill-link" href="javascript:void(0)" onclick="alert(\'跳转至报账单详情页：' + (billId || '') + '\')">' + (billId || '') + '</a></td>' +
+        '<td><input class="form-input" value="手动匹配" placeholder="" style="width:100%;"></td>' +
+        '<td><input class="form-input" value="' + (categoryName || '') + '" placeholder="" style="width:100%;"></td>' +
+        '<td><input class="form-input" value="' + (lineData.category || '') + '" placeholder="请输入" style="width:100%;"></td>' +
+        '<td><input class="form-input" value="' + (lineData.start || '') + '" placeholder="" style="width:100%;"></td>' +
+        '<td><input class="form-input" value="' + (lineData.end || '') + '" placeholder="" style="width:100%;"></td>' +
+        '<td><input class="form-input" value="' + (lineData.dept || '') + '" placeholder="" style="width:100%;"></td>' +
+        '<td><input class="form-input readonly" value="' + (lineData.amount || '') + '" placeholder="" style="width:100%;" readonly></td>' +
+        '<td><input class="form-input" value="CNY" placeholder="" style="width:100%;"></td>' +
+        '<td><input class="form-input" value="' + (lineData.amount || '') + '" placeholder="请输入" style="width:100%;"></td>';
+      billBody.appendChild(newTr);
+    });
+
+    closeAddBillModal();
+  };
+
+  // ========== Column Resize ==========
+  function initColResize(tableId) {
+    var table = document.getElementById(tableId);
+    if (!table) return;
+    var headers = table.querySelectorAll('thead th');
+    headers.forEach(function(th) {
+      var handle = document.createElement('div');
+      handle.className = 'resize-handle';
+      th.appendChild(handle);
+
+      var startX, startW, col;
+      handle.addEventListener('mousedown', function(e) {
+        e.preventDefault();
+        startX = e.pageX;
+        col = th;
+        startW = th.offsetWidth;
+        document.body.style.cursor = 'col-resize';
+        document.body.style.userSelect = 'none';
+
+        function onMove(ev) {
+          var diff = ev.pageX - startX;
+          col.style.width = Math.max(40, startW + diff) + 'px';
+        }
+        function onUp() {
+          document.removeEventListener('mousemove', onMove);
+          document.removeEventListener('mouseup', onUp);
+          document.body.style.cursor = '';
+          document.body.style.userSelect = '';
+        }
+        document.addEventListener('mousemove', onMove);
+        document.addEventListener('mouseup', onUp);
+      });
+    });
+  }
+
+  // ========== Tooltip Overflow Check ==========
+  function checkOverflowTooltips() {
+    document.querySelectorAll('.add-bill-modal .tip-wrap').forEach(function(wrap) {
+      var popup = wrap.querySelector('.tip-popup');
+      if (!popup) return;
+      if (wrap.scrollWidth > wrap.clientWidth) {
+        popup.style.display = 'block';
+        var rect = wrap.getBoundingClientRect();
+        var pop = popup.getBoundingClientRect();
+        var left = rect.left + rect.width / 2 - pop.width / 2;
+        if (left < 4) left = 4;
+        if (left + pop.width > window.innerWidth - 4) left = window.innerWidth - pop.width - 4;
+        popup.style.left = left + 'px';
+        popup.style.transform = 'none';
+      } else {
+        popup.style.display = 'none';
+      }
+    });
+  }
+
+  // ========== Event Listeners ==========
+  var addBillModalEl = document.getElementById('addBillModal');
+  if (addBillModalEl) {
+    addBillModalEl.addEventListener('click', function(e) {
+      if (e.target === this) closeAddBillModal();
+    });
+  }
+
+  var addBillModalBody = document.querySelector('.add-bill-modal .modal-body');
+  if (addBillModalBody) {
+    addBillModalBody.addEventListener('scroll', hideDropdown);
+  }
+
+  // Init
+  initColResize('addBillTable');
+})();
+</script>
+</body>
+</html>
