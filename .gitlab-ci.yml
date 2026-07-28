@@ -1,5 +1,7 @@
 pages:
   stage: deploy
+  tags:
+    - fssc
   script:
     - mkdir -p public
     - cp -r * public/ 2>/dev/null || true
