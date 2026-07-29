@@ -495,13 +495,11 @@
 
   .content-toolbar {
     display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 16px;
-    min-height: 36px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
     padding: 6px 0 8px;
     margin-bottom: 4px;
-    flex-wrap: wrap;
   }
   .content-toolbar-left,
   .content-toolbar-right {
@@ -511,8 +509,7 @@
     flex-wrap: wrap;
   }
   .content-toolbar-right {
-    margin-left: auto;
-    justify-content: flex-end;
+    justify-content: flex-start;
   }
   .remark-row {
     display: flex;
