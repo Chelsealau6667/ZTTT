@@ -445,7 +445,6 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    margin-bottom: 10px;
   }
   .link-field .link-label {
     font-size: 12px;
@@ -494,26 +493,53 @@
     background: #fafafa;
   }
 
-  .link-field-row {
+  .content-toolbar {
     display: flex;
     align-items: center;
-    gap: 2px;
-    margin-bottom: 2px;
+    justify-content: space-between;
+    gap: 16px;
+    min-height: 36px;
+    padding: 6px 0 8px;
+    margin-bottom: 4px;
     flex-wrap: wrap;
   }
-  .link-field-row .link-actions-right {
+  .content-toolbar-left,
+  .content-toolbar-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .content-toolbar-right {
     margin-left: auto;
+    justify-content: flex-end;
+  }
+  .remark-row {
     display: flex;
     align-items: center;
-    justify-content: flex-end;
-    gap: 2px;
-    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 8px;
   }
-  .link-field-row .link-field {
-    margin-bottom: 0;
+  .remark-label {
+    font-size: 12px;
+    color: #666;
+    line-height: 28px;
+    white-space: nowrap;
   }
-  .link-field-row .side-item {
-    margin-bottom: 0;
+  .remark-textarea {
+    flex: 1;
+    width: 100%;
+    height: 28px;
+    min-height: 28px;
+    background: #fff;
+    border: 1px solid #d9d9d9;
+    border-radius: 4px;
+    padding: 4px 8px;
+    font-size: 12px;
+    color: #333;
+    outline: none;
+    resize: none;
+    line-height: 18px;
   }
 
   /* buttons */
@@ -1104,11 +1130,13 @@
 
         <div class="content-layout">
           <div class="content-main">
-            <div class="link-field-row">
-              <div class="link-field">
-                <button class="btn-choose" onclick="document.getElementById('modal').classList.add('active')">关联结转单</button>
+            <div class="content-toolbar">
+              <div class="content-toolbar-left">
+                <div class="link-field">
+                  <button class="btn-choose" onclick="document.getElementById('modal').classList.add('active')">关联结转单</button>
+                </div>
               </div>
-              <div class="link-actions-right">
+              <div class="content-toolbar-right">
                 <div class="link-field">
                   <div class="link-label"><span class="required">*</span>结转币种：</div>
                   <select class="link-select" id="currencySelect" onchange="updateExchangeRate()">
@@ -1133,9 +1161,9 @@
                 </div>
               </div>
             </div>
-            <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px">
-              <div style="font-size:12px;color:#666;line-height:1.2;white-space:nowrap">单据说明：</div>
-              <textarea style="flex:1;width:100%;height:22px;min-height:22px;background:#fff;border:1px solid #d9d9d9;border-radius:4px;padding:1px 8px;font-size:12px;color:#333;outline:none;resize:none;line-height:1.2"></textarea>
+            <div class="remark-row">
+              <div class="remark-label">单据说明：</div>
+              <textarea class="remark-textarea"></textarea>
             </div>
 
             <div class="table-scroll"><table class="detail-table" style="min-width:1800px;">
