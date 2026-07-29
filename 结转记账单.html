@@ -464,11 +464,22 @@
     background: #fafafa;
   }
   .link-field .btn-choose {
-    color: #1a5bb5;
+    height: 28px;
+    padding: 0 14px;
+    border-radius: 4px;
+    color: #fff;
     font-size: 12px;
     cursor: pointer;
-    background: none;
-    border: none;
+    background: #1890ff;
+    border: 1px solid #1890ff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
+  }
+  .link-field .btn-choose:hover {
+    background: #40a9ff;
+    border-color: #40a9ff;
   }
 
   .link-field .link-select {
@@ -1087,9 +1098,7 @@
           <div class="content-main">
             <div class="link-field-row">
               <div class="link-field">
-                <div class="link-label"><span class="required">*</span>关联结转单：</div>
-                <input type="text" value="BX202607230001, BX202607230002, BX202607230003, BX202607230004" />
-                <button class="btn-choose" onclick="document.getElementById('modal').classList.add('active')">选择</button>
+                <button class="btn-choose" onclick="document.getElementById('modal').classList.add('active')">关联结转单</button>
               </div>
               <div class="link-field">
                 <div class="link-label"><span class="required">*</span>结转币种：</div>
