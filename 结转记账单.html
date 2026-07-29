@@ -1307,7 +1307,7 @@
             <tr>
               <th style="width:50px;">No.</th>
               <th><span class="required">*</span>业务小类</th>
-              <th>科目编码+科目名称</th>
+              <th>科目</th>
               <th>金额记账规则</th>
               <th><span class="required">*</span>业务开始时间</th>
               <th><span class="required">*</span>业务结束时间</th>
@@ -1651,7 +1651,7 @@
     tr.innerHTML =
       '<td>' + detailRowCount + '</td>' +
       '<td><input type="text" class="biz-input" onclick="openBizModal(this)" readonly placeholder="请选择" style="width:100%;height:24px;border:1px solid #d9d9d9;border-radius:2px;padding:0 4px;font-size:12px;cursor:pointer;background:#fff;" /></td>' +
-      '<td><input type="text" readonly placeholder="选择业务小类后自动带出" style="width:100%;height:24px;border:1px solid #d9d9d9;border-radius:2px;padding:0 4px;font-size:12px;background:#f5f5f5;color:#666;" /></td>' +
+      '<td><input type="text" class="subject-input" readonly placeholder="选择业务小类后自动带出" style="width:100%;height:24px;border:1px solid #d9d9d9;border-radius:2px;padding:0 4px;font-size:12px;background:#f5f5f5;color:#666;" /></td>' +
       '<td><select style="width:100%;height:24px;border:1px solid #d9d9d9;border-radius:2px;font-size:12px;"><option>请选择</option><option>按金额</option><option>按比例</option></select></td>' +
       '<td><div style="display:flex;align-items:center;"><input type="text" class="date-input" onblur="normalizeDateInput(this)" placeholder="YYYY-MM-DD" style="flex:1;height:24px;border:1px solid #d9d9d9;border-right:none;border-radius:2px 0 0 2px;padding:0 4px;font-size:12px;" /><span style="display:flex;align-items:center;justify-content:center;width:22px;height:24px;border:1px solid #d9d9d9;border-radius:0 2px 2px 0;background:#f5f5f5;cursor:pointer;font-size:12px;color:#666;" onclick="openDatePicker(this)">&#128197;</span></div></td>' +
       '<td><div style="display:flex;align-items:center;"><input type="text" class="date-input" onblur="normalizeDateInput(this)" placeholder="YYYY-MM-DD" style="flex:1;height:24px;border:1px solid #d9d9d9;border-right:none;border-radius:2px 0 0 2px;padding:0 4px;font-size:12px;" /><span style="display:flex;align-items:center;justify-content:center;width:22px;height:24px;border:1px solid #d9d9d9;border-radius:0 2px 2px 0;background:#f5f5f5;cursor:pointer;font-size:12px;color:#666;" onclick="openDatePicker(this)">&#128197;</span></div></td>' +
@@ -1934,6 +1934,13 @@
         var subName = row.querySelector('td:nth-child(6)').textContent.trim();
         if (lastBizInput) {
           lastBizInput.value = code + ' - ' + name;
+          var tr = lastBizInput.closest('tr');
+          if (tr) {
+            var subjectInput = tr.querySelector('.subject-input');
+            if (subjectInput) {
+              subjectInput.value = subCode + ' ' + subName;
+            }
+          }
         }
       }
     });
